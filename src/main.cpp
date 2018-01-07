@@ -1,0 +1,56 @@
+#include <iostream>
+#include <stdlib.h>
+
+#include <GL/glew.h>
+
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+
+#pragma comment(lib, "OpenGL32.lib")
+#pragma comment(lib, "noise.lib")
+
+#include "utils.h"
+
+#include <noise/noise.h>
+
+using namespace noise;
+using namespace glm;
+
+#define GLSL(src) #src
+
+void render(GLuint vao, GLuint program)
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glUseProgram (program);
+    glBindVertexArray (vao);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+}
+
+int main(void) {
+    std::cout << "ses 0" << std::endl;
+    GLFWwindow* window = initialize();
+    std::cout << "ses 1" << std::endl;
+
+    //glEnable(GL_DEPTH_TEST); // enable depth-testing
+    //glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
+
+    GLuint triangleVAO = createTriangleVAO();
+    std::cout << "ses 2" << std::endl;
+    GLuint triangleProgram = createTriangleProgram();
+    std::cout << "ses 3" << std::endl;
+
+	module::Perlin myModule;
+	double value = myModule.GetValue(1.25, 0.75, 0.5);
+	std::cout << value << std::endl;
+
+    while (!glfwWindowShouldClose(window)) {
+
+        render(triangleVAO, triangleProgram);
+
+        glfwPollEvents();
+        glfwSwapBuffers(window);
+    }
+
+    stop(window);
+    exit(EXIT_SUCCESS);
+}
