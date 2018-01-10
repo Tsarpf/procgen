@@ -7,32 +7,48 @@
 
 #include "Octree.h"
 
+using namespace glm;
+
+const vec3 CHILD_MIN_OFFSETS[] =
+{
+        vec3(0,0,0),
+        vec3(0,0,1),
+        vec3(0,1,0),
+        vec3(0,1,1),
+        vec3(1,0,0),
+        vec3(1,0,1),
+        vec3(1,1,0),
+        vec3(1,1,1),
+};
+
+Octree::~Octree()
+{
+    /////// NYI
+}
+
+
 // Call this to initialize a new node with children already made
-Octree::Octree(int size, int min, std::array<Octree*, 8> children, int8_t childField)
+// in this case no need to create anything except maybe construct what to draw.
+Octree::Octree(int size, int min, std::array<Octree*, 8> Children, int8_t ChildField)
+        : m_children(Children), m_childField(ChildField)
 {
 }
 
 // Call this if creating a completely new octree
 // or a leaf node
-Octree::Octree(const int maxResolution, const int size, const int min)
+Octree::Octree(const int resolution, const int size, const int min)
 {
-	if (size == 1) {
-		ConstructLeaf(min);
+	if (resolution == size) {
+		ConstructLeaf(resolution, min);
 	}
 	else
 	{
-		ConstructBottomUp(maxResolution, size, min);
+		ConstructBottomUp(resolution, size, min);
 	}
 }
 
-Octree::Octree()
+void Octree::ConstructLeaf(const int resolution, const int min)
 {
-
-}
-
-void Octree::ConstructLeaf(int min)
-{
-
 }
 
 int index(int x, int y, int z, int dimensionLength)
@@ -68,6 +84,11 @@ void Octree::ConstructBottomUp(const int maxResolution, const int size, const in
                 {
                     // having a function that creates children on behalf of a node doesn't make any sense
                     // because the children's children should already exist. or something. i don't remember
+
+                    const int idx = index(x, y, z, 2);
+
+                    // TODO: figure this out
+                    const int childCornerPos = min + CHILD_MIN_OFFSETS[idx] * cubeSize;
 
                     Octree* tree = nullptr;
                     if(cubeSize > maxResolution) {
@@ -109,7 +130,6 @@ void Octree::ConstructBottomUp(const int maxResolution, const int size, const in
                         continue;
                     }
 
-                    int idx = index(x, y, z, 2);
                     newChildren[idx] = tree;
                     newChildField = newChildField & (1 << idx);
                 }
@@ -154,5 +174,5 @@ void Octree::ConstructBottomUp(const int maxResolution, const int size, const in
 //		}
 //		cubeSize *= 2;
 //	}
-}
+//}
 
