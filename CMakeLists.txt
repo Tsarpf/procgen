@@ -51,7 +51,7 @@ if (APPLE)
     else ()
 
       #add_executable(${APP_NAME} MACOSX_BUNDLE main.cpp utils.cpp utils.h Octree.cpp Octree.h)
-        add_executable(${APP_NAME} MACOSX_BUNDLE src/main.cpp src/utils.cpp src/utils.h)
+        add_executable(${APP_NAME} MACOSX_BUNDLE src/main.cpp src/utils.cpp src/utils.h src/Octree.cpp src/Octree.h)
     endif ()
 
     set_target_properties(${APP_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules/app.plist.in)
