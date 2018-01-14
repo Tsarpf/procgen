@@ -1,3 +1,4 @@
 build/
 xcode/
 cmake-build-debug
+.idea/
