@@ -3,6 +3,7 @@
 //
 #include <array>
 #include <cmath>
+#include <iostream>
 #include <cstdint>
 
 #include "Octree.h"
@@ -29,25 +30,36 @@ Octree::~Octree()
 
 // Call this to initialize a new node with children already made
 // in this case no need to create anything except maybe construct what to draw.
-Octree::Octree(int size, int min, std::array<Octree*, 8> Children, int8_t ChildField)
+Octree::Octree(int size, glm::vec3 min, std::array<Octree*, 8> Children, int8_t ChildField)
         : m_children(Children), m_childField(ChildField)
 {
+    std::cout << "pre-initialized octree" << std::endl;
+    std::string output = "";
+    for(int i = 7; i >= 0; i--)
+    {
+        ((m_childField & (1 << i)) > 0)
+            ? output += "1"
+            : output += "0";
+    }
+    std::cout << output << std::endl;
 }
 
 // Call this if creating a completely new octree
 // or a leaf node
-Octree::Octree(const int resolution, const int size, const int min)
+Octree::Octree(const int resolution, const int size, const glm::vec3 min)
 {
 	if (resolution == size) {
+        std::cout << "creating a leaf" << std::endl;
 		ConstructLeaf(resolution, min);
 	}
 	else
 	{
+        std::cout << "constructing from bottom up" << std::endl;
 		ConstructBottomUp(resolution, size, min);
 	}
 }
 
-void Octree::ConstructLeaf(const int resolution, const int min)
+void Octree::ConstructLeaf(const int resolution, const glm::vec3 min)
 {
 }
 
@@ -62,8 +74,7 @@ bool Octree::HasSomethingToRender()
     return true;
 }
 
-// 'min' is the x=y=z coordinate of the minimum corner of the octree.
-void Octree::ConstructBottomUp(const int maxResolution, const int size, const int min)
+void Octree::ConstructBottomUp(const int maxResolution, const int size, const glm::vec3 min)
 {
     int cubeSize = maxResolution;
 
@@ -82,26 +93,20 @@ void Octree::ConstructBottomUp(const int maxResolution, const int size, const in
             {
                 for(int z = 0; z < 2; z++)
                 {
-                    // having a function that creates children on behalf of a node doesn't make any sense
-                    // because the children's children should already exist. or something. i don't remember
-
                     const int idx = index(x, y, z, 2);
 
-                    // TODO: figure this out
-                    const int childCornerPos = min + CHILD_MIN_OFFSETS[idx] * cubeSize;
+                    const glm::vec3 childCornerPos = min + CHILD_MIN_OFFSETS[idx] * (float)cubeSize;
 
                     Octree* tree = nullptr;
                     if(cubeSize > maxResolution) {
-                        // in this case we've ran at least one round,
-                        // so there are children we can pass along.
-
                         // look up children created on a previous level from array
                         // if previous level children count for this node is 0, skip this node as well!
 
                         // the children array should be populated now as this shouldn't be the first round.
+                        // (on the first round cubeSize == maxResolution)
                         if(oldChildField > 0 && x == 0 && y == 0 && z == 0)
                         {
-                            tree = new Octree(cubeSize, min, oldChildren, oldChildField);
+                            tree = new Octree(cubeSize, childCornerPos, oldChildren, oldChildField);
                         }
                         else if(x == 0 && y == 0 && z == 0)
                         {
@@ -111,7 +116,7 @@ void Octree::ConstructBottomUp(const int maxResolution, const int size, const in
                         else
                         {
                             // we will have to check if this node has children
-                            tree = new Octree(maxResolution, cubeSize, min);
+                            tree = new Octree(maxResolution, cubeSize, childCornerPos);
                         }
                     }
                     else
@@ -119,7 +124,7 @@ void Octree::ConstructBottomUp(const int maxResolution, const int size, const in
                         // if cube size is maxResolution, we're creating leaf nodes
                         // this means no children
 
-                        tree = new Octree(maxResolution, cubeSize, min);
+                        tree = new Octree(maxResolution, cubeSize, childCornerPos);
                     }
 
                     if (!tree->HasSomethingToRender())

@@ -9,9 +9,10 @@
 #pragma comment(lib, "OpenGL32.lib")
 #pragma comment(lib, "noise.lib")
 
-#include "utils.h"
-
 #include <noise/noise.h>
+
+#include "utils.h"
+#include "Octree.h"
 
 using namespace noise;
 using namespace glm;
@@ -26,22 +27,26 @@ void render(GLuint vao, GLuint program)
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
+void drawOctree()
+{
+    // abua
+    Octree* tree = new Octree(1, 8, glm::vec3(0,0,0));
+}
+
 int main(void) {
-    std::cout << "ses 0" << std::endl;
     GLFWwindow* window = initialize();
-    std::cout << "ses 1" << std::endl;
 
     //glEnable(GL_DEPTH_TEST); // enable depth-testing
     //glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
 
     GLuint triangleVAO = createTriangleVAO();
-    std::cout << "ses 2" << std::endl;
     GLuint triangleProgram = createTriangleProgram();
-    std::cout << "ses 3" << std::endl;
 
 	module::Perlin myModule;
 	double value = myModule.GetValue(1.25, 0.75, 0.5);
 	std::cout << value << std::endl;
+
+    drawOctree();
 
     while (!glfwWindowShouldClose(window)) {
 

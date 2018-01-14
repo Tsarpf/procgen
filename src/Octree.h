@@ -12,14 +12,15 @@
 
 class Octree {
 public:
-	Octree(int size, int min, std::array<Octree*, 8> Children, int8_t ChildField);
-	Octree(const int maxResolution, const int size, const int min);
+	Octree(int size, glm::vec3 min, std::array<Octree*, 8> Children, int8_t ChildField);
+	Octree(const int maxResolution, const int size, const glm::vec3 min);
 	~Octree();
 
     bool HasSomethingToRender();
 private:
-	void ConstructLeaf(const int resolution, const int min);
-	void ConstructBottomUp(const int maxResolution, const int size, const int min);
+	void ConstructLeaf(const int resolution, const glm::vec3 min);
+	void ConstructBottomUp(const int maxResolution, const int size, const glm::vec3 min);
+
 	std::array<Octree*, 8> m_children;
     int8_t m_childField;
 };
