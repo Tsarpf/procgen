@@ -30,5 +30,10 @@ enum OldPosition {
 	LOWERRIGHT
 };
 
+struct OctreeChildren {
+	int8_t field;
+	std::array<Octree*, 8> children;
+};
+
 
 #endif //PROJECT_OCTREE_H

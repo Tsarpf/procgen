@@ -74,110 +74,152 @@ bool Octree::HasSomethingToRender()
     return true;
 }
 
-void Octree::ConstructBottomUp(const int maxResolution, const int size, const glm::vec3 min)
+//void Octree::ConstructBottomUp(const int maxResolution, const int size, const glm::vec3 min)
+//{
+//    int cubeSize = maxResolution;
+//
+//    std::array<Octree*, 8> oldChildren;
+//    int8_t oldChildField = 0;
+//
+//    while (cubeSize < size)
+//    {
+//        // for each size, create the children on behalf of their owner
+//
+//        std::array<Octree*, 8> newChildren;
+//        int8_t newChildField = 0;
+//        for(int x = 0; x < 2; x++)
+//        {
+//            for(int y = 0; y < 2; y++)
+//            {
+//                for(int z = 0; z < 2; z++)
+//                {
+//                    const int idx = index(x, y, z, 2);
+//
+//                    const glm::vec3 childCornerPos = min + CHILD_MIN_OFFSETS[idx] * (float)cubeSize;
+//
+//                    Octree* tree = nullptr;
+//                    if(cubeSize > maxResolution) {
+//                        // look up children created on a previous level from array
+//                        // if previous level children count for this node is 0, skip this node as well!
+//
+//                        // the children array should be populated now as this shouldn't be the first round.
+//                        // (on the first round cubeSize == maxResolution)
+//                        if(oldChildField > 0 && x == 0 && y == 0 && z == 0)
+//                        {
+//                            tree = new Octree(cubeSize, childCornerPos, oldChildren, oldChildField);
+//                        }
+//                        else if(x == 0 && y == 0 && z == 0)
+//                        {
+//                            // no children for this node, nothing to draw for this node either
+//                            continue;
+//                        }
+//                        else
+//                        {
+//                            // we will have to check if this node has children
+//                            tree = new Octree(maxResolution, cubeSize, childCornerPos);
+//                        }
+//                    }
+//                    else
+//                    {
+//                        // if cube size is maxResolution, we're creating leaf nodes
+//                        // this means no children
+//
+//                        tree = new Octree(maxResolution, cubeSize, childCornerPos);
+//                    }
+//
+//                    if (!tree->HasSomethingToRender())
+//                    {
+//                        delete tree;
+//                        tree = nullptr;
+//
+//                        continue;
+//                    }
+//
+//                    newChildren[idx] = tree;
+//                    newChildField = newChildField & (1 << idx);
+//                }
+//            }
+//        }
+//        cubeSize *= 2;
+//        oldChildren = newChildren;
+//        oldChildField = newChildField;
+//    }
+//}
+
+void Octree::ConstructBottomUp(const int resolution, const int size, const glm::vec3 min)
 {
-    int cubeSize = maxResolution;
+    // Figure out the area encapsulated by this cube.
+    // First loop through the area in 1x1x1 cubes, then  2x2x2, etc.
 
-    std::array<Octree*, 8> oldChildren;
-    int8_t oldChildField = 0;
-
-    while (cubeSize < size)
+    int cubeSize = resolution;
+    while (cubeSize != size)
     {
-        // for each size, create the children on behalf of their owner
+        std::vector<std::vector<Octree *[8]> > children;
 
-        std::array<Octree*, 8> newChildren;
-        int8_t newChildField = 0;
-        for(int x = 0; x < 2; x++)
+        // there will be (size / cubesize) cubes per axis
+        // and /2 that many cubes _per axis_ in the parent
+
+        const int childCountPerAxis = size / cubeSize;
+        const int parentCountPerAxis = childCountPerAxis / 2;
+        const int parentCount = pow(size / cubeSize, 3) / 8;
+
+        //Octree** parents = new Octree*[parentCountPerAxis * parentCountPerAxis * parentCountPerAxis];
+
+
+        std::array<OctreeChildren*, parentCount> newParents;
+        std::array<OctreeChildren*, parentCount> oldParents;
+
+        for (int x = 0; x < size; x += cubeSize)
         {
-            for(int y = 0; y < 2; y++)
+            for (int y = 0; y < size; y += cubeSize)
             {
-                for(int z = 0; z < 2; z++)
+                for (int z = 0; z < size; z += cubeSize)
                 {
-                    const int idx = index(x, y, z, 2);
+                    // 'x / cubesize' is how manyth index we're in, in child sizes
+                    // for parents, for each 2 (per axis) per child, the parent idx should rise.
+                    // if we divie by two, first two are 0 / 2, 1/2. then 2/2, 3/2, 4/2... yup the floored integer
+                    // increases every other child idx. so it's correct.
+                    int childIdxX = x / cubeSize;
+                    int childIdxY = y / cubeSize;
+                    int childIdxZ = z / cubeSize;
+                    int parentIdxX = childIdxX / 2;
+                    int parentIdxY = childIdxY / 2;
+                    int parentIdxZ = childIdxZ / 2;
+                    int parentIdx = index(parentIdxX, parentIdxY, parentIdxZ, parentCountPerAxis);
+                    int childIdx = index(x, y, z, size / cubeSize);
+                    int cornerIdx = index(childIdxX % 2, childIdxY % 2, childIdxZ % 2, 2);
+                    const glm::vec3 childPos = min + CHILD_MIN_OFFSETS[cornerIdx] * cubeSize;
 
-                    const glm::vec3 childCornerPos = min + CHILD_MIN_OFFSETS[idx] * (float)cubeSize;
-
-                    Octree* tree = nullptr;
-                    if(cubeSize > maxResolution) {
-                        // look up children created on a previous level from array
-                        // if previous level children count for this node is 0, skip this node as well!
-
-                        // the children array should be populated now as this shouldn't be the first round.
-                        // (on the first round cubeSize == maxResolution)
-                        if(oldChildField > 0 && x == 0 && y == 0 && z == 0)
-                        {
-                            tree = new Octree(cubeSize, childCornerPos, oldChildren, oldChildField);
-                        }
-                        else if(x == 0 && y == 0 && z == 0)
-                        {
-                            // no children for this node, nothing to draw for this node either
-                            continue;
-                        }
-                        else
-                        {
-                            // we will have to check if this node has children
-                            tree = new Octree(maxResolution, cubeSize, childCornerPos);
-                        }
+                    Octree* child = nullptr;
+                    if (cubeSize == resolution)
+                    {
+                        // 1) is max res level aka has no children, just check it's draw info and add to it's parent array
+                        //      if there is something to draw for it
+                        child = new Octree(resolution, cubeSize, childPos);
                     }
                     else
                     {
-                        // if cube size is maxResolution, we're creating leaf nodes
-                        // this means no children
+                        // 2) is not max res level, check if has children, if yes, check if this one has something to draw
+                        //      if yes, add to parents array
 
-                        tree = new Octree(maxResolution, cubeSize, childCornerPos);
+                        // Octree* child = new Octree(cubeSize, childPos, );
+
+                        // figure out idx in oldParents..
+                        // is it childIdx because the indexing should match since old parentstuff is the same as new
+                        // childstuff, right?
+
+                        // oldParents[childIdx] should be the OctreeChildren that we could just pass to this new
+                        // Octree, right? If its field is non-zero or the OctreeChildren thing itself is not a null pointer
+                        // do we really want to have this function do the null checking bullshit?
                     }
 
-                    if (!tree->HasSomethingToRender())
-                    {
-                        delete tree;
-                        tree = nullptr;
-
-                        continue;
-                    }
-
-                    newChildren[idx] = tree;
-                    newChildField = newChildField & (1 << idx);
+                    newParents[parentIdx]->children[cornerIdx] = child;
+                    newParents[parentIdx]->field = newParents[parentIdx]->field & (1 << cornerIdx);
                 }
             }
         }
         cubeSize *= 2;
-        oldChildren = newChildren;
-        oldChildField = newChildField;
+        oldParents = newParents;
     }
 }
-
-//void Octree::ConstructBottomUp(int size, int min)
-//{
-//	// Figure out the area encapsulated by this cube.
-//	// First loop through the area in 1x1x1 cubes, then  2x2x2, etc.
-//
-//	int cubeSize = 1;
-//	while (cubeSize != size) {
-//		std::vector<std::vector<Octree*[8]> > children;
-//
-//		// there will be (size / cubesize) cubes per axis
-//		// and /2 that many cubes in the parent   <-- wat? /9 for quadtrees and /27 for octrees, right?
-//
-//		const int parentCountPerAxis = (size / cubeSize) / 2;
-//		const int parentCount = pow(size / cubeSize, 3) / 8;
-//
-//		//Octree parents[parentCount][parentCount][parentCount];
-//
-//		Octree** parents = new Octree*[parentCountPerAxis * parentCountPerAxis * parentCountPerAxis];
-//		for (int x = 0; x < size; x += cubeSize)
-//		{
-//			for (int y = 0; y < size; y += cubeSize)
-//			{
-//				for (int z = 0; z < size; z += cubeSize)
-//				{
-//					int parentX = x / (cubeSize * 2);
-//					int parentY = y / (cubeSize * 2);
-//					int parentZ = z / (cubeSize * 2);
-//					int idx = index(parentX, parentY, parentZ, parentCount);
-//				}
-//			}
-//		}
-//		cubeSize *= 2;
-//	}
-//}
 
