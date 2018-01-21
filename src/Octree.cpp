@@ -166,7 +166,12 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
         //Octree** parents = new Octree*[parentCountPerAxis * parentCountPerAxis * parentCountPerAxis];
 
 
+        // Should we initialize them to null pointers.
         std::array<OctreeChildren*, parentCount> newParents;
+        // TODO:
+        // oldParents should probably be a vector, since it's size will change dynamically.
+        // we cannot place it outside the loop because then it's size might be different from newParents,
+        // and we cannot place it inside the loop, since then its contents wouldn't survive to the next loop as it should.
         std::array<OctreeChildren*, parentCount> oldParents;
 
         for (int x = 0; x < size; x += cubeSize)
@@ -186,7 +191,7 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                     int parentIdxY = childIdxY / 2;
                     int parentIdxZ = childIdxZ / 2;
                     int parentIdx = index(parentIdxX, parentIdxY, parentIdxZ, parentCountPerAxis);
-                    int childIdx = index(x, y, z, size / cubeSize);
+                    int childIdx = index(childIdxX, childIdxY, childIdxZ, size / cubeSize);
                     int cornerIdx = index(childIdxX % 2, childIdxY % 2, childIdxZ % 2, 2);
                     const glm::vec3 childPos = min + CHILD_MIN_OFFSETS[cornerIdx] * cubeSize;
 
@@ -202,17 +207,22 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                         // 2) is not max res level, check if has children, if yes, check if this one has something to draw
                         //      if yes, add to parents array
 
-                        // Octree* child = new Octree(cubeSize, childPos, );
-
-                        // figure out idx in oldParents..
-                        // is it childIdx because the indexing should match since old parentstuff is the same as new
-                        // childstuff, right?
-
-                        // oldParents[childIdx] should be the OctreeChildren that we could just pass to this new
-                        // Octree, right? If its field is non-zero or the OctreeChildren thing itself is not a null pointer
-                        // do we really want to have this function do the null checking bullshit?
+                        child = new Octree(cubeSize, childPos, oldParents[childIdx]);
                     }
 
+                    if (!child->HasSomethingToRender())
+                    {
+                        delete child;
+                        child = nullptr;
+                        continue;
+                    }
+
+                    // do we really want to do the null checking dance here?
+                    // Should we initialize them to nullptr?
+                    if(!newParents[parentIdx])
+                    {
+                        // initialize OctreeChildren
+                    }
                     newParents[parentIdx]->children[cornerIdx] = child;
                     newParents[parentIdx]->field = newParents[parentIdx]->field & (1 << cornerIdx);
                 }

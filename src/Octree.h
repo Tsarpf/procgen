@@ -12,7 +12,7 @@
 
 class Octree {
 public:
-	Octree(int size, glm::vec3 min, std::array<Octree*, 8> Children, int8_t ChildField);
+	Octree(int size, glm::vec3 min, OctreeChildren* children);
 	Octree(const int maxResolution, const int size, const glm::vec3 min);
 	~Octree();
 
@@ -21,8 +21,9 @@ private:
 	void ConstructLeaf(const int resolution, const glm::vec3 min);
 	void ConstructBottomUp(const int maxResolution, const int size, const glm::vec3 min);
 
-	std::array<Octree*, 8> m_children;
-    int8_t m_childField;
+    OctreeChildren* m_children;
+	//std::array<Octree*, 8> m_children;
+    //int8_t m_childField;
 };
 
 enum OldPosition {
