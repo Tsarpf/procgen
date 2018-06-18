@@ -127,9 +127,9 @@ GLuint createTriangleProgram()
     std::string fragStr = readFile("../simple.frag");
     const char* fragStrC = fragStr.c_str();
 #else
-    std::string vertStr = readFile("../../../../src/simple.vert");
+    std::string vertStr = readFile("../src/simple.vert");
     const char* vertStrC = vertStr.c_str();
-    std::string fragStr = readFile("../../../../src/simple.frag");
+    std::string fragStr = readFile("../src/simple.frag");
     const char* fragStrC = fragStr.c_str();
 #endif
 

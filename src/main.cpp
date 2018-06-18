@@ -30,7 +30,8 @@ void render(GLuint vao, GLuint program)
 void drawOctree()
 {
     // abua
-    Octree* tree = new Octree(1, 8, glm::vec3(0,0,0));
+    vec3 Benis(0,0,0);
+    Octree* tree = new Octree(1, 8, vec3(0,0,0));
 }
 
 int main(void) {
