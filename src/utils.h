@@ -10,9 +10,13 @@
 #include <stdio.h>
 #include "glm/glm.hpp"
 
+#include "Octree.h"
+
 GLFWwindow* initialize();
 void stop(GLFWwindow* window);
 GLuint createTriangleProgram();
 GLuint createTriangleVAO();
+
+void visualizeOctree(Octree*);
 
 #endif //PROJECT_UTILS_H

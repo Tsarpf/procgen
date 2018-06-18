@@ -21,6 +21,7 @@ using namespace glm;
 
 void render(GLuint vao, GLuint program)
 {
+    //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram (program);
     glBindVertexArray (vao);
@@ -29,9 +30,8 @@ void render(GLuint vao, GLuint program)
 
 void drawOctree()
 {
-    // abua
-    vec3 Benis(0,0,0);
     Octree* tree = new Octree(1, 8, vec3(0,0,0));
+    visualizeOctree(tree);
 }
 
 int main(void) {

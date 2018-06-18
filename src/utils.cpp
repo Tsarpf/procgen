@@ -174,3 +174,8 @@ GLuint createTriangleVAO() {
     return vao;
 }
 
+void visualizeOctree(Octree* tree)
+{
+    std::cout << "visualizing octree" << std::endl;
+}
+
