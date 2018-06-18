@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 
 find_package(OpenGL REQUIRED)
 
+set(CMAKE_BUILD_TYPE Debug)
+
 set(GLFW_SOURCE_DIR "external/glfw")
 set(GLM_SOURCE_DIR "external/glm")
 set(GLEW_SOURCE_DIR "external/glew")
