@@ -18,5 +18,6 @@ GLuint createTriangleProgram();
 GLuint createTriangleVAO();
 
 void visualizeOctree(Octree*);
+void printBinary(uint8_t field);
 
 #endif //PROJECT_UTILS_H

@@ -10,7 +10,7 @@
             },
             "includePath": [
                 "${workspaceFolder}",
-                "external/glm",
+                "${workspaceFolder}/external/glm",
                 "external/glew",
                 "external/libnoise/src",
                 "external/glfw/include"

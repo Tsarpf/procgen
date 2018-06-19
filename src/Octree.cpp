@@ -8,6 +8,7 @@
 #include <memory>
 
 #include "Octree.h"
+#include "utils.h"
 
 const glm::vec3 CHILD_MIN_OFFSETS[] =
 {
@@ -26,25 +27,12 @@ Octree::~Octree()
     /////// NYI
 }
 
-void PrintBinary(uint8_t field)
-{
-    std::cout << "printing field" << std::endl;
-    std::string output = "";
-    for(int i = 7; i >= 0; i--)
-    {
-        ((field & (1 << i)) > 0)
-            ? output += "1"
-            : output += "0";
-    }
-    std::cout << output << std::endl;
-}
-
 
 // Used to initialize with children
 Octree::Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min) : m_children(std::move(children))
 {
     std::cout << "pre-initialized octree" << std::endl;
-    PrintBinary(m_children->field);
+    printBinary(m_children->field);
 }
 
 
@@ -114,13 +102,13 @@ Octree* Octree::ConstructLeaf(const int resolution, const glm::vec3 min)
         }
     }
 
-    PrintBinary(field);
+    //printBinary(field);
     if (field > 0) 
     {
         std::cout << "field is over 0" << std::endl;
         auto c = new OctreeChildren();
         c->field = field;
-        PrintBinary(c->field);
+        //printBinary(c->field);
         c->children = children;
         Octree* o = new Octree(std::unique_ptr<OctreeChildren>(c), resolution * 2, min);
         return o;
@@ -249,23 +237,23 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
         childCount = pow(childCountPerAxis, 3);
         parentCount = childCount / 8;
 
+
+        std::cout << "childCount" << childCount << std::endl;
+        std::cout << "parentCount" << parentCount << std::endl;
+
         currentSizeNodes = std::move(parentSizeNodes);
-        for(int i = 0; i < currentSizeNodes.size(); i++)
-        {
-            std::cout << "idx: " << i << std::endl;
-            if(currentSizeNodes[i])
-            {
-                PrintBinary(currentSizeNodes[i]->field);
-            }
-            else 
-            {
-                std::cout << "no array" << std::endl;
-            }
-        }
         parentSizeNodes = std::vector<std::unique_ptr<OctreeChildren>>(parentCount);
         for(int i = 0; i < parentSizeNodes.size(); i++)
         {
             parentSizeNodes[i] = nullptr;
         }
     }
+    
+    // currentSizeNodes length should be 1 now.
+    m_children = std::move(currentSizeNodes[0]);
+}
+
+OctreeChildren* Octree::GetChildren()
+{
+    return m_children.get();
 }

@@ -23,13 +23,15 @@ public:
 	~Octree();
 
     bool HasSomethingToRender();
+
+	OctreeChildren* GetChildren();
 private:
 	void ConstructBottomUp(const int maxResolution, const int size, const glm::vec3 min);
 	
 	static Octree* ConstructLeaf(const int resolution, const glm::vec3 min);
 	static bool Sample(const glm::vec3 pos);
 
-    std::unique_ptr<OctreeChildren> m_children;
+	std::unique_ptr<OctreeChildren> m_children;
 	//std::array<Octree*, 8> m_children;
     //int8_t m_childField;
 };

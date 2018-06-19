@@ -22,6 +22,20 @@ static void error_callback(int error, const char *description) {
     fputs(description, stderr);
 }
 
+void printBinary(uint8_t field)
+{
+    std::cout << "printing field" << std::endl;
+    std::string output = "";
+    for(int i = 7; i >= 0; i--)
+    {
+        ((field & (1 << i)) > 0)
+            ? output += "1"
+            : output += "0";
+    }
+    std::cout << output << std::endl;
+}
+
+
 GLFWwindow* initialize()
 {
     GLFWwindow *window;
@@ -177,5 +191,12 @@ GLuint createTriangleVAO() {
 void visualizeOctree(Octree* tree)
 {
     std::cout << "visualizing octree" << std::endl;
+    auto rootChildField = tree->GetChildren()->field;
+    //auto rootChild = (*tree->GetChildren())->children[0];
+    //auto childField = (*rootChild->GetChildren())->field;
+
+    //printBinary(childField);
+
+    printBinary(rootChildField);
 }
 
