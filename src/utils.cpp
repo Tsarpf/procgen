@@ -245,44 +245,48 @@ GLuint createCubeVAO() {
 
             // right
             1, 0, 0,    1, 0, 0,
-            1, 1, 1,    0, 1, 0,
             1, 0, 1,    0, 0, 1,
+            1, 1, 1,    0, 1, 0,
 
             1, 0, 0,    1, 0, 0,
-            1, 1, 1,    0, 1, 0,
             1, 1, 0,    0, 0, 1,
+            1, 1, 1,    0, 1, 0,
 
             // top
-            0, 0, 0,    1, 0, 0,
-            1, 0, 0,    0, 1, 0,
-            1, 0, 1,    0, 0, 1,
+            0, 1, 0,    1, 0, 0,
+            1, 1, 1,    0, 0, 1,
+            1, 1, 0,    0, 1, 0,
 
-            0, 0, 0,    1, 0, 0,
-            0, 0, 1,    0, 1, 0,
-            1, 0, 1,    0, 0, 1,
+            0, 1, 0,    1, 0, 0,
+            0, 1, 1,    0, 1, 0,
+            1, 1, 1,    0, 0, 1,
 
             // bottom
-            0, 1, 0,    1, 0, 0,
-            1, 1, 1,    0, 1, 0,
-            1, 1, 0,    0, 0, 1,
+            0, 0, 0,    1, 0, 0,
+            1, 0, 1,    0, 1, 0,
+            1, 0, 0,    0, 0, 1,
 
-            0, 1, 0,    1, 0, 0,
-            1, 1, 1,    0, 1, 0,
-            0, 1, 1,    0, 0, 1,
+            0, 0, 0,    1, 0, 0,
+            1, 0, 1,    0, 1, 0,
+            0, 0, 1,    0, 0, 1,
         };
 
     int i = 0;
     for(auto& point : points)
     {
-        if (i % 6 < 3)
+        if (i >= 6)
         {
-            point -= 0.5f;
+            i = 0;
+        }
+        if (i < 3)
+        {
+            //point -= 2.5f;
         }
         i++;
     }
 
     // (three floats per point) * (three points per triangle) * (two triangles per face) * (six faces per cube)
-    return createVAO(&points[0], 3 * 3 * 2 * 6);
+    return createVAO(&points[0], 6 * 3 * 2 * 6);
 }
 
 void setupProjection(GLuint program) 
@@ -293,8 +297,9 @@ void setupProjection(GLuint program)
         printf("errors before setupProjection %i \n", err);
     }
 
+    glm::vec3 eye(3, 3, 3);
     glm::mat4 view = glm::lookAt(
-        glm::vec3(4, 3, 3),
+        eye,
         glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(0.0f, 1.f, 0.f)
     );
@@ -302,14 +307,14 @@ void setupProjection(GLuint program)
     glm::mat4 model = glm::mat4(1.0f);
     //model[3] = glm::vec4(1.0, 1.0, 0.0, 1.0); 
     //printf("program location %i\n", program);
-    GLint modelUniform = glGetUniformLocation(program, "model");
+    //GLint modelUniform = glGetUniformLocation(program, "Model");
+    GLint modelUniform = glGetUniformLocation(program, "Model");
     printf("%i model\n", modelUniform);
 
     while((err = glGetError()) != GL_NO_ERROR)
     {
         printf("setupProjection glGetUniformLocation haz error %i \n", err);
     }
-
 
     glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 
@@ -319,7 +324,8 @@ void setupProjection(GLuint program)
     }
 
 
-    GLint viewUniform = glGetUniformLocation(program, "view");
+    //GLint viewUniform = glGetUniformLocation(program, "View");
+    GLint viewUniform = glGetUniformLocation(program, "View");
     printf("%i view\n", viewUniform);
     glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
 
@@ -330,7 +336,7 @@ void setupProjection(GLuint program)
         0.1f,
         100.0f
     );
-    GLint projUniform = glGetUniformLocation(program, "proj");
+    GLint projUniform = glGetUniformLocation(program, "Projection");
     glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(proj));
     printf("%i proj\n", projUniform);
 

@@ -26,8 +26,8 @@ void render(GLuint vao, GLuint program)
     // Draw wireframed
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
-    //glEnable(GL_CULL_FACE);  
-    //glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -36,7 +36,7 @@ void render(GLuint vao, GLuint program)
     glBindVertexArray(vao);
 
     //glDrawArrays(GL_TRIANGLES, 0, 3);
-    glDrawArrays(GL_TRIANGLES, 0, 3 * 3 * 2 * 6);
+    glDrawArrays(GL_TRIANGLES, 0, 3 * 6 * 2 * 6);
 }
 
 void drawOctree()
