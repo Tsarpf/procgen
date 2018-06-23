@@ -65,7 +65,8 @@ int main(void)
     // glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
 
     //GLuint triangleVAO = createTriangleVAO();
-    GLuint triangleVAO = createCubeVAO();
+    std::vector<float> genericCubePoints = cubePoints();
+    GLuint triangleVAO = createCubeVAO(genericCubePoints);
     GLuint triangleProgram = createTriangleProgram();
 
     setAttribPointers(triangleProgram);
@@ -79,7 +80,7 @@ int main(void)
     setupProjection(triangleProgram);
     while (!glfwWindowShouldClose(window))
     {
-        render(triangleVAO, 6 * 3 * 2 * 6);
+        render(triangleVAO, genericCubePoints.size());
 
         glfwPollEvents();
         glfwSwapBuffers(window);

@@ -212,79 +212,75 @@ GLuint createTriangleVAO() {
     return createVAO(points, 3 * 3);
 }
 
-GLuint createCubeVAO() {
+std::vector<float> cubePoints() {
     std::vector<float> points =
-        {
-            // front face
-            // pos      // color
-            1, 0, 0,    1, 0, 0,
-            0, 1, 0,    0, 1, 0,
-            1, 1, 0,    0, 0, 1,
+    {
+        // front face
+        // pos      // color
+        1, 0, 0,    1, 0, 0,
+        0, 1, 0,    0, 1, 0,
+        1, 1, 0,    0, 0, 1,
 
-            1, 0, 0,    1, 0, 0,
-            0, 0, 0,    0, 1, 0,
-            0, 1, 0,    0, 0, 1,
+        1, 0, 0,    1, 0, 0,
+        0, 0, 0,    0, 1, 0,
+        0, 1, 0,    0, 0, 1,
 
-            // back
-            1, 0, 1,    1, 0, 0,
-            1, 1, 1,    0, 1, 0,
-            0, 1, 1,    0, 0, 1,
+        // back
+        1, 0, 1,    1, 0, 0,
+        1, 1, 1,    0, 1, 0,
+        0, 1, 1,    0, 0, 1,
 
-            1, 0, 1,    1, 0, 0,
-            0, 1, 1,    0, 1, 0,
-            0, 0, 1,    0, 0, 1,
+        1, 0, 1,    1, 0, 0,
+        0, 1, 1,    0, 1, 0,
+        0, 0, 1,    0, 0, 1,
 
-            // left
-            0, 0, 0,    1, 0, 0,
-            0, 0, 1,    0, 1, 0,
-            0, 1, 1,    0, 0, 1,
+        // left
+        0, 0, 0,    1, 0, 0,
+        0, 0, 1,    0, 1, 0,
+        0, 1, 1,    0, 0, 1,
 
-            0, 0, 0,    1, 0, 0,
-            0, 1, 0,    0, 1, 0,
-            0, 1, 1,    0, 0, 1,
+        0, 0, 0,    1, 0, 0,
+        0, 1, 0,    0, 1, 0,
+        0, 1, 1,    0, 0, 1,
 
-            // right
-            1, 0, 0,    1, 0, 0,
-            1, 0, 1,    0, 0, 1,
-            1, 1, 1,    0, 1, 0,
+        // right
+        1, 0, 0,    1, 0, 0,
+        1, 0, 1,    0, 0, 1,
+        1, 1, 1,    0, 1, 0,
 
-            1, 0, 0,    1, 0, 0,
-            1, 1, 0,    0, 0, 1,
-            1, 1, 1,    0, 1, 0,
+        1, 0, 0,    1, 0, 0,
+        1, 1, 0,    0, 0, 1,
+        1, 1, 1,    0, 1, 0,
 
-            // top
-            0, 1, 0,    1, 0, 0,
-            1, 1, 1,    0, 0, 1,
-            1, 1, 0,    0, 1, 0,
+        // top
+        0, 1, 0,    1, 0, 0,
+        1, 1, 1,    0, 0, 1,
+        1, 1, 0,    0, 1, 0,
 
-            0, 1, 0,    1, 0, 0,
-            0, 1, 1,    0, 1, 0,
-            1, 1, 1,    0, 0, 1,
+        0, 1, 0,    1, 0, 0,
+        0, 1, 1,    0, 1, 0,
+        1, 1, 1,    0, 0, 1,
 
-            // bottom
-            0, 0, 0,    1, 0, 0,
-            1, 0, 1,    0, 1, 0,
-            1, 0, 0,    0, 0, 1,
+        // bottom
+        0, 0, 0,    1, 0, 0,
+        1, 0, 1,    0, 1, 0,
+        1, 0, 0,    0, 0, 1,
 
-            0, 0, 0,    1, 0, 0,
-            1, 0, 1,    0, 1, 0,
-            0, 0, 1,    0, 0, 1,
-        };
+        0, 0, 0,    1, 0, 0,
+        1, 0, 1,    0, 1, 0,
+        0, 0, 1,    0, 0, 1,
+    };
+    return points;
+}
 
-    int i = 0;
-
+GLuint createCubeVAO(std::vector<float>& points) {
     // (three floats per point) * (three points per triangle) * (two triangles per face) * (six faces per cube)
-    return createVAO(&points[0], 6 * 3 * 2 * 6);
+    // 6 * 3 * 2 * 6
+    return createVAO(&points[0], points.size());
 }
 
 void setupProjection(GLuint program) 
 {
-    GLenum err;
-    while((err = glGetError()) != GL_NO_ERROR)
-    {
-        printf("errors before setupProjection %i \n", err);
-    }
-
     glm::vec3 eye(3, 3, 3);
     glm::mat4 view = glm::lookAt(
         eye,

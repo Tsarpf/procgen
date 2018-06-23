@@ -17,10 +17,11 @@ GLFWwindow* initialize();
 void stop(GLFWwindow* window);
 GLuint createTriangleProgram();
 GLuint createTriangleVAO();
-GLuint createCubeVAO();
+GLuint createCubeVAO(std::vector<float>&);
 GLuint createVAO();
 void setAttribPointers(GLuint program);
 void setupProjection(GLuint program);
+std::vector<float> cubePoints();
 
 struct VizData {
     int size;
