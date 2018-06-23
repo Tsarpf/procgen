@@ -212,6 +212,70 @@ GLuint createTriangleVAO() {
     return createVAO(points, 3 * 3);
 }
 
+GLuint createCubeVAO(std::vector<float>& points) {
+    // (three floats per point) * (three points per triangle) * (two triangles per face) * (six faces per cube)
+    // 6 * 3 * 2 * 6
+    return createVAO(&points[0], points.size());
+}
+
+void setupProjection(GLuint program) 
+{
+    glm::vec3 eye(-5, 5, 5);
+    glm::mat4 view = glm::lookAt(
+        eye,
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.f, 0.f)
+    );
+
+    glm::mat4 model = glm::mat4(1.0f);
+    model[0] = glm::vec4(3, 0, 0, 0);
+    model[1] = glm::vec4(0, 2, 0, 0);
+    model[2] = glm::vec4(0, 0, 1, 0);
+    //model[3] = glm::vec4(0, 0, 0, 1);
+    GLint modelUniform = glGetUniformLocation(program, "Model");
+    glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
+
+    GLint viewUniform = glGetUniformLocation(program, "View");
+    printf("%i view\n", viewUniform);
+    glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
+
+    glm::mat4 proj = glm::perspective
+    (
+        glm::radians(45.0f),
+        800.0f / 600.0f,
+        0.1f,
+        100.0f
+    );
+    GLint projUniform = glGetUniformLocation(program, "Projection");
+    glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(proj));
+    printf("%i proj\n", projUniform);
+}
+std::vector<VizData> visualizeOctree(const Octree* node)
+{
+    std::vector<VizData> nums;
+
+    VizData stuff = {node->m_size, node->m_min};
+    nums.push_back(stuff);
+
+    const auto octreeChildren = node->GetChildren();
+    if (!octreeChildren) 
+    {
+        return nums;
+    }
+
+    auto children = octreeChildren->children;
+    for(const Octree* child : children)
+    {
+        if(child)
+        {
+            std::vector<VizData> childData = visualizeOctree(child);
+            nums.insert(nums.end(), childData.begin(), childData.end());
+        }
+    }
+
+    return nums;
+}
+
 std::vector<float> cubePoints() {
     std::vector<float> points =
     {
@@ -240,13 +304,13 @@ std::vector<float> cubePoints() {
         0, 1, 1,    0, 0, 1,
 
         0, 0, 0,    1, 0, 0,
-        0, 1, 0,    0, 1, 0,
         0, 1, 1,    0, 0, 1,
+        0, 1, 0,    0, 1, 0,
 
         // right
         1, 0, 0,    1, 0, 0,
-        1, 0, 1,    0, 0, 1,
         1, 1, 1,    0, 1, 0,
+        1, 0, 1,    0, 0, 1,
 
         1, 0, 0,    1, 0, 0,
         1, 1, 0,    0, 0, 1,
@@ -258,78 +322,17 @@ std::vector<float> cubePoints() {
         1, 1, 0,    0, 1, 0,
 
         0, 1, 0,    1, 0, 0,
-        0, 1, 1,    0, 1, 0,
-        1, 1, 1,    0, 0, 1,
+        0, 1, 1,    0, 0, 1,
+        1, 1, 1,    0, 1, 0,
 
         // bottom
         0, 0, 0,    1, 0, 0,
-        1, 0, 1,    0, 1, 0,
-        1, 0, 0,    0, 0, 1,
+        1, 0, 0,    0, 1, 0,
+        1, 0, 1,    0, 0, 0,
 
         0, 0, 0,    1, 0, 0,
-        1, 0, 1,    0, 1, 0,
-        0, 0, 1,    0, 0, 1,
+        1, 0, 1,    0, 0, 1,
+        0, 0, 1,    0, 1, 0,
     };
     return points;
-}
-
-GLuint createCubeVAO(std::vector<float>& points) {
-    // (three floats per point) * (three points per triangle) * (two triangles per face) * (six faces per cube)
-    // 6 * 3 * 2 * 6
-    return createVAO(&points[0], points.size());
-}
-
-void setupProjection(GLuint program) 
-{
-    glm::vec3 eye(3, 3, 3);
-    glm::mat4 view = glm::lookAt(
-        eye,
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, 1.f, 0.f)
-    );
-
-    glm::mat4 model = glm::mat4(1.0f);
-    GLint modelUniform = glGetUniformLocation(program, "Model");
-    glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
-
-    GLint viewUniform = glGetUniformLocation(program, "View");
-    printf("%i view\n", viewUniform);
-    glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
-
-    glm::mat4 proj = glm::perspective
-    (
-        glm::radians(45.0f),
-        800.0f / 600.0f,
-        0.1f,
-        100.0f
-    );
-    GLint projUniform = glGetUniformLocation(program, "Projection");
-    glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(proj));
-    printf("%i proj\n", projUniform);
-}
-
-std::vector<VizData> visualizeOctree(const Octree* node)
-{
-    std::vector<VizData> nums;
-
-    VizData stuff = {node->m_size, node->m_min};
-    nums.push_back(stuff);
-
-    const auto octreeChildren = node->GetChildren();
-    if (!octreeChildren) 
-    {
-        return nums;
-    }
-
-    auto children = octreeChildren->children;
-    for(const Octree* child : children)
-    {
-        if(child)
-        {
-            std::vector<VizData> childData = visualizeOctree(child);
-            nums.insert(nums.end(), childData.begin(), childData.end());
-        }
-    }
-
-    return nums;
 }

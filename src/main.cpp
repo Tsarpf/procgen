@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdlib.h>
+#include <chrono>
 
 #include <GL/glew.h>
 
@@ -27,8 +28,6 @@ void render(GLuint vao, int pointCount)
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
     glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     //glClear(GL_COLOR_BUFFER_BIT);
@@ -59,6 +58,8 @@ void drawOctree()
 
 int main(void)
 {
+    auto t_start = std::chrono::high_resolution_clock::now();
+
     GLFWwindow *window = initialize();
 
     // glEnable(GL_DEPTH_TEST); // enable depth-testing
@@ -80,6 +81,9 @@ int main(void)
     setupProjection(triangleProgram);
     while (!glfwWindowShouldClose(window))
     {
+        auto t_now = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
+
         render(triangleVAO, genericCubePoints.size());
 
         glfwPollEvents();
