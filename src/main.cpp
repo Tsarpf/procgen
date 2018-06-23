@@ -4,6 +4,8 @@
 #include <GL/glew.h>
 
 #include <GLFW/glfw3.h>
+
+#define GLM_FORCE_PURE
 #include <glm/glm.hpp>
 
 #pragma comment(lib, "OpenGL32.lib")
@@ -31,7 +33,13 @@ void render(GLuint vao, GLuint program)
 void drawOctree()
 {
     Octree* tree = new Octree(1, 8, vec3(0,0,0));
-    visualizeOctree(tree);
+    printf("-------- visualizing octree --------\n");
+    std::vector<VizData> viz = visualizeOctree(tree);
+    //for(const auto& elem : viz)
+    //{
+    //    printf("min (%f, %f, %f), size %d", elem.min.x, elem.min.y, elem.min.z, elem.size);
+    //    //std::cout << "min " << elem.min.x << " '" << " size " << elem.size << std::endl;
+    //}
 }
 
 int main(void) {

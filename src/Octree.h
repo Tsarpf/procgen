@@ -9,6 +9,7 @@
 #include <array>
 #include <memory>
 
+#define GLM_FORCE_PURE
 #include <glm/glm.hpp>
 
 struct OctreeChildren;
@@ -19,12 +20,16 @@ public:
 	Octree(const int maxResolution, const int size, const glm::vec3 min);
 
 	Octree(const int resolution, glm::vec3 min); // Leaf node
-	Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min);
+	Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min, int resolution);
 	~Octree();
 
     bool HasSomethingToRender();
 
-	OctreeChildren* GetChildren();
+	OctreeChildren* GetChildren() const;
+
+	const glm::vec3 m_min;
+	const int m_size;
+	const int m_resolution;
 private:
 	void ConstructBottomUp(const int maxResolution, const int size, const glm::vec3 min);
 	
@@ -32,8 +37,9 @@ private:
 	static bool Sample(const glm::vec3 pos);
 
 	std::unique_ptr<OctreeChildren> m_children;
-	//std::array<Octree*, 8> m_children;
-    //int8_t m_childField;
+
+	Octree(const Octree&);
+	Octree& operator=(const Octree&);
 };
 
 struct OctreeChildren {

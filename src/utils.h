@@ -8,6 +8,8 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
+
+#define GLM_FORCE_PURE
 #include "glm/glm.hpp"
 
 #include "Octree.h"
@@ -17,7 +19,12 @@ void stop(GLFWwindow* window);
 GLuint createTriangleProgram();
 GLuint createTriangleVAO();
 
-void visualizeOctree(Octree*);
+struct VizData {
+    int size;
+    glm::vec3 min;
+};
+
+std::vector<VizData> visualizeOctree(const Octree*);
 void printBinary(uint8_t field);
 
 #endif //PROJECT_UTILS_H

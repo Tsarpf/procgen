@@ -188,15 +188,33 @@ GLuint createTriangleVAO() {
     return vao;
 }
 
-void visualizeOctree(Octree* tree)
+std::vector<VizData> visualizeOctree(const Octree* node)
 {
+    std::vector<VizData> nums;
+
+    const auto octreeChildren = node->GetChildren();
+    if (!octreeChildren) 
+    {
+        return nums;
+    }
+
     std::cout << "visualizing octree" << std::endl;
-    auto rootChildField = tree->GetChildren()->field;
-    //auto rootChild = (*tree->GetChildren())->children[0];
-    //auto childField = (*rootChild->GetChildren())->field;
+    auto field = octreeChildren->field;
+    printBinary(field);
 
-    //printBinary(childField);
+    VizData stuff = {node->m_size, node->m_min};
+    nums.push_back(stuff);
 
-    printBinary(rootChildField);
+    auto children = octreeChildren->children;
+    //for(const auto & child : children)
+    for(const Octree* child : children)
+    {
+        if(child)
+        {
+            std::vector<VizData> childData = visualizeOctree(child);
+            nums.insert(nums.end(), childData.begin(), childData.end());
+        }
+    }
+
+    return nums;
 }
-

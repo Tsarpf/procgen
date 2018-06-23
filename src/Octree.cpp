@@ -25,20 +25,27 @@ const glm::vec3 CHILD_MIN_OFFSETS[] =
 Octree::~Octree()
 {
     /////// NYI
+    printf("destroying objects");
+
 }
 
 
 // Used to initialize with children
-Octree::Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min) : m_children(std::move(children))
+Octree::Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min, int resolution)
+: m_children(std::move(children)), m_resolution(resolution), m_size(size), m_min(min)
 {
-    std::cout << "pre-initialized octree" << std::endl;
+    printf("with children min (%f, %f, %f), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
+    //printf("min (%f, %f, %f), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
+    //std::cout << "lapsoset" <<  m_children.get() << std::endl;
     printBinary(m_children->field);
 }
 
 
 // Called when creating a new octree
 Octree::Octree(const int resolution, const int size, const glm::vec3 min)
+    : m_resolution(resolution), m_size(size), m_min(min), m_children(nullptr)
 {
+    printf("new octree min (%f, %f, %f), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
     /*
 	if (resolution == size) {
         std::cout << "creating a leaf" << std::endl;
@@ -53,6 +60,18 @@ Octree::Octree(const int resolution, const int size, const glm::vec3 min)
     std::cout << "constructing from bottom up" << std::endl;
     ConstructBottomUp(resolution, size, min);
 }
+
+Octree::Octree(const int resolution, glm::vec3 min)
+    : m_resolution(resolution), m_size(resolution), m_min(min), m_children(nullptr)
+{
+    m_children = std::unique_ptr<OctreeChildren>(nullptr);
+    printf("leaf node min (%f, %f, %f), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
+    // NYI
+    // Create leaf node draw data here.
+    //std::cout << "creating leaf node at resolution: " << resolution << std::endl;
+    //std::cout << "and min: " <<  min.x << min.y << min.z << std::endl;
+}
+
 
 int index(int x, int y, int z, int dimensionLength)
 {
@@ -70,18 +89,11 @@ bool Octree::Sample(const glm::vec3 pos)
     return pos.x == 1 ? true : false;
 }
 
-Octree::Octree(const int resolution, glm::vec3 min)
-{
-    // NYI
-    // Create leaf node draw data here.
-    //std::cout << "creating leaf node at resolution: " << resolution << std::endl;
-    //std::cout << "and min: " <<  min.x << min.y << min.z << std::endl;
-}
-
 Octree* Octree::ConstructLeaf(const int resolution, const glm::vec3 min)
 {
+    printf("construct leaf min (%f, %f, %f)\n", min.x, min.y, min.z);
     uint8_t field = 0;
-    std::array<Octree*, 8> children;
+    std::array<Octree*, 8> children = {};
     for(float x = 0; x < 2; x++)
     {
         for(float y = 0; y < 2; y++)
@@ -95,9 +107,9 @@ Octree* Octree::ConstructLeaf(const int resolution, const glm::vec3 min)
                 {
                     std::cout << "is solid" << std::endl;
                     field |= (1 << cornerIdx);
-                    children[cornerIdx] = new Octree(resolution, min);
+                    glm::vec3 childPos = glm::vec3(x + min.x, y + min.y, z + min.z) * (float)resolution;
+                    children[cornerIdx] = new Octree(resolution, childPos);
                 }
-
             }
         }
     }
@@ -106,17 +118,16 @@ Octree* Octree::ConstructLeaf(const int resolution, const glm::vec3 min)
     if (field > 0) 
     {
         std::cout << "field is over 0" << std::endl;
-        auto c = new OctreeChildren();
+        auto c = std::unique_ptr<OctreeChildren>(new OctreeChildren());
         c->field = field;
         //printBinary(c->field);
         c->children = children;
-        Octree* o = new Octree(std::unique_ptr<OctreeChildren>(c), resolution * 2, min);
+        Octree* o = new Octree(std::move(c), resolution * 2, min, resolution);
         return o;
     }
     else
     {
-        std::cout << "not over 0 " << field << std::endl;
-        //std::cout << "field is not over 0" << std::endl;
+        //std::cout << "not over 0 " << field << std::endl;
     }
 
     return nullptr;
@@ -151,7 +162,8 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
             {
                 for (int z = 0; z < size; z += cubeSize)
                 {
-                    std::cout << "x, y, z: " << x << y << z << std::endl;
+                    std::cout << "ses x, y, z: " << x << y << z << std::endl;
+                    printf("sos xyz (%i, %i, %i)\n", x, y, z);
 
                     const int childIdxX = x / cubeSize;
                     const int childIdxY = y / cubeSize;
@@ -173,40 +185,64 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                             if (!parentSizeNodes[parentIdx])
                             {
                                 std::array<Octree*, 8> children = {};
+                                for(auto& child : children)
+                                {
+                                    child = nullptr;
+                                }
                                 children[cornerIdx] = node;
+                                printf("node min stuff (%f, %f, %f)\n", node->m_min.x, node->m_min.y, node->m_min.z);
                                 parentSizeNodes[parentIdx] = std::unique_ptr<OctreeChildren>(new OctreeChildren
                                 {
                                     (1 << cornerIdx),
                                     children
                                 });
+                                for(const auto& c : parentSizeNodes[parentIdx]->children)
+                                {
+                                    if(c)
+                                    {
+                                        printf("min after constructing leaf and adding to parentSizeNodes (%f, %f, %f)\n", c->m_min.x, c->m_min.y, c->m_min.z);
+                                    }
+                                }
                             }
                             else // parent list already created
                             {
                                 parentSizeNodes[parentIdx]->field |= (1 << cornerIdx);
                                 parentSizeNodes[parentIdx]->children[cornerIdx] = node;
                             }
+
+                            for (auto &child : parentSizeNodes[parentIdx]->children)
+                            {
+                                if (child)
+                                {
+                                    printf("child homs %i\n", child->m_size);
+                                }
+                                else
+                                {
+                                    printf("no child\n");
+                                }
+                            }
                         }
                         else // node is null
                         {
-                            //std::cout << "no stuff in node" << std::endl;
+                            std::cout << "no stuff in node" << std::endl;
                             // do nothing?
                         }
                     }
-                    else
+                    else // cubesize > resolution * 2
                     {
-                        std::cout << "creating non-leafs" << std::endl;
                         // is a container element, should just contain previously created children, if any
-                        if(currentSizeNodes[childIdx]) // <- todo check if sane
+                        // check if this node has children
+                        if(currentSizeNodes[childIdx]) // 
                         {
-                            std::cout << "has children" << std::endl;
+                            //std::cout << "has children" << std::endl;
                             // Create a new octree node whose children are the ones created in previous
                             // loop iterations parents that are now currentSized
-                            node = new Octree(std::move(currentSizeNodes[childIdx]), resolution * 2, min);
+                            node = new Octree(std::move(currentSizeNodes[childIdx]), cubeSize, min, resolution);
 
                             //////////////////////////////////////////////////////////// This is the same as lines 180 ->
                             if (!parentSizeNodes[parentIdx])
                             {
-                                std::cout << "parent array not created" << std::endl;
+                                //std::cout << "parent array not created" << std::endl;
                                 std::array<Octree*, 8> children = {};
                                 children[cornerIdx] = node;
                                 parentSizeNodes[parentIdx] = std::unique_ptr<OctreeChildren>(new OctreeChildren
@@ -217,7 +253,7 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                             }
                             else // parent list already created
                             {
-                                std::cout << "parent array already created" << std::endl;
+                                //std::cout << "parent array already created" << std::endl;
                                 parentSizeNodes[parentIdx]->field |= (1 << cornerIdx);
                                 parentSizeNodes[parentIdx]->children[cornerIdx] = node;
                             }
@@ -225,7 +261,7 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                         }
                         else
                         {
-                            std::cout << "no children" << std::endl;
+                            //std::cout << "no children" << std::endl;
                         }
                     }
                 }
@@ -241,7 +277,12 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
         std::cout << "childCount" << childCount << std::endl;
         std::cout << "parentCount" << parentCount << std::endl;
 
-        currentSizeNodes = std::move(parentSizeNodes);
+        //currentSizeNodes = std::move(parentSizeNodes);
+        currentSizeNodes = std::vector<std::unique_ptr<OctreeChildren>>();
+        for(auto & node : parentSizeNodes)
+        {
+            currentSizeNodes.push_back(std::move(node));
+        }
         parentSizeNodes = std::vector<std::unique_ptr<OctreeChildren>>(parentCount);
         for(int i = 0; i < parentSizeNodes.size(); i++)
         {
@@ -253,7 +294,20 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
     m_children = std::move(currentSizeNodes[0]);
 }
 
-OctreeChildren* Octree::GetChildren()
+OctreeChildren* Octree::GetChildren() const
 {
-    return m_children.get();
+    std::cout << "------------------------------------" << std::endl;
+    std::cout << "printtibusiness" << std::endl;
+    std::cout << m_size << std::endl;
+    std::cout << "exists" << (m_children ? "true" : "false") << std::endl;
+    if(!m_children)
+    {
+        return nullptr;
+    }
+    std::cout << m_children.get() << std::endl;
+    printBinary(m_children.get()->field);
+    printf("min (%f, %f, %f), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
+    std::cout << "lapsoset" <<  m_children.get() << std::endl;
+    std::cout << "------------------------------------" << std::endl;
+    return m_children.get() ? m_children.get() : nullptr;
 }
