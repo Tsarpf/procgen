@@ -23,7 +23,7 @@ using namespace glm;
 
 void render(GLuint vao, GLuint program)
 {
-    //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram (program);
     glBindVertexArray (vao);
@@ -35,11 +35,17 @@ void drawOctree()
     Octree* tree = new Octree(1, 8, vec3(0,0,0));
     printf("-------- visualizing octree --------\n");
     std::vector<VizData> viz = visualizeOctree(tree);
-    //for(const auto& elem : viz)
-    //{
-    //    printf("min (%f, %f, %f), size %d", elem.min.x, elem.min.y, elem.min.z, elem.size);
-    //    //std::cout << "min " << elem.min.x << " '" << " size " << elem.size << std::endl;
-    //}
+    int count = 0;
+    for(const auto& elem : viz)
+    {
+        if(elem.size == 1)
+        {
+            count++;
+        }
+        printf("hola from draw octree min (%f, %f, %f), size %d\n", elem.min.x, elem.min.y, elem.min.z, elem.size);
+        //std::cout << "min " << elem.min.x << " '" << " size " << elem.size << std::endl;
+    }
+    printf("number of elements %i\n", count);
 }
 
 int main(void) {

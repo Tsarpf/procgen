@@ -192,21 +192,21 @@ std::vector<VizData> visualizeOctree(const Octree* node)
 {
     std::vector<VizData> nums;
 
+    VizData stuff = {node->m_size, node->m_min};
+    nums.push_back(stuff);
+
     const auto octreeChildren = node->GetChildren();
     if (!octreeChildren) 
     {
         return nums;
     }
 
-    std::cout << "visualizing octree" << std::endl;
+    std::cout << "visualizing node" << std::endl;
     auto field = octreeChildren->field;
-    printBinary(field);
+    //printBinary(field);
 
-    VizData stuff = {node->m_size, node->m_min};
-    nums.push_back(stuff);
 
     auto children = octreeChildren->children;
-    //for(const auto & child : children)
     for(const Octree* child : children)
     {
         if(child)

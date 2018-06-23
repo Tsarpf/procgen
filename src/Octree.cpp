@@ -174,14 +174,13 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                     const int parentIdx = index(parentIdxX, parentIdxY, parentIdxZ, parentCountPerAxis);
                     const int childIdx = index(childIdxX, childIdxY, childIdxZ, size / cubeSize);
                     const int cornerIdx = index(childIdxX % 2, childIdxY % 2, childIdxZ % 2, 2);
-                    const glm::vec3 pos = min + CHILD_MIN_OFFSETS[cornerIdx] * (float)cubeSize;
+                    const glm::vec3 pos = min + glm::vec3(x, y, z) * (float)cubeSize;
                     Octree* node = nullptr;
                     if (cubeSize == resolution * 2)
                     {
                         node = Octree::ConstructLeaf(resolution, pos); // null if nothing to draw
                         if (node)
                         {
-                            std::cout << "node had stuff" << std::endl;
                             if (!parentSizeNodes[parentIdx])
                             {
                                 std::array<Octree*, 8> children = {};
@@ -190,36 +189,17 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                                     child = nullptr;
                                 }
                                 children[cornerIdx] = node;
-                                printf("node min stuff (%f, %f, %f)\n", node->m_min.x, node->m_min.y, node->m_min.z);
+                                printf("node min stuff at constructbottomup (%f, %f, %f)\n", node->m_min.x, node->m_min.y, node->m_min.z);
                                 parentSizeNodes[parentIdx] = std::unique_ptr<OctreeChildren>(new OctreeChildren
                                 {
                                     (1 << cornerIdx),
                                     children
                                 });
-                                for(const auto& c : parentSizeNodes[parentIdx]->children)
-                                {
-                                    if(c)
-                                    {
-                                        printf("min after constructing leaf and adding to parentSizeNodes (%f, %f, %f)\n", c->m_min.x, c->m_min.y, c->m_min.z);
-                                    }
-                                }
                             }
                             else // parent list already created
                             {
                                 parentSizeNodes[parentIdx]->field |= (1 << cornerIdx);
                                 parentSizeNodes[parentIdx]->children[cornerIdx] = node;
-                            }
-
-                            for (auto &child : parentSizeNodes[parentIdx]->children)
-                            {
-                                if (child)
-                                {
-                                    printf("child homs %i\n", child->m_size);
-                                }
-                                else
-                                {
-                                    printf("no child\n");
-                                }
                             }
                         }
                         else // node is null
