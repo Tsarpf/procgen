@@ -166,6 +166,26 @@ GLuint createTriangleProgram()
     return program;
 }
 
+GLuint createVAO(float* pointArray, int length)
+{
+    GLuint vbo = 0;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, length * sizeof(float), pointArray, GL_STATIC_DRAW);
+
+    GLuint vao = 0;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    // three elements per vertex
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+    return vao;
+}
+
+
 GLuint createTriangleVAO() {
     float points[] = {
             0.0f,  0.5f,  0.0f,
@@ -173,19 +193,74 @@ GLuint createTriangleVAO() {
             -0.5f, -0.5f,  0.0f
     };
 
-    GLuint vbo = 0;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(float), points, GL_STATIC_DRAW);
+    return createVAO(points, 3 * 3);
+}
 
-    GLuint vao = 0;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+GLuint createCubeVAO() {
+    std::vector<float> points =
+        {
+            // front face
+            1, 0, 0,
+            0, 1, 0,
+            1, 1, 0,
 
-    return vao;
+            1, 0, 0,
+            0, 0, 0,
+            0, 1, 0,
+
+            // back
+            1, 0, 1,
+            1, 1, 1,
+            0, 1, 1,
+
+            1, 0, 1,
+            0, 1, 1,
+            0, 0, 1,
+
+            // left
+            0, 0, 0,
+            0, 0, 1,
+            0, 1, 1,
+
+            0, 0, 0,
+            0, 1, 0,
+            0, 1, 1,
+
+            // right
+            1, 0, 0,
+            1, 1, 1,
+            1, 0, 1,
+
+            1, 0, 0,
+            1, 1, 1,
+            1, 1, 0,
+
+            // top
+            0, 0, 0,
+            1, 0, 0, 
+            1, 0, 1, 
+
+            0, 0, 0,
+            0, 0, 1,
+            1, 0, 1, 
+
+            // bottom
+            0, 1, 0,
+            1, 1, 1, 
+            1, 1, 0, 
+
+            0, 1, 0,
+            1, 1, 1, 
+            0, 1, 1,
+        };
+
+    for(auto& point : points)
+    {
+        point -= 0.5;
+    }
+
+    // (three floats per point) * (three points per triangle) * (two triangles per face) * (six faces per cube)
+    return createVAO(&points[0], 3 * 3 * 2 * 6);
 }
 
 std::vector<VizData> visualizeOctree(const Octree* node)

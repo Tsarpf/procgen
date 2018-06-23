@@ -23,22 +23,26 @@ using namespace glm;
 
 void render(GLuint vao, GLuint program)
 {
-    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    // Draw wireframed
+    //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glUseProgram (program);
-    glBindVertexArray (vao);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glUseProgram(program);
+    glBindVertexArray(vao);
+
+    //glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawArrays(GL_TRIANGLES, 0, 3 * 3 * 2 * 6);
 }
 
 void drawOctree()
 {
-    Octree* tree = new Octree(1, 8, vec3(0,0,0));
+    Octree *tree = new Octree(1, 8, vec3(0, 0, 0));
     printf("-------- visualizing octree --------\n");
     std::vector<VizData> viz = visualizeOctree(tree);
     int count = 0;
-    for(const auto& elem : viz)
+    for (const auto &elem : viz)
     {
-        if(elem.size == 1)
+        if (elem.size == 1)
         {
             count++;
         }
@@ -48,22 +52,25 @@ void drawOctree()
     printf("number of elements %i\n", count);
 }
 
-int main(void) {
-    GLFWwindow* window = initialize();
+int main(void)
+{
+    GLFWwindow *window = initialize();
 
     //glEnable(GL_DEPTH_TEST); // enable depth-testing
     //glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
 
-    GLuint triangleVAO = createTriangleVAO();
+    //GLuint triangleVAO = createTriangleVAO();
+    GLuint triangleVAO = createCubeVAO();
     GLuint triangleProgram = createTriangleProgram();
 
-	module::Perlin myModule;
-	double value = myModule.GetValue(1.25, 0.75, 0.5);
-	std::cout << value << std::endl;
+    module::Perlin myModule;
+    double value = myModule.GetValue(1.25, 0.75, 0.5);
+    std::cout << value << std::endl;
 
     drawOctree();
 
-    while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(window))
+    {
 
         render(triangleVAO, triangleProgram);
 

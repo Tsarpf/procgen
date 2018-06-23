@@ -18,6 +18,8 @@ GLFWwindow* initialize();
 void stop(GLFWwindow* window);
 GLuint createTriangleProgram();
 GLuint createTriangleVAO();
+GLuint createCubeVAO();
+GLuint createVAO();
 
 struct VizData {
     int size;
