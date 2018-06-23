@@ -21,7 +21,7 @@ using namespace glm;
 
 #define GLSL(src) #src
 
-void render(GLuint vao, GLuint program)
+void render(GLuint vao, int pointCount)
 {
     // Draw wireframed
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -36,7 +36,7 @@ void render(GLuint vao, GLuint program)
     glBindVertexArray(vao);
 
     //glDrawArrays(GL_TRIANGLES, 0, 3);
-    glDrawArrays(GL_TRIANGLES, 0, 3 * 6 * 2 * 6);
+    glDrawArrays(GL_TRIANGLES, 0, pointCount);
 }
 
 void drawOctree()
@@ -79,7 +79,7 @@ int main(void)
     setupProjection(triangleProgram);
     while (!glfwWindowShouldClose(window))
     {
-        render(triangleVAO, triangleProgram);
+        render(triangleVAO, 6 * 3 * 2 * 6);
 
         glfwPollEvents();
         glfwSwapBuffers(window);

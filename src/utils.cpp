@@ -272,18 +272,6 @@ GLuint createCubeVAO() {
         };
 
     int i = 0;
-    for(auto& point : points)
-    {
-        if (i >= 6)
-        {
-            i = 0;
-        }
-        if (i < 3)
-        {
-            //point -= 2.5f;
-        }
-        i++;
-    }
 
     // (three floats per point) * (three points per triangle) * (two triangles per face) * (six faces per cube)
     return createVAO(&points[0], 6 * 3 * 2 * 6);
@@ -305,26 +293,9 @@ void setupProjection(GLuint program)
     );
 
     glm::mat4 model = glm::mat4(1.0f);
-    //model[3] = glm::vec4(1.0, 1.0, 0.0, 1.0); 
-    //printf("program location %i\n", program);
-    //GLint modelUniform = glGetUniformLocation(program, "Model");
     GLint modelUniform = glGetUniformLocation(program, "Model");
-    printf("%i model\n", modelUniform);
-
-    while((err = glGetError()) != GL_NO_ERROR)
-    {
-        printf("setupProjection glGetUniformLocation haz error %i \n", err);
-    }
-
     glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 
-    while((err = glGetError()) != GL_NO_ERROR)
-    {
-        printf("setupProjection glUniformMatrix4fv haz error %i \n", err);
-    }
-
-
-    //GLint viewUniform = glGetUniformLocation(program, "View");
     GLint viewUniform = glGetUniformLocation(program, "View");
     printf("%i view\n", viewUniform);
     glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
@@ -337,14 +308,8 @@ void setupProjection(GLuint program)
         100.0f
     );
     GLint projUniform = glGetUniformLocation(program, "Projection");
-    glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(proj));
+    glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(proj));
     printf("%i proj\n", projUniform);
-
-    glm::mat4 mvp = proj * view * model;
-    GLint mvpUniform = glGetUniformLocation(program, "mvp");
-    glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(mvp));
-    printf("%i mvp\n", mvpUniform);
-
 }
 
 std::vector<VizData> visualizeOctree(const Octree* node)
