@@ -9,7 +9,6 @@
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 
-#define GLM_FORCE_PURE
 #include "glm/glm.hpp"
 
 #include "Octree.h"
@@ -21,6 +20,7 @@ GLuint createTriangleVAO();
 GLuint createCubeVAO();
 GLuint createVAO();
 void setAttribPointers(GLuint program);
+void setupProjection(GLuint program);
 
 struct VizData {
     int size;

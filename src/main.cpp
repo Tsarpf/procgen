@@ -26,8 +26,13 @@ void render(GLuint vao, GLuint program)
     // Draw wireframed
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
+    //glEnable(GL_CULL_FACE);  
+    //glCullFace(GL_BACK);
+
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    //glClear(GL_COLOR_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glUseProgram(program);
     glBindVertexArray(vao);
 
     //glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -56,8 +61,8 @@ int main(void)
 {
     GLFWwindow *window = initialize();
 
-    //glEnable(GL_DEPTH_TEST); // enable depth-testing
-    //glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
+    // glEnable(GL_DEPTH_TEST); // enable depth-testing
+    // glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
 
     //GLuint triangleVAO = createTriangleVAO();
     GLuint triangleVAO = createCubeVAO();
@@ -69,15 +74,21 @@ int main(void)
     double value = myModule.GetValue(1.25, 0.75, 0.5);
     std::cout << value << std::endl;
 
-    drawOctree();
+    //drawOctree();
 
+    setupProjection(triangleProgram);
     while (!glfwWindowShouldClose(window))
     {
-
         render(triangleVAO, triangleProgram);
 
         glfwPollEvents();
         glfwSwapBuffers(window);
+
+        GLenum err;
+        while((err = glGetError()) != GL_NO_ERROR)
+        {
+            printf("haz error %i \n", err);
+        }
     }
 
     stop(window);

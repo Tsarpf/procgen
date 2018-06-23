@@ -9,7 +9,6 @@
 #include <array>
 #include <memory>
 
-#define GLM_FORCE_PURE
 #include <glm/glm.hpp>
 
 struct OctreeChildren;

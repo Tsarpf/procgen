@@ -8,6 +8,9 @@
 #include <fstream>
 #include <iostream>
 
+#include <glm/gtc/matrix_transform.hpp> 
+#include <glm/gtc/type_ptr.hpp>
+
 // Mostly just mix & matched to my liking from:
 // https://github.com/capnramses/antons_opengl_tutorials_book/blob/master/40_compute_shader/gl_utils.cpp
 // http://www.glfw.org/docs/3.0/quick.html
@@ -51,7 +54,7 @@ GLFWwindow* initialize()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    window = glfwCreateWindow(640, 480, "OpenGL Boilerplate", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "OpenGL Boilerplate", NULL, NULL);
     if (!window) {
         glfwTerminate();
         exit(EXIT_FAILURE);
@@ -178,6 +181,8 @@ GLuint createTriangleProgram()
     glLinkProgram(program);
     checkProgramErrors(program);
 
+    glUseProgram(program);
+
     return program;
 }
 
@@ -192,7 +197,6 @@ GLuint createVAO(float* pointArray, int length)
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
 
     return vao;
 }
@@ -272,13 +276,69 @@ GLuint createCubeVAO() {
     {
         if (i % 6 < 3)
         {
-            point -= 0.5;
+            point -= 0.5f;
         }
         i++;
     }
 
     // (three floats per point) * (three points per triangle) * (two triangles per face) * (six faces per cube)
     return createVAO(&points[0], 3 * 3 * 2 * 6);
+}
+
+void setupProjection(GLuint program) 
+{
+    GLenum err;
+    while((err = glGetError()) != GL_NO_ERROR)
+    {
+        printf("errors before setupProjection %i \n", err);
+    }
+
+    glm::mat4 view = glm::lookAt(
+        glm::vec3(4, 3, 3),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.f, 0.f)
+    );
+
+    glm::mat4 model = glm::mat4(1.0f);
+    //model[3] = glm::vec4(1.0, 1.0, 0.0, 1.0); 
+    //printf("program location %i\n", program);
+    GLint modelUniform = glGetUniformLocation(program, "model");
+    printf("%i model\n", modelUniform);
+
+    while((err = glGetError()) != GL_NO_ERROR)
+    {
+        printf("setupProjection glGetUniformLocation haz error %i \n", err);
+    }
+
+
+    glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
+
+    while((err = glGetError()) != GL_NO_ERROR)
+    {
+        printf("setupProjection glUniformMatrix4fv haz error %i \n", err);
+    }
+
+
+    GLint viewUniform = glGetUniformLocation(program, "view");
+    printf("%i view\n", viewUniform);
+    glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
+
+    glm::mat4 proj = glm::perspective
+    (
+        glm::radians(45.0f),
+        800.0f / 600.0f,
+        0.1f,
+        100.0f
+    );
+    GLint projUniform = glGetUniformLocation(program, "proj");
+    glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(proj));
+    printf("%i proj\n", projUniform);
+
+    glm::mat4 mvp = proj * view * model;
+    GLint mvpUniform = glGetUniformLocation(program, "mvp");
+    glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(mvp));
+    printf("%i mvp\n", mvpUniform);
+
 }
 
 std::vector<VizData> visualizeOctree(const Octree* node)
@@ -293,11 +353,6 @@ std::vector<VizData> visualizeOctree(const Octree* node)
     {
         return nums;
     }
-
-    //std::cout << "visualizing node" << std::endl;
-    //auto field = octreeChildren->field;
-    //printBinary(field);
-
 
     auto children = octreeChildren->children;
     for(const Octree* child : children)

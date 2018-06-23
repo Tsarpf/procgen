@@ -1,12 +1,24 @@
-#version 400\
+#version 330
 
-layout(location = 0) in vec3 position;
-
+in vec3 position;
 in vec3 inColor;
 out vec3 fragInColor;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 proj;
+uniform mat4 mvp;
 
 void main()
 {
     fragInColor = inColor;
-    gl_Position = vec4(position, 1.0);
+    //gl_Position = model * vec4(position.xy, 0, 1.0f);
+    //gl_Position = model * vec4(position.xy, 0.0f, 1.0f);
+
+    //gl_Position = model * view * proj;
+
+    //gl_Position = proj * view * model * vec4(position.xy, 0.0f, 1.0f);
+
+    gl_Position = mvp * vec4(position, 1.0f);
+    //gl_Position = mvp * vec4(position, 1.0f);
 }
