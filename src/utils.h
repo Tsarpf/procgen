@@ -20,6 +20,7 @@ GLuint createTriangleProgram();
 GLuint createTriangleVAO();
 GLuint createCubeVAO();
 GLuint createVAO();
+void setAttribPointers(GLuint program);
 
 struct VizData {
     int size;

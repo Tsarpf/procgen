@@ -63,6 +63,8 @@ int main(void)
     GLuint triangleVAO = createCubeVAO();
     GLuint triangleProgram = createTriangleProgram();
 
+    setAttribPointers(triangleProgram);
+
     module::Perlin myModule;
     double value = myModule.GetValue(1.25, 0.75, 0.5);
     std::cout << value << std::endl;

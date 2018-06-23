@@ -128,6 +128,21 @@ bool checkProgramErrors (GLuint program) {
     return true;
 }
 
+void setAttribPointers(GLuint program)
+{
+    // three position elements per vertex
+    GLint posAttrib = glGetAttribLocation(program, "position");
+    printf("%i posAttrib\n", posAttrib);
+    glEnableVertexAttribArray(posAttrib);
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), NULL);
+
+    GLint colorAttrib = glGetAttribLocation(program, "inColor");
+    printf("%i colorAttrib\n", colorAttrib);
+    glEnableVertexAttribArray(colorAttrib);
+    glVertexAttribPointer(colorAttrib, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(2*sizeof(float)));
+}
+
+
 GLuint createTriangleProgram()
 {
     GLuint program = glCreateProgram();
@@ -176,11 +191,8 @@ GLuint createVAO(float* pointArray, int length)
     GLuint vao = 0;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
-    glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-    // three elements per vertex
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
     return vao;
 }
@@ -200,63 +212,69 @@ GLuint createCubeVAO() {
     std::vector<float> points =
         {
             // front face
-            1, 0, 0,
-            0, 1, 0,
-            1, 1, 0,
+            // pos      // color
+            1, 0, 0,    1, 0, 0,
+            0, 1, 0,    0, 1, 0,
+            1, 1, 0,    0, 0, 1,
 
-            1, 0, 0,
-            0, 0, 0,
-            0, 1, 0,
+            1, 0, 0,    1, 0, 0,
+            0, 0, 0,    0, 1, 0,
+            0, 1, 0,    0, 0, 1,
 
             // back
-            1, 0, 1,
-            1, 1, 1,
-            0, 1, 1,
+            1, 0, 1,    1, 0, 0,
+            1, 1, 1,    0, 1, 0,
+            0, 1, 1,    0, 0, 1,
 
-            1, 0, 1,
-            0, 1, 1,
-            0, 0, 1,
+            1, 0, 1,    1, 0, 0,
+            0, 1, 1,    0, 1, 0,
+            0, 0, 1,    0, 0, 1,
 
             // left
-            0, 0, 0,
-            0, 0, 1,
-            0, 1, 1,
+            0, 0, 0,    1, 0, 0,
+            0, 0, 1,    0, 1, 0,
+            0, 1, 1,    0, 0, 1,
 
-            0, 0, 0,
-            0, 1, 0,
-            0, 1, 1,
+            0, 0, 0,    1, 0, 0,
+            0, 1, 0,    0, 1, 0,
+            0, 1, 1,    0, 0, 1,
 
             // right
-            1, 0, 0,
-            1, 1, 1,
-            1, 0, 1,
+            1, 0, 0,    1, 0, 0,
+            1, 1, 1,    0, 1, 0,
+            1, 0, 1,    0, 0, 1,
 
-            1, 0, 0,
-            1, 1, 1,
-            1, 1, 0,
+            1, 0, 0,    1, 0, 0,
+            1, 1, 1,    0, 1, 0,
+            1, 1, 0,    0, 0, 1,
 
             // top
-            0, 0, 0,
-            1, 0, 0, 
-            1, 0, 1, 
+            0, 0, 0,    1, 0, 0,
+            1, 0, 0,    0, 1, 0,
+            1, 0, 1,    0, 0, 1,
 
-            0, 0, 0,
-            0, 0, 1,
-            1, 0, 1, 
+            0, 0, 0,    1, 0, 0,
+            0, 0, 1,    0, 1, 0,
+            1, 0, 1,    0, 0, 1,
 
             // bottom
-            0, 1, 0,
-            1, 1, 1, 
-            1, 1, 0, 
+            0, 1, 0,    1, 0, 0,
+            1, 1, 1,    0, 1, 0,
+            1, 1, 0,    0, 0, 1,
 
-            0, 1, 0,
-            1, 1, 1, 
-            0, 1, 1,
+            0, 1, 0,    1, 0, 0,
+            1, 1, 1,    0, 1, 0,
+            0, 1, 1,    0, 0, 1,
         };
 
+    int i = 0;
     for(auto& point : points)
     {
-        point -= 0.5;
+        if (i % 6 < 3)
+        {
+            point -= 0.5;
+        }
+        i++;
     }
 
     // (three floats per point) * (three points per triangle) * (two triangles per face) * (six faces per cube)
@@ -276,8 +294,8 @@ std::vector<VizData> visualizeOctree(const Octree* node)
         return nums;
     }
 
-    std::cout << "visualizing node" << std::endl;
-    auto field = octreeChildren->field;
+    //std::cout << "visualizing node" << std::endl;
+    //auto field = octreeChildren->field;
     //printBinary(field);
 
 
