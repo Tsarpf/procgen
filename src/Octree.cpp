@@ -174,7 +174,7 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                     const int parentIdx = index(parentIdxX, parentIdxY, parentIdxZ, parentCountPerAxis);
                     const int childIdx = index(childIdxX, childIdxY, childIdxZ, size / cubeSize);
                     const int cornerIdx = index(childIdxX % 2, childIdxY % 2, childIdxZ % 2, 2);
-                    const glm::vec3 pos = min + glm::vec3(x, y, z) * (float)cubeSize;
+                    const glm::vec3 pos = min + glm::vec3(x, y, z);
                     Octree* node = nullptr;
                     if (cubeSize == resolution * 2)
                     {
