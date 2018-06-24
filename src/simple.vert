@@ -12,4 +12,5 @@ void main()
 {
     fragInColor = inColor;
     gl_Position = Projection * View * Model * vec4(position, 1.0f);
+    //gl_Position = Model * vec4(position, 1.0f);
 }

@@ -75,19 +75,20 @@ void rotateModel(float time, GLuint program)
 void drawVisualization(const float time, const GLuint program, const GLuint triangleVAO, const std::vector<float>& genericCubePoints,
                        const std::vector<VizData>& nodes)
 {
+	printf("draw visualization thing\n");
     GLint modelUniform = glGetUniformLocation(program, "Model");
     for(const auto& viz : nodes)
     {
         glm::mat4 translate = glm::translate
         (
-            glm::mat4(),
+            glm::mat4(1.0f),
             viz.min
         );
 
         glm::mat4 rotate = glm::mat4(1.0f);
-        rotate = glm::rotate(
-            rotate,
-            time * glm::radians(30.0f),
+		rotate = glm::rotate(
+			rotate,
+			time * glm::radians(30.0f),
             glm::vec3(0.0f, 1.0f, 0.0f));
 
         glm::mat4 scale = glm::mat4(1.0f);
@@ -96,13 +97,10 @@ void drawVisualization(const float time, const GLuint program, const GLuint tria
         scale[2] = glm::vec4(0, 0, viz.size, 0);
 
         glm::mat4 model = glm::mat4(1.0f);
-        //glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(translate * scale * rotate * model ));
-
         //this should be correct but isn't?
-        //glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(translate * rotate * scale * model));
+        //glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model * translate * rotate * scale));
 
         glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model * rotate * translate * scale));
-        //glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model * (translate * (rotate * scale))));
         render(triangleVAO, genericCubePoints.size());
     }
 }

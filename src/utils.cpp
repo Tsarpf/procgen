@@ -152,13 +152,14 @@ GLuint createTriangleProgram()
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
-	// For now I just use visual studio and this works
 #ifdef _WIN32
-    std::string vertStr = readFile("../simple.vert");
+	printf("is win32");
+    std::string vertStr = readFile("../src/simple.vert");
     const char* vertStrC = vertStr.c_str();
-    std::string fragStr = readFile("../simple.frag");
+    std::string fragStr = readFile("../src/simple.frag");
     const char* fragStrC = fragStr.c_str();
 #else
+	printf("is not win32");
     std::string vertStr = readFile("../src/simple.vert");
     const char* vertStrC = vertStr.c_str();
     std::string fragStr = readFile("../src/simple.frag");

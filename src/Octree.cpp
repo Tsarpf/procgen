@@ -192,7 +192,7 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                                 printf("node min stuff at constructbottomup (%f, %f, %f)\n", node->m_min.x, node->m_min.y, node->m_min.z);
                                 parentSizeNodes[parentIdx] = std::unique_ptr<OctreeChildren>(new OctreeChildren
                                 {
-                                    (1 << cornerIdx),
+                                    (uint8_t)(1 << cornerIdx),
                                     children
                                 });
                             }
@@ -227,7 +227,7 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                                 children[cornerIdx] = node;
                                 parentSizeNodes[parentIdx] = std::unique_ptr<OctreeChildren>(new OctreeChildren
                                 {
-                                    (1 << cornerIdx),
+                                    (uint8_t)(1 << cornerIdx),
                                     children
                                 });
                             }
@@ -276,18 +276,18 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
 
 OctreeChildren* Octree::GetChildren() const
 {
-    std::cout << "------------------------------------" << std::endl;
-    std::cout << "printtibusiness" << std::endl;
-    std::cout << m_size << std::endl;
-    std::cout << "exists" << (m_children ? "true" : "false") << std::endl;
+	//std::cout << "------------------------------------" << std::endl;
+    //std::cout << "printtibusiness" << std::endl;
+    //std::cout << m_size << std::endl;
+    //std::cout << "exists" << (m_children ? "true" : "false") << std::endl;
     if(!m_children)
     {
         return nullptr;
     }
-    std::cout << m_children.get() << std::endl;
-    printBinary(m_children.get()->field);
-    printf("min (%f, %f, %f), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
-    std::cout << "lapsoset" <<  m_children.get() << std::endl;
-    std::cout << "------------------------------------" << std::endl;
+    //std::cout << m_children.get() << std::endl;
+    //printBinary(m_children.get()->field);
+    //printf("min (%f, %f, %f), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
+    //std::cout << "lapsoset" <<  m_children.get() << std::endl;
+    //std::cout << "------------------------------------" << std::endl;
     return m_children.get() ? m_children.get() : nullptr;
 }
