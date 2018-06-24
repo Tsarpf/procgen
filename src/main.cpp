@@ -8,6 +8,8 @@
 
 #define GLM_FORCE_PURE
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #pragma comment(lib, "OpenGL32.lib")
 #pragma comment(lib, "noise.lib")
@@ -27,7 +29,6 @@ void render(GLuint vao, int pointCount)
     // Draw wireframed
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
-    glEnable(GL_CULL_FACE);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     //glClear(GL_COLOR_BUFFER_BIT);
@@ -56,6 +57,26 @@ void drawOctree()
     printf("number of elements %i\n", count);
 }
 
+void initializeOpenGL(GLuint program)
+{
+    setAttribPointers(program);
+    setupProjection(program);
+    glEnable(GL_CULL_FACE);
+}
+
+void rotateModel(float time, GLuint program)
+{
+    GLint modelUniform = glGetUniformLocation(program, "Model");
+
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(
+        model,
+        time * glm::radians(180.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f)
+    );
+    glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
+}
+
 int main(void)
 {
     auto t_start = std::chrono::high_resolution_clock::now();
@@ -70,7 +91,6 @@ int main(void)
     GLuint triangleVAO = createCubeVAO(genericCubePoints);
     GLuint triangleProgram = createTriangleProgram();
 
-    setAttribPointers(triangleProgram);
 
     module::Perlin myModule;
     double value = myModule.GetValue(1.25, 0.75, 0.5);
@@ -78,11 +98,12 @@ int main(void)
 
     //drawOctree();
 
-    setupProjection(triangleProgram);
+    initializeOpenGL(triangleProgram);
     while (!glfwWindowShouldClose(window))
     {
         auto t_now = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
+        rotateModel(time, triangleProgram);
 
         render(triangleVAO, genericCubePoints.size());
 

@@ -250,6 +250,7 @@ void setupProjection(GLuint program)
     glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(proj));
     printf("%i proj\n", projUniform);
 }
+
 std::vector<VizData> visualizeOctree(const Octree* node)
 {
     std::vector<VizData> nums;
