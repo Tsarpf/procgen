@@ -86,7 +86,7 @@ bool Octree::HasSomethingToRender()
 
 bool Octree::Sample(const glm::vec3 pos)
 {
-    return pos.x == 1 ? true : false;
+    return pos.x == 0 ? true : false;
 }
 
 Octree* Octree::ConstructLeaf(const int resolution, const glm::vec3 min)
@@ -217,7 +217,7 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                             //std::cout << "has children" << std::endl;
                             // Create a new octree node whose children are the ones created in previous
                             // loop iterations parents that are now currentSized
-                            node = new Octree(std::move(currentSizeNodes[childIdx]), cubeSize, min, resolution);
+                            node = new Octree(std::move(currentSizeNodes[childIdx]), cubeSize, pos, resolution);
 
                             //////////////////////////////////////////////////////////// This is the same as lines 180 ->
                             if (!parentSizeNodes[parentIdx])

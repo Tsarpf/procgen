@@ -220,7 +220,7 @@ GLuint createCubeVAO(std::vector<float>& points) {
 
 void setupProjection(GLuint program) 
 {
-    glm::vec3 eye(-5, 5, 5);
+    glm::vec3 eye(-5, 15, 15);
     glm::mat4 view = glm::lookAt(
         eye,
         glm::vec3(0.0f, 0.0f, 0.0f),
