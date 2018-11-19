@@ -2,9 +2,12 @@
 /src/*.c
 /include/GL/*.h
 /build/vc6/*.rc
+/build/*.rc
 /build/*/*.sdf
 /build/*/*.suo
+/build/*/*.db
 /build/*/*.vcxproj.user
+/build/*/.vs/
 /build/*/tmp/
 /build/cmake/CMakeFiles/
 /build/cmake/CMakeCache.txt
@@ -16,3 +19,4 @@
 /lib
 /tmp
 /out
+.DS_Store*
