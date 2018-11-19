@@ -41,7 +41,7 @@ Octree::Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min
 }
 
 
-// Called when creating a new octree
+// Called when creating a completely new octree from scratch
 Octree::Octree(const int resolution, const int size, const glm::vec3 min)
     : m_resolution(resolution), m_size(size), m_min(min), m_children(nullptr)
 {
@@ -61,8 +61,9 @@ Octree::Octree(const int resolution, const int size, const glm::vec3 min)
     ConstructBottomUp(resolution, size, min);
 }
 
+// Leaf node constructor
 Octree::Octree(const int resolution, glm::vec3 min)
-    : m_resolution(resolution), m_size(resolution), m_min(min), m_children(nullptr)
+    : m_resolution(resolution), m_size(resolution), m_min(min), m_children(nullptr), m_leaf(true)
 {
     m_children = std::unique_ptr<OctreeChildren>(nullptr);
     printf("leaf node min (%f, %f, %f), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
@@ -108,6 +109,8 @@ Octree* Octree::ConstructLeaf(const int resolution, const glm::vec3 min)
                     std::cout << "is solid" << std::endl;
                     field |= (1 << cornerIdx);
                     glm::vec3 childPos = glm::vec3(x + min.x, y + min.y, z + min.z) * (float)resolution;
+
+					// TODO: micro opt: maybe do new Octree :ing for each child only after checking field != 0xFF
                     children[cornerIdx] = new Octree(resolution, childPos);
                 }
             }
@@ -117,6 +120,9 @@ Octree* Octree::ConstructLeaf(const int resolution, const glm::vec3 min)
     //printBinary(field);
     if (field > 0) 
     {
+		// TODO: maybe check here field = 0xFF aka all children exist so we can possibly
+		// approximate all children with a single vertex. Check QEFs. Set m_leaf'ness.
+
         std::cout << "field is over 0" << std::endl;
         auto c = std::unique_ptr<OctreeChildren>(new OctreeChildren());
         c->field = field;
@@ -135,14 +141,13 @@ Octree* Octree::ConstructLeaf(const int resolution, const glm::vec3 min)
 
 void Octree::ConstructBottomUp(const int resolution, const int size, const glm::vec3 min)
 {
-    // First loop through the area in 1x1x1 cubes, then  2x2x2, etc.
+    // First loop through the area in 1x1x1 cubes, then 2x2x2, etc.
 
     int cubeSize = resolution * 2;
     int childCountPerAxis = size / cubeSize;
     int parentCountPerAxis = childCountPerAxis / 2;
     int childCount = pow(childCountPerAxis, 3);
     int parentCount = childCount / 8;
-    //TODO unique_ptr hommat
     std::vector<std::unique_ptr<OctreeChildren>> currentSizeNodes(childCount);
     std::vector<std::unique_ptr<OctreeChildren>> parentSizeNodes(parentCount);
     for(int i = 0; i < currentSizeNodes.size(); i++)
@@ -205,7 +210,7 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                         else // node is null
                         {
                             std::cout << "no stuff in node" << std::endl;
-                            // do nothing?
+                            // TODO: really do nothing?
                         }
                     }
                     else // cubesize > resolution * 2
@@ -290,4 +295,68 @@ OctreeChildren* Octree::GetChildren() const
     //std::cout << "lapsoset" <<  m_children.get() << std::endl;
     //std::cout << "------------------------------------" << std::endl;
     return m_children.get() ? m_children.get() : nullptr;
+}
+
+void Octree::MeshFromOctree()
+{
+	// TODO: Give vertex buffer as a parameter to generatevertexindices
+	//std::vector<int> vertexBuffer;
+	GenerateVertexIndices();
+
+	// TODO: give index buffer as parameter
+	CellProc();
+}
+
+void Octree::GenerateVertexIndices()
+{
+	// Go through all leaf nodes, create a vertex
+	// Add vertex index info to node so it can be accessed in CellProc
+
+	// Mebbe just create the vertices in the middle of the node at first,
+	// work with sharper features etc. later?
+}
+
+void Octree::CellProc()
+{
+	if (!m_leaf)
+	{
+		for (int i = 0; i < 8; i++)
+		{
+			if (m_children->children[i])
+			{
+				m_children->children[i]->CellProc();
+			}
+		}
+
+		for (int i = 0; i < 12; i++)
+		{
+			// TODO: faces
+		}
+
+		for (int i = 0; i < 6; i++)
+		{
+			// TODO: edges
+		}
+	}
+
+	// Else do nothing?
+}
+
+void Octree::EdgeProc(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3)
+{
+	if (n0.m_leaf || n1.m_leaf || n2.m_leaf || n3.m_leaf)
+	{
+		return ProcessEdge(n0, n1, n2, n3);
+	}
+
+
+}
+
+void Octree::FaceProc(const Octree& n0, const Octree& n1)
+{
+	// 4 calls to face proc 
+}
+
+void Octree::ProcessEdge(const Octree&, const Octree&, const Octree&, const Octree&)
+{
 }

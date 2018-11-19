@@ -54,7 +54,7 @@ GLFWwindow* initialize()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    window = glfwCreateWindow(800, 600, "OpenGL Boilerplate", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "Dual contouring methods", NULL, NULL);
     if (!window) {
         glfwTerminate();
         exit(EXIT_FAILURE);

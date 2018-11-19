@@ -28,17 +28,28 @@ public:
 
 	const glm::vec3 m_min;
 	const int m_size;
-	const int m_resolution;
+
 private:
 	void ConstructBottomUp(const int maxResolution, const int size, const glm::vec3 min);
 	
 	static Octree* ConstructLeaf(const int resolution, const glm::vec3 min);
 	static bool Sample(const glm::vec3 pos);
 
+	void CellProc();
+	void FaceProc(const Octree&, const Octree&);
+	void EdgeProc(const Octree&, const Octree&, const Octree&, const Octree&);
+	void ProcessEdge(const Octree&, const Octree&, const Octree&, const Octree&);
+
+	void MeshFromOctree();
+	void GenerateVertexIndices();
+
 	std::unique_ptr<OctreeChildren> m_children;
 
 	Octree(const Octree&);
 	Octree& operator=(const Octree&);
+
+	const int m_resolution;
+	bool m_leaf;
 };
 
 struct OctreeChildren {
