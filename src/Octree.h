@@ -36,8 +36,12 @@ private:
 	static bool Sample(const glm::vec3 pos);
 
 	void CellProc();
-	void FaceProc(const Octree&, const Octree&);
-	void EdgeProc(const Octree&, const Octree&, const Octree&, const Octree&);
+	void FaceProcX(const Octree&, const Octree&);
+	void FaceProcY(const Octree&, const Octree&);
+	void FaceProcZ(const Octree&, const Octree&);
+	void EdgeProcXY(const Octree&, const Octree&, const Octree&, const Octree&);
+	void EdgeProcXZ(const Octree&, const Octree&, const Octree&, const Octree&);
+	void EdgeProcYZ(const Octree&, const Octree&, const Octree&, const Octree&);
 	void ProcessEdge(const Octree&, const Octree&, const Octree&, const Octree&);
 
 	void MeshFromOctree();

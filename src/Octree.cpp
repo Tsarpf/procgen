@@ -74,6 +74,7 @@ Octree::Octree(const int resolution, glm::vec3 min)
 }
 
 
+
 int index(int x, int y, int z, int dimensionLength)
 {
 	return x + dimensionLength * (y + dimensionLength * z);
@@ -316,35 +317,100 @@ void Octree::GenerateVertexIndices()
 	// work with sharper features etc. later?
 }
 
+// indices 
+// 0 = 0,0,0 = 0 + 2 * (0 + 2 * 0)
+// 1 = 1,0,0 = 1 + 2 * (0 + 2 * 0)
+
+// 2 = 0,1,0 = 0 + 2 * (1 + 2 * 0)
+// 3 = 1,1,0 = 1 + 2 * (1 + 2 * 0)
+
+// 4 = 0,0,1 = 0 + 2 * (0 + 2 * 1)
+// 5 = 1,0,1 = 1 + 2 * (0 + 2 * 1)
+
+// 6 = 0,1,1 = 0 + 2 * (1 + 2 * 1)
+// 7 = 1,1,1 = 1 + 2 * (1 + 2 * 1)
+
+// Faces:
+// X: [0, 1], [4, 5], [2, 3], [6, 7]
+// Y: [0, 2], [1, 3], [4, 6], [5, 7]
+// Z: [0, 4], [1, 5], [2, 6], [3, 7]
+
+// Edges:
+// XY: [0, 1, 2, 3], [4, 5, 6, 7]
+// XZ: [0, 1, 4, 5], [2, 3, 6, 7]
+// YZ: [0, 2, 4, 6], [1, 3, 5, 7]
+
 void Octree::CellProc()
 {
 	if (!m_leaf)
 	{
+		const auto& children = m_children->children;
+
+		// Cells
 		for (int i = 0; i < 8; i++)
 		{
-			if (m_children->children[i])
+			if (children[i])
 			{
-				m_children->children[i]->CellProc();
+				children[i]->CellProc();
 			}
 		}
 
-		for (int i = 0; i < 12; i++)
-		{
-			// TODO: faces
-		}
+		// Faces
+		FaceProcX(*children[0], *children[1]);
+		FaceProcX(*children[4], *children[5]);
+		FaceProcX(*children[2], *children[3]);
+		FaceProcX(*children[6], *children[7]);
 
-		for (int i = 0; i < 6; i++)
-		{
-			// TODO: edges
-		}
+		FaceProcY(*children[0], *children[2]);
+		FaceProcY(*children[1], *children[3]);
+		FaceProcY(*children[4], *children[6]);
+		FaceProcY(*children[5], *children[7]);
+
+		FaceProcZ(*children[0], *children[4]);
+		FaceProcZ(*children[1], *children[5]);
+		FaceProcZ(*children[2], *children[6]);
+		FaceProcZ(*children[3], *children[7]);
+
+		// Edges
+		EdgeProcXY(*children[0], *children[1], *children[2], *children[3]);
+		EdgeProcXY(*children[4], *children[5], *children[6], *children[7]);
+
+		EdgeProcXZ(*children[0], *children[1], *children[4], *children[5]);
+		EdgeProcXZ(*children[2], *children[3], *children[6], *children[7]);
+
+		EdgeProcYZ(*children[0], *children[2], *children[4], *children[6]);
+		EdgeProcYZ(*children[1], *children[3], *children[5], *children[7]);
 	}
-
-	// Else do nothing?
+	
+	// TODO else do nothing?
 }
 
-void Octree::EdgeProc(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3)
+void Octree::EdgeProcXY(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3)
 {
-	if (n0.m_leaf || n1.m_leaf || n2.m_leaf || n3.m_leaf)
+	if (n0.m_leaf && n1.m_leaf && n2.m_leaf && n3.m_leaf)
+	{
+		return ProcessEdge(n0, n1, n2, n3);
+	}
+
+	// TODO: figure out which children to pass from next 
+
+	//const Octree[4] children = {
+
+	//EdgeProcXY(*children[0], *children[1], *children[2], *children[3]);
+	//EdgeProcXY(*children[4], *children[5], *children[6], *children[7]);
+}
+void Octree::EdgeProcXZ(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3)
+{
+	if (n0.m_leaf && n1.m_leaf && n2.m_leaf && n3.m_leaf)
+	{
+		return ProcessEdge(n0, n1, n2, n3);
+	}
+
+
+}
+void Octree::EdgeProcYZ(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3)
+{
+	if (n0.m_leaf && n1.m_leaf && n2.m_leaf && n3.m_leaf)
 	{
 		return ProcessEdge(n0, n1, n2, n3);
 	}
@@ -352,9 +418,14 @@ void Octree::EdgeProc(const Octree& n0, const Octree& n1, const Octree& n2, cons
 
 }
 
-void Octree::FaceProc(const Octree& n0, const Octree& n1)
+void Octree::FaceProcX(const Octree& n0, const Octree& n1)
 {
-	// 4 calls to face proc 
+}
+void Octree::FaceProcY(const Octree& n0, const Octree& n1)
+{
+}
+void Octree::FaceProcZ(const Octree& n0, const Octree& n1)
+{
 }
 
 void Octree::ProcessEdge(const Octree&, const Octree&, const Octree&, const Octree&)
