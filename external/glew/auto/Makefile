@@ -12,8 +12,29 @@ include ../config/version
 SHELL = bash
 PYTHON ?= python
 
+### Use git repository for GL extension specifications
+
+GIT_CLONE  ?= git clone --branch glew https://github.com/nigels-com/glfixes.git
+
+###
+### Conventional desktop OpenGL settings
+###
+
+REGISTRY     = registry/gl/specs
 EXT          = extensions/gl
+FILTER       = filter_gl_ext.sh
 CORE         = core/gl
+REGISTRY_URL = http://www.opengl.org/registry/
+
+###
+### Experimental OpenGL ES settings
+###
+
+# REGISTRY     = registry/gles
+# EXT          = extensions/gles
+# FILTER       = filter_gles_ext.sh
+# CORE         = core/gles
+# REGISTRY_URL = http://www.khronos.org/registry/gles/
 
 BIN = bin
 SRC = src
@@ -82,29 +103,24 @@ B.TARGETS = \
 
 all custom: $(I.TARGETS) $(S.TARGETS) $(D.TARGETS) $(B.TARGETS)
 
-registry: OpenGL-Registry/.dummy
+registry: $(REGISTRY)/.dummy
 ext: $(EXT)/.dummy
 
-OpenGL-Registry/.dummy:
+$(REGISTRY)/.dummy:
 	@echo "--------------------------------------------------------------------"
-	@echo "Downloading OpenGL-Registry"
+	@echo "Downloading registry"
 	@echo "--------------------------------------------------------------------"
-	git clone https://github.com/KhronosGroup/OpenGL-Registry.git OpenGL-Registry
-	git clone https://github.com/KhronosGroup/EGL-Registry.git EGL-Registry
-	git clone --branch glew https://github.com/nigels-com/glfixes glfixes
+	$(GIT_CLONE) registry
 	touch $@
 
-$(EXT)/.dummy: OpenGL-Registry/.dummy
+$(EXT)/.dummy: $(REGISTRY)/.dummy
 	@echo "--------------------------------------------------------------------"
 	@echo "Creating descriptors"
 	@echo "--------------------------------------------------------------------"
 	rm -rf $(EXT)
-	cp -r glfixes/gl/specs/ANGLE OpenGL-Registry/extensions
-	cp -r glfixes/gl/specs/REGAL OpenGL-Registry/extensions
-	$(BIN)/update_ext.sh $(EXT) OpenGL-Registry/extensions $(BLACKLIST)
-#	$(PYTHON) $(BIN)/parse_xml.py EGL-Registry/api/egl.xml --core core/gl --extensions extensions/gl
-	$(PYTHON) $(BIN)/parse_xml.py EGL-Registry/api/egl.xml                --extensions extensions/gl
-	$(BIN)/filter_gl_ext.sh $(EXT)
+	$(BIN)/update_ext.sh $(EXT) $(REGISTRY) $(BLACKLIST)
+	$(PYTHON) $(BIN)/parse_xml.py registry/xml/egl.xml --core core/gl --extensions extensions/gl
+	$(BIN)/$(FILTER)     $(EXT)
 ifeq ($(patsubst Darwin%,Darwin,$(SYSTEM)), Darwin)
 	find $(CORE) -maxdepth 1 -type f | grep -v VERSION | grep -v "~" | \
 	xargs -J % cp % $(EXT)
@@ -193,7 +209,7 @@ $(S.DEST)/glew.c: $(EXT)/.dummy
 	$(BIN)/make_def_var.pl GL $(GL_EXT_SPEC) >> $@
 	echo -e "\nstatic const char * _glewExtensionLookup[] = {" >> $@;
 	$(BIN)/make_index.pl $(GL_CORE_SPEC) $(GL_EXT_SPEC) >> $@
-	echo -e "  NULL\n};\n\n" >> $@;
+	echo -e "  NULL\n};\n" >> $@;
 	$(BIN)/make_enable_index.pl $(GL_CORE_SPEC) $(GL_EXT_SPEC) >> $@
 	$(BIN)/make_initd.pl GL $(GL_CORE_SPEC) >> $@
 	$(BIN)/make_initd.pl GL $(GL_EXT_SPEC) >> $@

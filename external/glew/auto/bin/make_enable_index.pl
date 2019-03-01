@@ -9,7 +9,6 @@
 
 use strict;
 use warnings;
-use File::Basename;
 
 use lib '.';
 do 'bin/make.pl';
@@ -30,7 +29,7 @@ if (@ARGV)
 	print "/* Detected via extension string or experimental mode */\n";
 	print "static GLboolean* _glewExtensionEnabled[] = {\n";;
 
-	foreach my $ext (sort { basename($a) cmp basename($b) } @extlist)
+	foreach my $ext (sort @extlist)
 	{
 		my ($extname, $exturl, $extstring, $reuse, $types, $tokens, $functions, $exacts) = 
 			parse_ext($ext);
@@ -43,5 +42,5 @@ if (@ARGV)
 		print "#endif\n";
 	}
 
-	print "  NULL\n};\n\n";
+	print "  NULL\n};\n";
 }
