@@ -340,6 +340,8 @@ void Octree::GenerateVertexIndices()
 // XZ: [0, 1, 4, 5], [2, 3, 6, 7]
 // YZ: [0, 2, 4, 6], [1, 3, 5, 7]
 
+// XY/XZ/YZ means the cubes are ordered in that way, eg for XZ the cubes are on the bottom (0 1 4 5) and top four (2 3 6 7)
+
 void Octree::CellProc()
 {
 	if (!m_leaf)
@@ -392,12 +394,8 @@ void Octree::EdgeProcXY(const Octree& n0, const Octree& n1, const Octree& n2, co
 		return ProcessEdge(n0, n1, n2, n3);
 	}
 
-	// TODO: figure out which children to pass from next 
-
-	//const Octree[4] children = {
-
-	//EdgeProcXY(*children[0], *children[1], *children[2], *children[3]);
-	//EdgeProcXY(*children[4], *children[5], *children[6], *children[7]);
+	EdgeProcXY(*n0.m_children->children[3], *n1.m_children->children[2], *n2.m_children->children[1], *n3.m_children->children[0]);
+	EdgeProcXY(*n0.m_children->children[7], *n1.m_children->children[6], *n2.m_children->children[5], *n3.m_children->children[4]);
 }
 void Octree::EdgeProcXZ(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3)
 {
@@ -406,7 +404,8 @@ void Octree::EdgeProcXZ(const Octree& n0, const Octree& n1, const Octree& n2, co
 		return ProcessEdge(n0, n1, n2, n3);
 	}
 
-
+	EdgeProcXZ(*n0.m_children->children[5], *n1.m_children->children[4], *n2.m_children->children[1], *n3.m_children->children[0]);
+	EdgeProcXZ(*n0.m_children->children[7], *n1.m_children->children[6], *n2.m_children->children[3], *n3.m_children->children[2]);
 }
 void Octree::EdgeProcYZ(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3)
 {
@@ -415,7 +414,8 @@ void Octree::EdgeProcYZ(const Octree& n0, const Octree& n1, const Octree& n2, co
 		return ProcessEdge(n0, n1, n2, n3);
 	}
 
-
+	EdgeProcYZ(*n0.m_children->children[6], *n1.m_children->children[4], *n2.m_children->children[2], *n3.m_children->children[0]);
+	EdgeProcYZ(*n0.m_children->children[7], *n1.m_children->children[5], *n2.m_children->children[3], *n3.m_children->children[1]);
 }
 
 void Octree::FaceProcX(const Octree& n0, const Octree& n1)
