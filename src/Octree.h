@@ -28,6 +28,7 @@ public:
 
 	const glm::vec3 m_min;
 	const int m_size;
+	bool IsLeaf() const;
 
 private:
 	void ConstructBottomUp(const int maxResolution, const int size, const glm::vec3 min);

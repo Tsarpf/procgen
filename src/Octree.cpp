@@ -342,6 +342,22 @@ void Octree::GenerateVertexIndices()
 
 // XY/XZ/YZ means the cubes are ordered in that way, eg for XZ the cubes are on the bottom (0 1 4 5) and top four (2 3 6 7)
 
+const Octree& LeafOrChild(const Octree& node, size_t idx)
+{
+	if (node.IsLeaf())
+		return node;
+
+	return *node.GetChildren()->children[idx];
+}
+
+bool Octree::IsLeaf() const
+{
+	if (m_children && m_children->field > 0)
+		return false;
+
+	return true;
+}
+
 void Octree::CellProc()
 {
 	if (!m_leaf)
@@ -396,8 +412,8 @@ void Octree::EdgeProcXY(const Octree& n0, const Octree& n1, const Octree& n2, co
 		return ProcessEdge(n0, n1, n2, n3);
 	}
 	
-	EdgeProcXY(*n0.m_children->children[3], *n1.m_children->children[2], *n2.m_children->children[1], *n3.m_children->children[0]);
-	EdgeProcXY(*n0.m_children->children[7], *n1.m_children->children[6], *n2.m_children->children[5], *n3.m_children->children[4]);
+	EdgeProcXY(LeafOrChild(n0, 3), LeafOrChild(n1, 2), LeafOrChild(n2, 1), LeafOrChild(n3, 0));
+	EdgeProcXY(LeafOrChild(n0, 7), LeafOrChild(n1, 6), LeafOrChild(n2, 5), LeafOrChild(n3, 4));
 }
 void Octree::EdgeProcXZ(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3)
 {
