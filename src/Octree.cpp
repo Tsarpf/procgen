@@ -385,20 +385,23 @@ void Octree::CellProc()
 	}
 	
 	// TODO else do nothing?
+	//...? todo checking if already leaf node, if so, pass current node instead of some child
 }
 
 void Octree::EdgeProcXY(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3)
 {
+	//todo checking if already leaf node, if so, pass current node instead of some child
 	if (n0.m_leaf && n1.m_leaf && n2.m_leaf && n3.m_leaf)
 	{
 		return ProcessEdge(n0, n1, n2, n3);
 	}
-
+	
 	EdgeProcXY(*n0.m_children->children[3], *n1.m_children->children[2], *n2.m_children->children[1], *n3.m_children->children[0]);
 	EdgeProcXY(*n0.m_children->children[7], *n1.m_children->children[6], *n2.m_children->children[5], *n3.m_children->children[4]);
 }
 void Octree::EdgeProcXZ(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3)
 {
+	//todo checking if already leaf node, if so, pass current node instead of some child
 	if (n0.m_leaf && n1.m_leaf && n2.m_leaf && n3.m_leaf)
 	{
 		return ProcessEdge(n0, n1, n2, n3);
@@ -409,6 +412,7 @@ void Octree::EdgeProcXZ(const Octree& n0, const Octree& n1, const Octree& n2, co
 }
 void Octree::EdgeProcYZ(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3)
 {
+	//todo checking if already leaf node, if so, pass current node instead of some child
 	if (n0.m_leaf && n1.m_leaf && n2.m_leaf && n3.m_leaf)
 	{
 		return ProcessEdge(n0, n1, n2, n3);
@@ -418,14 +422,41 @@ void Octree::EdgeProcYZ(const Octree& n0, const Octree& n1, const Octree& n2, co
 	EdgeProcYZ(*n0.m_children->children[7], *n1.m_children->children[5], *n2.m_children->children[3], *n3.m_children->children[1]);
 }
 
+// Faces spawn four calls to faceproc, 
+// and four calls to edgeproc
 void Octree::FaceProcX(const Octree& n0, const Octree& n1)
 {
+	//todo checking if already leaf node, if so, pass current node instead of some child
+	FaceProcX(*n0.m_children->children[1], *n1.m_children->children[0]);
+	FaceProcX(*n0.m_children->children[3], *n1.m_children->children[2]);
+	FaceProcX(*n0.m_children->children[5], *n1.m_children->children[4]);
+	FaceProcX(*n0.m_children->children[7], *n1.m_children->children[6]);
+
+	EdgeProcXY(*n0.m_children->children[1], *n1.m_children->children[0], *n0.m_children->children[3], *n1.m_children->children[2]);
+	EdgeProcXY(*n0.m_children->children[5], *n1.m_children->children[4], *n0.m_children->children[7], *n1.m_children->children[6]);
+
+	EdgeProcXZ(*n0.m_children->children[3], *n1.m_children->children[2], *n0.m_children->children[7], *n1.m_children->children[6]);
+	EdgeProcXZ(*n0.m_children->children[1], *n1.m_children->children[0], *n0.m_children->children[5], *n1.m_children->children[4]);
 }
 void Octree::FaceProcY(const Octree& n0, const Octree& n1)
 {
+	//todo checking if already leaf node, if so, pass current node instead of some child
+	FaceProcX(*n0.m_children->children[2], *n1.m_children->children[0]);
+	FaceProcX(*n0.m_children->children[1], *n1.m_children->children[1]);
+	FaceProcX(*n0.m_children->children[6], *n1.m_children->children[4]);
+	FaceProcX(*n0.m_children->children[7], *n1.m_children->children[5]);
+
+	// todo edgeprocs
 }
 void Octree::FaceProcZ(const Octree& n0, const Octree& n1)
 {
+	//todo checking if already leaf node, if so, pass current node instead of some child
+	FaceProcX(*n0.m_children->children[4], *n1.m_children->children[0]);
+	FaceProcX(*n0.m_children->children[5], *n1.m_children->children[1]);
+	FaceProcX(*n0.m_children->children[6], *n1.m_children->children[2]);
+	FaceProcX(*n0.m_children->children[7], *n1.m_children->children[3]);
+
+	// todo edgeprocs
 }
 
 void Octree::ProcessEdge(const Octree&, const Octree&, const Octree&, const Octree&)
