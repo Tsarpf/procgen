@@ -446,7 +446,11 @@ void Octree::FaceProcY(const Octree& n0, const Octree& n1)
 	FaceProcX(*n0.m_children->children[6], *n1.m_children->children[4]);
 	FaceProcX(*n0.m_children->children[7], *n1.m_children->children[5]);
 
-	// todo edgeprocs
+	EdgeProcXY(*n0.m_children->children[2], *n0.m_children->children[3], *n1.m_children->children[0], *n1.m_children->children[1]);
+	EdgeProcXY(*n0.m_children->children[6], *n0.m_children->children[7], *n1.m_children->children[4], *n1.m_children->children[5]);
+
+	EdgeProcYZ(*n0.m_children->children[2], *n1.m_children->children[0], *n0.m_children->children[6], *n1.m_children->children[4]);
+	EdgeProcYZ(*n0.m_children->children[3], *n1.m_children->children[1], *n0.m_children->children[7], *n1.m_children->children[5]);
 }
 void Octree::FaceProcZ(const Octree& n0, const Octree& n1)
 {
@@ -455,8 +459,13 @@ void Octree::FaceProcZ(const Octree& n0, const Octree& n1)
 	FaceProcX(*n0.m_children->children[5], *n1.m_children->children[1]);
 	FaceProcX(*n0.m_children->children[6], *n1.m_children->children[2]);
 	FaceProcX(*n0.m_children->children[7], *n1.m_children->children[3]);
+	
 
-	// todo edgeprocs
+	EdgeProcYZ(*n0.m_children->children[4], *n0.m_children->children[6], *n1.m_children->children[0], *n1.m_children->children[2]);
+	EdgeProcYZ(*n0.m_children->children[5], *n0.m_children->children[7], *n1.m_children->children[1], *n1.m_children->children[3]);
+
+	EdgeProcXZ(*n0.m_children->children[4], *n0.m_children->children[5], *n1.m_children->children[0], *n1.m_children->children[1]);
+	EdgeProcXZ(*n0.m_children->children[6], *n0.m_children->children[7], *n1.m_children->children[2], *n1.m_children->children[3]);
 }
 
 void Octree::ProcessEdge(const Octree&, const Octree&, const Octree&, const Octree&)
