@@ -24,15 +24,15 @@ const glm::vec3 CHILD_MIN_OFFSETS[] =
 
 Octree::~Octree()
 {
-    /////// NYI
-    printf("destroying objects");
+    /////// NYI, should f.ex delete the OctreeChildren/children
+    printf("destroying Octree");
 
 }
 
 
 // Used to initialize with children
 Octree::Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min, int resolution)
-: m_children(std::move(children)), m_resolution(resolution), m_size(size), m_min(min)
+: m_children(std::move(children)), m_resolution(resolution), m_size(size), m_min(min), m_leaf(false)
 {
     printf("with children min (%f, %f, %f), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
     //printf("min (%f, %f, %f), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
@@ -43,7 +43,7 @@ Octree::Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min
 
 // Called when creating a completely new octree from scratch
 Octree::Octree(const int resolution, const int size, const glm::vec3 min)
-    : m_resolution(resolution), m_size(size), m_min(min), m_children(nullptr)
+    : m_resolution(resolution), m_size(size), m_min(min), m_children(nullptr), m_leaf(false)
 {
     printf("new octree min (%f, %f, %f), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
     /*
@@ -119,7 +119,7 @@ Octree* Octree::ConstructLeaf(const int resolution, const glm::vec3 min)
     }
 
     //printBinary(field);
-    if (field > 0) 
+    if (field != 0 || field != 255) 
     {
 		// TODO: maybe check here field = 0xFF aka all children exist so we can possibly
 		// approximate all children with a single vertex. Check QEFs. Set m_leaf'ness.
@@ -132,10 +132,11 @@ Octree* Octree::ConstructLeaf(const int resolution, const glm::vec3 min)
         Octree* o = new Octree(std::move(c), resolution * 2, min, resolution);
         return o;
     }
-    else
-    {
-        //std::cout << "not over 0 " << field << std::endl;
-    }
+	// debugging
+    //else
+    //{
+    //    std::cout << "not over 0 " << field << std::endl;
+    //}
 
     return nullptr;
 }
@@ -298,23 +299,37 @@ OctreeChildren* Octree::GetChildren() const
     return m_children.get() ? m_children.get() : nullptr;
 }
 
-void Octree::MeshFromOctree()
+void Octree::MeshFromOctree(IndexBuffer& indexBuffer)
 {
 	// TODO: Give vertex buffer as a parameter to generatevertexindices
 	//std::vector<int> vertexBuffer;
 	GenerateVertexIndices();
 
-	// TODO: give index buffer as parameter
-	CellProc();
+	CellProc(indexBuffer);
 }
 
-void Octree::GenerateVertexIndices()
+void Octree::GenerateVertexIndices(VertexBuffer& vertexBuffer)
 {
 	// Go through all leaf nodes, create a vertex
 	// Add vertex index info to node so it can be accessed in CellProc
 
 	// Mebbe just create the vertices in the middle of the node at first,
 	// work with sharper features etc. later?
+
+	if (IsLeaf())
+	{
+		m_index = vertexBuffer.size();
+		// NYI vertex contents
+		Vertex v = {};
+		vertexBuffer.push_back(v);
+	}
+	else
+	{
+		for (int i = 0; i < 8; i++)
+		{
+			m_children->children[i]->GenerateVertexIndices(vertexBuffer);
+		}
+	}
 }
 
 // indices 
@@ -353,12 +368,18 @@ const Octree& LeafOrChild(const Octree& node, size_t idx)
 bool Octree::IsLeaf() const
 {
 	if (m_children && m_children->field > 0)
-		return false;
+	{
+		printf("checking children leafness? %i is leaf, but returning", false, m_leaf);
+	}
+	else
+	{
+		printf("checking children leafness? %i is leaf, but returning", true, m_leaf);
+	}
 
-	return true;
+	return m_leaf;
 }
 
-void Octree::CellProc()
+void Octree::CellProc(IndexBuffer& indexBuffer)
 {
 	if (!m_leaf)
 	{
@@ -369,75 +390,92 @@ void Octree::CellProc()
 		{
 			if (children[i])
 			{
-				children[i]->CellProc();
+				children[i]->CellProc(indexBuffer);
 			}
 		}
 
 		// Faces
-		FaceProcX(*children[0], *children[1]);
-		FaceProcX(*children[4], *children[5]);
-		FaceProcX(*children[2], *children[3]);
-		FaceProcX(*children[6], *children[7]);
+		// Y is dir 2 in example
+		FaceProcX(*children[0], *children[1], indexBuffer);
+		FaceProcX(*children[4], *children[5], indexBuffer);
+		FaceProcX(*children[2], *children[3], indexBuffer);
+		FaceProcX(*children[6], *children[7], indexBuffer);
 
-		FaceProcY(*children[0], *children[2]);
-		FaceProcY(*children[1], *children[3]);
-		FaceProcY(*children[4], *children[6]);
-		FaceProcY(*children[5], *children[7]);
+		// Y is dir 1 in example
+		FaceProcY(*children[0], *children[2], indexBuffer);
+		FaceProcY(*children[1], *children[3], indexBuffer);
+		FaceProcY(*children[4], *children[6], indexBuffer);
+		FaceProcY(*children[5], *children[7], indexBuffer);
 
-		FaceProcZ(*children[0], *children[4]);
-		FaceProcZ(*children[1], *children[5]);
-		FaceProcZ(*children[2], *children[6]);
-		FaceProcZ(*children[3], *children[7]);
+
+		// Z is dir 0 in example
+		FaceProcZ(*children[0], *children[4], indexBuffer);
+		FaceProcZ(*children[1], *children[5], indexBuffer);
+		FaceProcZ(*children[2], *children[6], indexBuffer);
+		FaceProcZ(*children[3], *children[7], indexBuffer);
 
 		// Edges
-		EdgeProcXY(*children[0], *children[1], *children[2], *children[3]);
-		EdgeProcXY(*children[4], *children[5], *children[6], *children[7]);
+		// dir 0 in edgeProcEdgeMask
+		EdgeProcXY(*children[0], *children[1], *children[2], *children[3], indexBuffer);
+		EdgeProcXY(*children[4], *children[5], *children[6], *children[7], indexBuffer);
 
-		EdgeProcXZ(*children[0], *children[1], *children[4], *children[5]);
-		EdgeProcXZ(*children[2], *children[3], *children[6], *children[7]);
+		// dir 1 in edgeProcEdgeMask
+		EdgeProcXZ(*children[0], *children[1], *children[4], *children[5], indexBuffer);
+		EdgeProcXZ(*children[2], *children[3], *children[6], *children[7], indexBuffer);
 
-		EdgeProcYZ(*children[0], *children[2], *children[4], *children[6]);
-		EdgeProcYZ(*children[1], *children[3], *children[5], *children[7]);
+		// dir 2 in edgeProcEdgeMask
+		EdgeProcYZ(*children[0], *children[2], *children[4], *children[6], indexBuffer);
+		EdgeProcYZ(*children[1], *children[3], *children[5], *children[7], indexBuffer);
 	}
 	
 	// TODO else do nothing?
 	//...? todo checking if already leaf node, if so, pass current node instead of some child
 }
 
-void Octree::EdgeProcXY(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3)
+void Octree::EdgeProcXY(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3, IndexBuffer& indexBuffer)
 {
+	const int dir = 0;
 	if (n0.m_leaf && n1.m_leaf && n2.m_leaf && n3.m_leaf)
 	{
-		return ProcessEdge(n0, n1, n2, n3);
+		const Octree nodes[4] = {
+			n0, n1, n2, n3
+		};
+		return ProcessEdge(nodes, dir, indexBuffer);
 	}
 	
-	EdgeProcXY(LeafOrChild(n0, 3), LeafOrChild(n1, 2), LeafOrChild(n2, 1), LeafOrChild(n3, 0));
-	EdgeProcXY(LeafOrChild(n0, 7), LeafOrChild(n1, 6), LeafOrChild(n2, 5), LeafOrChild(n3, 4));
+	EdgeProcXY(LeafOrChild(n0, 3), LeafOrChild(n1, 2), LeafOrChild(n2, 1), LeafOrChild(n3, 0), indexBuffer);
+	EdgeProcXY(LeafOrChild(n0, 7), LeafOrChild(n1, 6), LeafOrChild(n2, 5), LeafOrChild(n3, 4), indexBuffer);
 }
-void Octree::EdgeProcXZ(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3)
+void Octree::EdgeProcXZ(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3, IndexBuffer& indexBuffer)
 {
-	//todo checking if already leaf node, if so, pass current node instead of some child
+	const int dir = 1;
 	if (n0.m_leaf && n1.m_leaf && n2.m_leaf && n3.m_leaf)
 	{
-		return ProcessEdge(n0, n1, n2, n3);
+		const Octree nodes[4] = {
+			n0, n1, n2, n3
+		};
+		return ProcessEdge(nodes, dir, indexBuffer);
 	}
-	EdgeProcXZ(LeafOrChild(n0, 5), LeafOrChild(n1, 4), LeafOrChild(n2, 1), LeafOrChild(n3, 0));
-	EdgeProcXZ(LeafOrChild(n0, 7), LeafOrChild(n1, 6), LeafOrChild(n2, 3), LeafOrChild(n3, 2));
+	EdgeProcXZ(LeafOrChild(n0, 5), LeafOrChild(n1, 4), LeafOrChild(n2, 1), LeafOrChild(n3, 0), indexBuffer);
+	EdgeProcXZ(LeafOrChild(n0, 7), LeafOrChild(n1, 6), LeafOrChild(n2, 3), LeafOrChild(n3, 2), indexBuffer);
 }
-void Octree::EdgeProcYZ(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3)
+void Octree::EdgeProcYZ(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3, IndexBuffer& indexBuffer)
 {
-	//todo checking if already leaf node, if so, pass current node instead of some child
+	const int dir = 2;
 	if (n0.m_leaf && n1.m_leaf && n2.m_leaf && n3.m_leaf)
 	{
-		return ProcessEdge(n0, n1, n2, n3);
+		const Octree nodes[4] = {
+			n0, n1, n2, n3
+		};
+		return ProcessEdge(nodes, dir, indexBuffer);
 	}
-	EdgeProcYZ(LeafOrChild(n0, 6), LeafOrChild(n1, 4), LeafOrChild(n2, 2), LeafOrChild(n3, 0));
-	EdgeProcYZ(LeafOrChild(n0, 7), LeafOrChild(n1, 5), LeafOrChild(n2, 3), LeafOrChild(n3, 1));
+	EdgeProcYZ(LeafOrChild(n0, 6), LeafOrChild(n1, 4), LeafOrChild(n2, 2), LeafOrChild(n3, 0), indexBuffer);
+	EdgeProcYZ(LeafOrChild(n0, 7), LeafOrChild(n1, 5), LeafOrChild(n2, 3), LeafOrChild(n3, 1), indexBuffer);
 }
 
 // Faces spawn four calls to faceproc, 
 // and four calls to edgeproc
-void Octree::FaceProcX(const Octree& n0, const Octree& n1)
+void Octree::FaceProcX(const Octree& n0, const Octree& n1, IndexBuffer& indexBuffer)
 {
 	//const std::tuple<int, int> pairs[] = {
 	const std::tuple<int, int> facePairs[] = {
@@ -456,17 +494,17 @@ void Octree::FaceProcX(const Octree& n0, const Octree& n1)
 	};
 
 	for (const auto [a, b] : facePairs) {
-		FaceProcX(LeafOrChild(n0, a), LeafOrChild(n1, b));
+		FaceProcX(LeafOrChild(n0, a), LeafOrChild(n1, b), indexBuffer);
 	}
 
 	for (const auto [a, b, c, d] : edgeXYPairs) {
-		EdgeProcXY(LeafOrChild(n0, a), LeafOrChild(n1, b), LeafOrChild(n0, c), LeafOrChild(n1, d));
+		EdgeProcXY(LeafOrChild(n0, a), LeafOrChild(n1, b), LeafOrChild(n0, c), LeafOrChild(n1, d), indexBuffer);
 	}
 	for (const auto [a, b, c, d] : edgeXZPairs) {
-		EdgeProcXZ(LeafOrChild(n0, a), LeafOrChild(n1, b), LeafOrChild(n0, c), LeafOrChild(n1, d));
+		EdgeProcXZ(LeafOrChild(n0, a), LeafOrChild(n1, b), LeafOrChild(n0, c), LeafOrChild(n1, d), indexBuffer);
 	}
 }
-void Octree::FaceProcY(const Octree& n0, const Octree& n1)
+void Octree::FaceProcY(const Octree& n0, const Octree& n1, IndexBuffer& indexBuffer)
 {
 	const std::tuple<int, int> facePairs[] = {
 		{ 2, 0 },
@@ -484,18 +522,18 @@ void Octree::FaceProcY(const Octree& n0, const Octree& n1)
 	};
 
 	for (const auto [a, b] : facePairs) {
-		FaceProcY(LeafOrChild(n0, a), LeafOrChild(n1, b));
+		FaceProcY(LeafOrChild(n0, a), LeafOrChild(n1, b), indexBuffer);
 	}
 
 	for (const auto [a, b, c, d] : edgeXYPairs) {
-		EdgeProcXY(LeafOrChild(n0, a), LeafOrChild(n0, b), LeafOrChild(n1, c), LeafOrChild(n1, d));
+		EdgeProcXY(LeafOrChild(n0, a), LeafOrChild(n0, b), LeafOrChild(n1, c), LeafOrChild(n1, d), indexBuffer);
 	}
 
 	for (const auto [a, b, c, d] : edgeYZPairs) {
-		EdgeProcXZ(LeafOrChild(n0, a), LeafOrChild(n1, b), LeafOrChild(n0, c), LeafOrChild(n1, d));
+		EdgeProcXZ(LeafOrChild(n0, a), LeafOrChild(n1, b), LeafOrChild(n0, c), LeafOrChild(n1, d), indexBuffer);
 	}
 }
-void Octree::FaceProcZ(const Octree& n0, const Octree& n1)
+void Octree::FaceProcZ(const Octree& n0, const Octree& n1, IndexBuffer& indexBuffer)
 {
 	const std::tuple<int, int> facePairs[] = {
 		{ 4, 0 },
@@ -513,18 +551,96 @@ void Octree::FaceProcZ(const Octree& n0, const Octree& n1)
 	};
 
 	for (const auto [a, b] : facePairs) {
-		FaceProcZ(LeafOrChild(n0, a), LeafOrChild(n1, b));
+		FaceProcZ(LeafOrChild(n0, a), LeafOrChild(n1, b), indexBuffer);
 	}
 
 	for (const auto [a, b, c, d] : edgeXYPairs) {
-		EdgeProcYZ(LeafOrChild(n0, a), LeafOrChild(n0, b), LeafOrChild(n1, c), LeafOrChild(n1, d));
+		EdgeProcYZ(LeafOrChild(n0, a), LeafOrChild(n0, b), LeafOrChild(n1, c), LeafOrChild(n1, d), indexBuffer);
 	}
 
 	for (const auto [a, b, c, d] : edgeYZPairs) {
-		EdgeProcXZ(LeafOrChild(n0, a), LeafOrChild(n0, b), LeafOrChild(n1, c), LeafOrChild(n1, d));
+		EdgeProcXZ(LeafOrChild(n0, a), LeafOrChild(n0, b), LeafOrChild(n1, c), LeafOrChild(n1, d), indexBuffer);
 	}
 }
 
-void Octree::ProcessEdge(const Octree&, const Octree&, const Octree&, const Octree&)
-{
+void Octree::ProcessEdge(const Octree node[4], int dir, IndexBuffer& indexBuffer)
+ {
+	/*
+	This function copied from https://github.com/nickgildea/DualContouringSample/blob/master/DualContouringSample/octree.cpp
+	Implementations of Octree member functions.
+	Copyright (C) 2011  Tao Ju
+	This library is free software; you can redistribute it and/or
+	modify it under the terms of the GNU Lesser General Public License
+	(LGPL) as published by the Free Software Foundation; either
+	version 2.1 of the License, or (at your option) any later version.
+	This library is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+	Lesser General Public License for more details.
+	You should have received a copy of the GNU Lesser General Public
+	License along with this library; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+	*/
+	const int MATERIAL_AIR = 0;
+	const int MATERIAL_SOLID = 1;
+
+	const int edgevmap[12][2] =
+	{
+		{0,4},{1,5},{2,6},{3,7},	// x-axis 
+		{0,2},{1,3},{4,6},{5,7},	// y-axis
+		{0,1},{2,3},{4,5},{6,7}		// z-axis
+	};
+	const int processEdgeMask[3][4] = { {3,2,1,0},{7,5,6,4},{11,10,9,8} };
+	int minSize = 1000000;		// arbitrary big number
+	int minIndex = 0;
+	int indices[4] = { -1, -1, -1, -1 };
+	bool flip = false;
+	bool signChange[4] = { false, false, false, false };
+
+	for (int i = 0; i < 4; i++)
+	{
+		const int edge = processEdgeMask[dir][i];
+		const int c1 = edgevmap[edge][0];
+		const int c2 = edgevmap[edge][1];
+
+		const int m1 = (node[i].m_children->field >> c1) & 1;
+		const int m2 = (node[i].m_children->field >> c2) & 1;
+
+		if (node[i].m_size < minSize)
+		{
+			minSize = node[i].m_size;
+			minIndex = i;
+			flip = m1 != MATERIAL_AIR;
+		}
+
+		indices[i] = node[i].index;
+
+		signChange[i] =
+			(m1 == MATERIAL_AIR && m2 != MATERIAL_AIR) ||
+			(m1 != MATERIAL_AIR && m2 == MATERIAL_AIR);
+	}
+
+	if (signChange[minIndex])
+	{
+		if (!flip)
+		{
+			indexBuffer.push_back(indices[0]);
+			indexBuffer.push_back(indices[1]);
+			indexBuffer.push_back(indices[3]);
+
+			indexBuffer.push_back(indices[0]);
+			indexBuffer.push_back(indices[3]);
+			indexBuffer.push_back(indices[2]);
+		}
+		else
+		{
+			indexBuffer.push_back(indices[0]);
+			indexBuffer.push_back(indices[3]);
+			indexBuffer.push_back(indices[1]);
+
+			indexBuffer.push_back(indices[0]);
+			indexBuffer.push_back(indices[2]);
+			indexBuffer.push_back(indices[3]);
+		}
+	}
 }

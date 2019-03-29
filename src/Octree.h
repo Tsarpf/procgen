@@ -10,6 +10,14 @@
 #include <memory>
 
 #include <glm/glm.hpp>
+struct Vertex
+{
+	glm::vec3 position;
+	glm::vec3 normal;
+};
+typedef std::vector<int> IndexBuffer;
+typedef std::vector<Vertex> VertexBuffer;
+
 
 struct OctreeChildren;
 
@@ -28,6 +36,7 @@ public:
 
 	const glm::vec3 m_min;
 	const int m_size;
+	int m_index;
 	bool IsLeaf() const;
 
 private:
@@ -36,17 +45,17 @@ private:
 	static Octree* ConstructLeaf(const int resolution, const glm::vec3 min);
 	static bool Sample(const glm::vec3 pos);
 
-	void CellProc();
-	void FaceProcX(const Octree&, const Octree&);
-	void FaceProcY(const Octree&, const Octree&);
-	void FaceProcZ(const Octree&, const Octree&);
-	void EdgeProcXY(const Octree&, const Octree&, const Octree&, const Octree&);
-	void EdgeProcXZ(const Octree&, const Octree&, const Octree&, const Octree&);
-	void EdgeProcYZ(const Octree&, const Octree&, const Octree&, const Octree&);
-	void ProcessEdge(const Octree&, const Octree&, const Octree&, const Octree&);
+	void CellProc(IndexBuffer& indexBuffer);
+	void FaceProcX(const Octree&, const Octree&, IndexBuffer& indexBuffer);
+	void FaceProcY(const Octree&, const Octree&, IndexBuffer& indexBuffer);
+	void FaceProcZ(const Octree&, const Octree&, IndexBuffer& indexBuffer);
+	void EdgeProcXY(const Octree&, const Octree&, const Octree&, const Octree&, IndexBuffer& indexBuffer);
+	void EdgeProcXZ(const Octree&, const Octree&, const Octree&, const Octree&, IndexBuffer& indexBuffer);
+	void EdgeProcYZ(const Octree&, const Octree&, const Octree&, const Octree&, IndexBuffer& indexBuffer);
+	void ProcessEdge(const Octree node[4] , int dir, IndexBuffer& indexBuffer);
 
-	void MeshFromOctree();
-	void GenerateVertexIndices();
+	void MeshFromOctree(IndexBuffer& indexBuffer);
+	void GenerateVertexIndices(VertexBuffer& vertexBuffer);
 
 	std::unique_ptr<OctreeChildren> m_children;
 
