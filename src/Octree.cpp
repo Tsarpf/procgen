@@ -406,7 +406,6 @@ void Octree::CellProc()
 
 void Octree::EdgeProcXY(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3)
 {
-	//todo checking if already leaf node, if so, pass current node instead of some child
 	if (n0.m_leaf && n1.m_leaf && n2.m_leaf && n3.m_leaf)
 	{
 		return ProcessEdge(n0, n1, n2, n3);
@@ -422,9 +421,8 @@ void Octree::EdgeProcXZ(const Octree& n0, const Octree& n1, const Octree& n2, co
 	{
 		return ProcessEdge(n0, n1, n2, n3);
 	}
-
-	EdgeProcXZ(*n0.m_children->children[5], *n1.m_children->children[4], *n2.m_children->children[1], *n3.m_children->children[0]);
-	EdgeProcXZ(*n0.m_children->children[7], *n1.m_children->children[6], *n2.m_children->children[3], *n3.m_children->children[2]);
+	EdgeProcXZ(LeafOrChild(n0, 5), LeafOrChild(n1, 4), LeafOrChild(n2, 1), LeafOrChild(n3, 0));
+	EdgeProcXZ(LeafOrChild(n0, 7), LeafOrChild(n1, 6), LeafOrChild(n2, 3), LeafOrChild(n3, 2));
 }
 void Octree::EdgeProcYZ(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3)
 {
@@ -433,55 +431,98 @@ void Octree::EdgeProcYZ(const Octree& n0, const Octree& n1, const Octree& n2, co
 	{
 		return ProcessEdge(n0, n1, n2, n3);
 	}
-
-	EdgeProcYZ(*n0.m_children->children[6], *n1.m_children->children[4], *n2.m_children->children[2], *n3.m_children->children[0]);
-	EdgeProcYZ(*n0.m_children->children[7], *n1.m_children->children[5], *n2.m_children->children[3], *n3.m_children->children[1]);
+	EdgeProcYZ(LeafOrChild(n0, 6), LeafOrChild(n1, 4), LeafOrChild(n2, 2), LeafOrChild(n3, 0));
+	EdgeProcYZ(LeafOrChild(n0, 7), LeafOrChild(n1, 5), LeafOrChild(n2, 3), LeafOrChild(n3, 1));
 }
 
 // Faces spawn four calls to faceproc, 
 // and four calls to edgeproc
 void Octree::FaceProcX(const Octree& n0, const Octree& n1)
 {
-	//todo checking if already leaf node, if so, pass current node instead of some child
-	FaceProcX(*n0.m_children->children[1], *n1.m_children->children[0]);
-	FaceProcX(*n0.m_children->children[3], *n1.m_children->children[2]);
-	FaceProcX(*n0.m_children->children[5], *n1.m_children->children[4]);
-	FaceProcX(*n0.m_children->children[7], *n1.m_children->children[6]);
+	//const std::tuple<int, int> pairs[] = {
+	const std::tuple<int, int> facePairs[] = {
+		{ 1, 0 },
+		{ 3, 2 },
+		{ 5, 4 },
+		{ 7, 6 },
+	};
+	const std::tuple<int, int, int, int> edgeXYPairs[] = {
+		{ 1, 0, 3, 2 },
+		{ 5, 4, 7, 6 },
+	};
+	const std::tuple<int, int, int, int> edgeXZPairs[] = {
+		{ 3, 2, 7, 6 },
+		{ 1, 0, 5, 4 },
+	};
 
-	EdgeProcXY(*n0.m_children->children[1], *n1.m_children->children[0], *n0.m_children->children[3], *n1.m_children->children[2]);
-	EdgeProcXY(*n0.m_children->children[5], *n1.m_children->children[4], *n0.m_children->children[7], *n1.m_children->children[6]);
+	for (const auto [a, b] : facePairs) {
+		FaceProcX(LeafOrChild(n0, a), LeafOrChild(n1, b));
+	}
 
-	EdgeProcXZ(*n0.m_children->children[3], *n1.m_children->children[2], *n0.m_children->children[7], *n1.m_children->children[6]);
-	EdgeProcXZ(*n0.m_children->children[1], *n1.m_children->children[0], *n0.m_children->children[5], *n1.m_children->children[4]);
+	for (const auto [a, b, c, d] : edgeXYPairs) {
+		EdgeProcXY(LeafOrChild(n0, a), LeafOrChild(n1, b), LeafOrChild(n0, c), LeafOrChild(n1, d));
+	}
+	for (const auto [a, b, c, d] : edgeXZPairs) {
+		EdgeProcXZ(LeafOrChild(n0, a), LeafOrChild(n1, b), LeafOrChild(n0, c), LeafOrChild(n1, d));
+	}
 }
 void Octree::FaceProcY(const Octree& n0, const Octree& n1)
 {
-	//todo checking if already leaf node, if so, pass current node instead of some child
-	FaceProcX(*n0.m_children->children[2], *n1.m_children->children[0]);
-	FaceProcX(*n0.m_children->children[1], *n1.m_children->children[1]);
-	FaceProcX(*n0.m_children->children[6], *n1.m_children->children[4]);
-	FaceProcX(*n0.m_children->children[7], *n1.m_children->children[5]);
+	const std::tuple<int, int> facePairs[] = {
+		{ 2, 0 },
+		{ 1, 1 },
+		{ 6, 4 },
+		{ 7, 5 },
+	};
+	const std::tuple<int, int, int, int> edgeXYPairs[] = {
+		{ 2, 3, 0, 1 },
+		{ 6, 7, 4, 5 },
+	};
+	const std::tuple<int, int, int, int> edgeYZPairs[] = {
+		{ 2, 0, 6, 4 },
+		{ 3, 1, 7, 5 },
+	};
 
-	EdgeProcXY(*n0.m_children->children[2], *n0.m_children->children[3], *n1.m_children->children[0], *n1.m_children->children[1]);
-	EdgeProcXY(*n0.m_children->children[6], *n0.m_children->children[7], *n1.m_children->children[4], *n1.m_children->children[5]);
+	for (const auto [a, b] : facePairs) {
+		FaceProcY(LeafOrChild(n0, a), LeafOrChild(n1, b));
+	}
 
-	EdgeProcYZ(*n0.m_children->children[2], *n1.m_children->children[0], *n0.m_children->children[6], *n1.m_children->children[4]);
-	EdgeProcYZ(*n0.m_children->children[3], *n1.m_children->children[1], *n0.m_children->children[7], *n1.m_children->children[5]);
+	for (const auto [a, b, c, d] : edgeXYPairs) {
+		EdgeProcXY(LeafOrChild(n0, a), LeafOrChild(n0, b), LeafOrChild(n1, c), LeafOrChild(n1, d));
+	}
+
+	for (const auto [a, b, c, d] : edgeYZPairs) {
+		EdgeProcXZ(LeafOrChild(n0, a), LeafOrChild(n1, b), LeafOrChild(n0, c), LeafOrChild(n1, d));
+	}
 }
 void Octree::FaceProcZ(const Octree& n0, const Octree& n1)
 {
-	//todo checking if already leaf node, if so, pass current node instead of some child
-	FaceProcX(*n0.m_children->children[4], *n1.m_children->children[0]);
-	FaceProcX(*n0.m_children->children[5], *n1.m_children->children[1]);
-	FaceProcX(*n0.m_children->children[6], *n1.m_children->children[2]);
-	FaceProcX(*n0.m_children->children[7], *n1.m_children->children[3]);
-	
+	const std::tuple<int, int> facePairs[] = {
+		{ 4, 0 },
+		{ 5, 1 },
+		{ 6, 2 },
+		{ 7, 3 },
+	};
+	const std::tuple<int, int, int, int> edgeXYPairs[] = {
+		{ 4, 6, 0, 2 },
+		{ 5, 7, 1, 3 },
+	};
+	const std::tuple<int, int, int, int> edgeYZPairs[] = {
+		{ 4, 5, 0, 1 },
+		{ 6, 7, 2, 3 },
+	};
 
-	EdgeProcYZ(*n0.m_children->children[4], *n0.m_children->children[6], *n1.m_children->children[0], *n1.m_children->children[2]);
-	EdgeProcYZ(*n0.m_children->children[5], *n0.m_children->children[7], *n1.m_children->children[1], *n1.m_children->children[3]);
+	for (const auto [a, b] : facePairs) {
+		FaceProcZ(LeafOrChild(n0, a), LeafOrChild(n1, b));
+	}
 
-	EdgeProcXZ(*n0.m_children->children[4], *n0.m_children->children[5], *n1.m_children->children[0], *n1.m_children->children[1]);
-	EdgeProcXZ(*n0.m_children->children[6], *n0.m_children->children[7], *n1.m_children->children[2], *n1.m_children->children[3]);
+	for (const auto [a, b, c, d] : edgeXYPairs) {
+		EdgeProcYZ(LeafOrChild(n0, a), LeafOrChild(n0, b), LeafOrChild(n1, c), LeafOrChild(n1, d));
+	}
+
+	for (const auto [a, b, c, d] : edgeYZPairs) {
+		EdgeProcXZ(LeafOrChild(n0, a), LeafOrChild(n0, b), LeafOrChild(n1, c), LeafOrChild(n1, d));
+	}
 }
 
 void Octree::ProcessEdge(const Octree&, const Octree&, const Octree&, const Octree&)
