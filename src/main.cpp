@@ -120,6 +120,7 @@ int main(void)
     GLuint triangleProgram = createTriangleProgram();
 
 
+	// Check noise lib works
     module::Perlin myModule;
     double value = myModule.GetValue(1.25, 0.75, 0.5);
     std::cout << value << std::endl;

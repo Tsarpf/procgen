@@ -10,7 +10,7 @@
 #include "Octree.h"
 #include "utils.h"
 
-const glm::vec3 CHILD_MIN_OFFSETS[] =
+const glm::ivec3 CHILD_MIN_OFFSETS[] =
 {
         glm::vec3(0,0,0),
         glm::vec3(0,0,1),
@@ -25,7 +25,7 @@ const glm::vec3 CHILD_MIN_OFFSETS[] =
 Octree::~Octree()
 {
     /////// NYI, should f.ex delete the OctreeChildren/children
-    printf("destroying Octree");
+    printf("destroying Octree\n");
 
 }
 
@@ -34,7 +34,7 @@ Octree::~Octree()
 Octree::Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min, int resolution)
 : m_children(std::move(children)), m_resolution(resolution), m_size(size), m_min(min), m_leaf(false)
 {
-    printf("with children min (%f, %f, %f), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
+    printf("with children min (%i, %i, %i), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
     //printf("min (%f, %f, %f), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
     //std::cout << "lapsoset" <<  m_children.get() << std::endl;
     printBinary(m_children->field);
@@ -45,11 +45,11 @@ Octree::Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min
 Octree::Octree(const int resolution, const int size, const glm::vec3 min)
     : m_resolution(resolution), m_size(size), m_min(min), m_children(nullptr), m_leaf(false)
 {
-    printf("new octree min (%f, %f, %f), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
+    printf("new octree min (%i, %i, %i), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
     /*
 	if (resolution == size) {
         std::cout << "creating a leaf" << std::endl;
-		ConstructLeaf(resolution, min);
+		ConstructLeafParent(resolution, min);
 	}
 	else
 	{
@@ -65,8 +65,8 @@ Octree::Octree(const int resolution, const int size, const glm::vec3 min)
 Octree::Octree(const int resolution, glm::vec3 min)
     : m_resolution(resolution), m_size(resolution), m_min(min), m_children(nullptr), m_leaf(true)
 {
-    m_children = std::unique_ptr<OctreeChildren>(nullptr);
-    printf("leaf node min (%f, %f, %f), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
+    //m_children = std::unique_ptr<OctreeChildren>(nullptr);
+    printf("leaf node constructor thang min (%i, %i, %i), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
     // NYI
     // Create leaf node draw data here.
     //std::cout << "creating leaf node at resolution: " << resolution << std::endl;
@@ -86,59 +86,31 @@ bool Octree::HasSomethingToRender()
     return true;
 }
 
-bool Octree::Sample(const glm::vec3 pos)
+float Sphere(const glm::vec3& worldPosition, const glm::vec3& origin, float radius)
 {
-    return pos.x == 0 ? true : false;
+	return glm::length(worldPosition - origin) - radius;
 }
 
-Octree* Octree::ConstructLeaf(const int resolution, const glm::vec3 min)
+float DensityFunction(const glm::vec3 pos)
 {
-    printf("construct leaf min (%f, %f, %f)\n", min.x, min.y, min.z);
-    uint8_t field = 0;
-    std::array<Octree*, 8> children = {};
-    for(float x = 0; x < 2; x++)
-    {
-        for(float y = 0; y < 2; y++)
-        {
-            for(float z = 0; z < 2; z++)
-            {
-                glm::ivec3 offset = glm::ivec3(x, y, z);
-                int cornerIdx = index(offset.x % 2, offset.y % 2, offset.z % 2, 2);
-                bool solid = Sample(glm::ivec3(min.x + offset.x, min.y + offset.y, min.z + offset.z));
-                if (solid)
-                {
-                    std::cout << "is solid" << std::endl;
-                    field |= (1 << cornerIdx);
-                    glm::vec3 childPos = glm::vec3(x + min.x, y + min.y, z + min.z) * (float)resolution;
+	return Sphere(pos, glm::vec3(4, 2, 4), 1.0);
+}
 
-					// TODO: micro opt: maybe do new Octree :ing for each child only after checking field != 0xFF
-                    children[cornerIdx] = new Octree(resolution, childPos);
-                }
-            }
-        }
-    }
+bool Sample(const glm::vec3 pos)
+{
+	printf("density at (%f, %f, %f) %f\n", pos.x, pos.y, pos.z, DensityFunction(pos));
+	return DensityFunction(pos) > 0;
+	//return pos.x == 0 ? true : false;
+}
 
-    //printBinary(field);
-    if (field != 0 || field != 255) 
-    {
-		// TODO: maybe check here field = 0xFF aka all children exist so we can possibly
-		// approximate all children with a single vertex. Check QEFs. Set m_leaf'ness.
+glm::vec3 CalculateSurfaceNormal(const glm::vec3& p)
+{
+	const float H = 0.001f;
+	const float dx = DensityFunction(p + glm::vec3(H, 0.f, 0.f)) - DensityFunction(p - glm::vec3(H, 0.f, 0.f));
+	const float dy = DensityFunction(p + glm::vec3(0.f, H, 0.f)) - DensityFunction(p - glm::vec3(0.f, H, 0.f));
+	const float dz = DensityFunction(p + glm::vec3(0.f, 0.f, H)) - DensityFunction(p - glm::vec3(0.f, 0.f, H));
 
-        std::cout << "field is over 0" << std::endl;
-        auto c = std::unique_ptr<OctreeChildren>(new OctreeChildren());
-        c->field = field;
-        //printBinary(c->field);
-        c->children = children;
-        Octree* o = new Octree(std::move(c), resolution * 2, min, resolution);
-        return o;
-    }
-	// debugging
-    //else
-    //{
-    //    std::cout << "not over 0 " << field << std::endl;
-    //}
-
-    return nullptr;
+	return glm::normalize(glm::vec3(dx, dy, dz));
 }
 
 void Octree::ConstructBottomUp(const int resolution, const int size, const glm::vec3 min)
@@ -152,11 +124,11 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
     int parentCount = childCount / 8;
     std::vector<std::unique_ptr<OctreeChildren>> currentSizeNodes(childCount);
     std::vector<std::unique_ptr<OctreeChildren>> parentSizeNodes(parentCount);
-    for(int i = 0; i < currentSizeNodes.size(); i++)
+    for(uint32_t i = 0; i < currentSizeNodes.size(); i++)
     {
         currentSizeNodes[i] = nullptr;
     }
-    for(int i = 0; i < parentSizeNodes.size(); i++)
+    for(uint32_t i = 0; i < parentSizeNodes.size(); i++)
     {
         parentSizeNodes[i] = nullptr;
     }
@@ -185,7 +157,7 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                     Octree* node = nullptr;
                     if (cubeSize == resolution * 2)
                     {
-                        node = Octree::ConstructLeaf(resolution, pos); // null if nothing to draw
+                        node = Octree::ConstructLeafParent(resolution, pos); // null if nothing to draw
                         if (node)
                         {
                             if (!parentSizeNodes[parentIdx])
@@ -196,7 +168,7 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                                     child = nullptr;
                                 }
                                 children[cornerIdx] = node;
-                                printf("node min stuff at constructbottomup (%f, %f, %f)\n", node->m_min.x, node->m_min.y, node->m_min.z);
+                                printf("node min stuff at constructbottomup (%i, %i, %i)\n", node->m_min.x, node->m_min.y, node->m_min.z);
                                 parentSizeNodes[parentIdx] = std::unique_ptr<OctreeChildren>(new OctreeChildren
                                 {
                                     (uint8_t)(1 << cornerIdx),
@@ -271,7 +243,7 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
             currentSizeNodes.push_back(std::move(node));
         }
         parentSizeNodes = std::vector<std::unique_ptr<OctreeChildren>>(parentCount);
-        for(int i = 0; i < parentSizeNodes.size(); i++)
+        for(uint32_t i = 0; i < parentSizeNodes.size(); i++)
         {
             parentSizeNodes[i] = nullptr;
         }
@@ -301,9 +273,8 @@ OctreeChildren* Octree::GetChildren() const
 
 void Octree::MeshFromOctree(IndexBuffer& indexBuffer)
 {
-	// TODO: Give vertex buffer as a parameter to generatevertexindices
-	//std::vector<int> vertexBuffer;
-	GenerateVertexIndices();
+	VertexBuffer vertexBuffer;
+	GenerateVertexIndices(vertexBuffer);
 
 	CellProc(indexBuffer);
 }
@@ -369,11 +340,11 @@ bool Octree::IsLeaf() const
 {
 	if (m_children && m_children->field > 0)
 	{
-		printf("checking children leafness? %i is leaf, but returning", false, m_leaf);
+		printf("checking children leafness? %i is leaf, but returning %i\n", false, m_leaf);
 	}
 	else
 	{
-		printf("checking children leafness? %i is leaf, but returning", true, m_leaf);
+		printf("checking children leafness? %i is leaf, but returning %i\n", true, m_leaf);
 	}
 
 	return m_leaf;
@@ -437,8 +408,8 @@ void Octree::EdgeProcXY(const Octree& n0, const Octree& n1, const Octree& n2, co
 	const int dir = 0;
 	if (n0.m_leaf && n1.m_leaf && n2.m_leaf && n3.m_leaf)
 	{
-		const Octree nodes[4] = {
-			n0, n1, n2, n3
+		const Octree* nodes[4] = {
+			&n0, &n1, &n2, &n3
 		};
 		return ProcessEdge(nodes, dir, indexBuffer);
 	}
@@ -451,8 +422,8 @@ void Octree::EdgeProcXZ(const Octree& n0, const Octree& n1, const Octree& n2, co
 	const int dir = 1;
 	if (n0.m_leaf && n1.m_leaf && n2.m_leaf && n3.m_leaf)
 	{
-		const Octree nodes[4] = {
-			n0, n1, n2, n3
+		const Octree* nodes[4] = {
+			&n0, &n1, &n2, &n3
 		};
 		return ProcessEdge(nodes, dir, indexBuffer);
 	}
@@ -464,8 +435,8 @@ void Octree::EdgeProcYZ(const Octree& n0, const Octree& n1, const Octree& n2, co
 	const int dir = 2;
 	if (n0.m_leaf && n1.m_leaf && n2.m_leaf && n3.m_leaf)
 	{
-		const Octree nodes[4] = {
-			n0, n1, n2, n3
+		const Octree* nodes[4] = {
+			&n0, &n1, &n2, &n3
 		};
 		return ProcessEdge(nodes, dir, indexBuffer);
 	}
@@ -563,7 +534,7 @@ void Octree::FaceProcZ(const Octree& n0, const Octree& n1, IndexBuffer& indexBuf
 	}
 }
 
-void Octree::ProcessEdge(const Octree node[4], int dir, IndexBuffer& indexBuffer)
+void Octree::ProcessEdge(const Octree* node[4], int dir, IndexBuffer& indexBuffer)
  {
 	/*
 	This function copied from https://github.com/nickgildea/DualContouringSample/blob/master/DualContouringSample/octree.cpp
@@ -603,17 +574,17 @@ void Octree::ProcessEdge(const Octree node[4], int dir, IndexBuffer& indexBuffer
 		const int c1 = edgevmap[edge][0];
 		const int c2 = edgevmap[edge][1];
 
-		const int m1 = (node[i].m_children->field >> c1) & 1;
-		const int m2 = (node[i].m_children->field >> c2) & 1;
+		const int m1 = (node[i]->m_children->field >> c1) & 1;
+		const int m2 = (node[i]->m_children->field >> c2) & 1;
 
-		if (node[i].m_size < minSize)
+		if (node[i]->m_size < minSize)
 		{
-			minSize = node[i].m_size;
+			minSize = node[i]->m_size;
 			minIndex = i;
 			flip = m1 != MATERIAL_AIR;
 		}
 
-		indices[i] = node[i].index;
+		indices[i] = node[i]->m_index;
 
 		signChange[i] =
 			(m1 == MATERIAL_AIR && m2 != MATERIAL_AIR) ||
@@ -643,4 +614,206 @@ void Octree::ProcessEdge(const Octree node[4], int dir, IndexBuffer& indexBuffer
 			indexBuffer.push_back(indices[3]);
 		}
 	}
+}
+
+glm::vec3 ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm::vec3& p1)
+{
+	/*
+	This function copied from https://github.com/nickgildea/DualContouringSample/blob/master/DualContouringSample/octree.cpp
+	Implementations of Octree member functions.
+	Copyright (C) 2011  Tao Ju
+	This library is free software; you can redistribute it and/or
+	modify it under the terms of the GNU Lesser General Public License
+	(LGPL) as published by the Free Software Foundation; either
+	version 2.1 of the License, or (at your option) any later version.
+	This library is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+	Lesser General Public License for more details.
+	You should have received a copy of the GNU Lesser General Public
+	License along with this library; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+	*/
+	// approximate the zero crossing by finding the min value along the edge
+	float minValue = 100000.f;
+	float t = 0.f;
+	float currentT = 0.f;
+	const int steps = 8;
+	const float increment = 1.f / (float)steps;
+	while (currentT <= 1.f)
+	{
+		const glm::vec3 p = p0 + ((p1 - p0) * currentT);
+		const float density = glm::abs(DensityFunction(p));
+		if (density < minValue)
+		{
+			minValue = density;
+			t = currentT;
+		}
+
+		currentT += increment;
+	}
+
+	return p0 + ((p1 - p0) * t);
+}
+
+Octree* ConstructLeaf(const int resolution, glm::ivec3 min)
+{
+	/*
+	This function copied from https://github.com/nickgildea/DualContouringSample/blob/master/DualContouringSample/octree.cpp, ConstructLeaf
+	Implementations of Octree member functions.
+	Copyright (C) 2011  Tao Ju
+	This library is free software; you can redistribute it and/or
+	modify it under the terms of the GNU Lesser General Public License
+	(LGPL) as published by the Free Software Foundation; either
+	version 2.1 of the License, or (at your option) any later version.
+	This library is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+	Lesser General Public License for more details.
+	You should have received a copy of the GNU Lesser General Public
+	License along with this library; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+	*/
+	const float QEF_ERROR = 1e-6f;
+	const int QEF_SWEEPS = 4;
+	const int MATERIAL_AIR = 0;
+	const int MATERIAL_SOLID = 1;
+	const int edgevmap[12][2] =
+	{
+		{0,4},{1,5},{2,6},{3,7},	// x-axis 
+		{0,2},{1,3},{4,6},{5,7},	// y-axis
+		{0,1},{2,3},{4,5},{6,7}		// z-axis
+	};
+	using namespace glm;
+
+
+	Octree* leaf = new Octree(resolution, min);
+
+	int corners = 0;
+	for (int i = 0; i < 8; i++)
+	{
+		//const glm::ivec3 cornerPos = leaf->min + CHILD_MIN_OFFSETS[i];
+		const ivec3 cornerPos = leaf->m_min + CHILD_MIN_OFFSETS[i];
+		const bool inside = !Sample(vec3(cornerPos));
+		//printf("density sample %i at (%i, %i, %i)\n", inside, cornerPos.x, cornerPos.y, cornerPos.z);
+		if (inside)
+		{
+		//	printf("inside sampled! at (%i, %i, %i)\n", inside, cornerPos.x, cornerPos.y, cornerPos.z);
+			corners |= (1 << i);
+		}
+	}
+
+	if (corners == 0 || corners == 255)
+	{
+		// voxel is full inside or outside the volume
+		printf("leaf completely in/out, not drawing\n");
+		delete leaf;
+		return nullptr;
+	}
+
+	// otherwise the voxel contains the surface, so find the edge intersections
+	const int MAX_CROSSINGS = 6;
+	int edgeCount = 0;
+	vec3 averageNormal(0.f);
+	svd::QefSolver qef;
+
+	for (int i = 0; i < 12 && edgeCount < MAX_CROSSINGS; i++)
+	{
+		const int c1 = edgevmap[i][0];
+		const int c2 = edgevmap[i][1];
+
+		const int m1 = (corners >> c1) & 1;
+		const int m2 = (corners >> c2) & 1;
+
+		if ((m1 == MATERIAL_AIR && m2 == MATERIAL_AIR) ||
+			(m1 == MATERIAL_SOLID && m2 == MATERIAL_SOLID))
+		{
+			// no zero crossing on this edge
+			continue;
+		}
+
+		const vec3 p1 = vec3(min + CHILD_MIN_OFFSETS[c1]);
+		const vec3 p2 = vec3(min + CHILD_MIN_OFFSETS[c2]);
+		const vec3 p = ApproximateZeroCrossingPosition(p1, p2);
+		const vec3 n = CalculateSurfaceNormal(p);
+		qef.add(p.x, p.y, p.z, n.x, n.y, n.z);
+
+		averageNormal += n;
+
+		edgeCount++;
+	}
+
+	svd::Vec3 qefPosition;
+	qef.solve(qefPosition, QEF_ERROR, QEF_SWEEPS, QEF_ERROR);
+
+	//OctreeDrawInfo* drawInfo = new OctreeDrawInfo;
+	leaf->m_drawPos = vec3(qefPosition.x, qefPosition.y, qefPosition.z);
+	leaf->m_qef = qef.getData();
+
+	const vec3 max = vec3(leaf->m_min + ivec3(leaf->m_size)); // why do we have to add this one's specific size? Shouldn't it always be 1?
+
+	if (leaf->m_drawPos.x < min.x || leaf->m_drawPos.x > max.x ||
+		leaf->m_drawPos.y < min.y || leaf->m_drawPos.y > max.y ||
+		leaf->m_drawPos.z < min.z || leaf->m_drawPos.z > max.z)
+	{
+		const auto& mp = qef.getMassPoint();
+		leaf->m_drawPos = vec3(mp.x, mp.y, mp.z);
+	}
+
+	leaf->m_averageNormal = glm::normalize(averageNormal / (float)edgeCount);
+	leaf->m_corners = corners;
+
+	return leaf;
+}
+
+Octree* Octree::ConstructLeafParent(const int resolution, const glm::vec3 min)
+{
+    printf("construct leaf min (%i, %i, %i)\n", min.x, min.y, min.z);
+	printf("leaf resolution %i\n", resolution);
+    uint8_t field = 0;
+    std::array<Octree*, 8> children = {};
+    for(float x = 0; x < 2; x++)
+    {
+        for(float y = 0; y < 2; y++)
+        {
+            for(float z = 0; z < 2; z++)
+            {
+                glm::ivec3 offset = glm::ivec3(x, y, z);
+                int cornerIdx = index(offset.x % 2, offset.y % 2, offset.z % 2, 2);
+
+				glm::vec3 childPos = glm::vec3(x + min.x, y + min.y, z + min.z) * (float)resolution;
+				Octree* child = ConstructLeaf(resolution, childPos);
+				if (child)
+				{
+                    std::cout << "leaf has something to draw yay" << std::endl;
+                    field |= (1 << cornerIdx);
+				}
+
+				// Set in any case to children array, so elements are not left with default values, but nullptr instead.
+				children[cornerIdx] = child;
+            }
+        }
+    }
+
+    //printBinary(field);
+    if (field != 0 || field != 255) 
+    {
+		// TODO: maybe check here field = 0xFF aka all children exist so we can possibly
+		// approximate all children with a single vertex. Check QEFs. Set m_leaf'ness.
+
+        std::cout << "field is over 0" << std::endl;
+        auto c = std::unique_ptr<OctreeChildren>(new OctreeChildren());
+        c->field = field;
+        //printBinary(c->field);
+        c->children = children;
+        Octree* o = new Octree(std::move(c), resolution * 2, min, resolution);
+        return o;
+    }
+	// debugging
+    //else
+    //{
+    //    std::cout << "not over 0 " << field << std::endl;
+    //}
+
+    return nullptr;
 }

@@ -5,6 +5,9 @@
 #ifndef PROJECT_OCTREE_H
 #define PROJECT_OCTREE_H
 
+#include "svd.h"
+#include "qef.h"
+
 #include <vector>
 #include <array>
 #include <memory>
@@ -15,9 +18,9 @@ struct Vertex
 	glm::vec3 position;
 	glm::vec3 normal;
 };
+
 typedef std::vector<int> IndexBuffer;
 typedef std::vector<Vertex> VertexBuffer;
-
 
 struct OctreeChildren;
 
@@ -34,15 +37,22 @@ public:
 
 	OctreeChildren* GetChildren() const;
 
-	const glm::vec3 m_min;
+	const glm::ivec3 m_min;
 	const int m_size;
-	int m_index;
 	bool IsLeaf() const;
+
+
+	// Draw info. Moving these behind a pointer might save space.
+	int m_index;
+	svd::QefData m_qef;
+	glm::vec3 m_drawPos;
+	glm::vec3 m_averageNormal;
+	int m_corners;
 
 private:
 	void ConstructBottomUp(const int maxResolution, const int size, const glm::vec3 min);
 	
-	static Octree* ConstructLeaf(const int resolution, const glm::vec3 min);
+	static Octree* ConstructLeafParent(const int resolution, const glm::vec3 min);
 	static bool Sample(const glm::vec3 pos);
 
 	void CellProc(IndexBuffer& indexBuffer);
@@ -52,7 +62,7 @@ private:
 	void EdgeProcXY(const Octree&, const Octree&, const Octree&, const Octree&, IndexBuffer& indexBuffer);
 	void EdgeProcXZ(const Octree&, const Octree&, const Octree&, const Octree&, IndexBuffer& indexBuffer);
 	void EdgeProcYZ(const Octree&, const Octree&, const Octree&, const Octree&, IndexBuffer& indexBuffer);
-	void ProcessEdge(const Octree node[4] , int dir, IndexBuffer& indexBuffer);
+	void ProcessEdge(const Octree* node[4] , int dir, IndexBuffer& indexBuffer);
 
 	void MeshFromOctree(IndexBuffer& indexBuffer);
 	void GenerateVertexIndices(VertexBuffer& vertexBuffer);
