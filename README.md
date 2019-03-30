@@ -9,7 +9,9 @@ cmake ..
 
 And enable C++17 features in your compiler. They're only used for structured bindings right now so easy to remove as well.
 
-If you're really reading this to find a licence, just assume everything written by me so far is WTFPL or whatever. 
+## Licensing
+Assume everything written by me so far is WTFPL or whatever. There are some LGPL functions (they specifically start with a comment noting the license) copied from here https://github.com/nickgildea/DualContouringSample, that are originally from the DC paper's example implementation.
+
 ## Dependencies
 
  * [GLFW](https://github.com/glfw/glfw)
