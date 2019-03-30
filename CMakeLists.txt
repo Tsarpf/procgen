@@ -33,11 +33,6 @@ add_library(glew STATIC
   ${GLEW_SOURCE_DIR}/include
 )
 
-# MESSAGE(STATUS "GLEW_LIBRARY:       " ${GLEW_LIBRARY} " pääs ")
-# target_link_libraries(glew ${GLFW_LIBRARIES})
-
-# link_libraries(glew)
-
 target_link_libraries(glew glfw ${GLEW_LIBRARY} ${OPENGL_LIBRARIES})
 
 add_definitions(
@@ -48,6 +43,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
+FILE(GLOB SRCFILES src/*.cpp)
 set(APP_NAME "dual-contouring")
 if (APPLE)
     if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/icon.icns)
@@ -56,7 +52,7 @@ if (APPLE)
         set_target_properties(${APP_NAME} PROPERTIES MACOSX_BUNDLE_ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/icon.icns)
     else ()
 
-        add_executable(${APP_NAME} MACOSX_BUNDLE src/main.cpp src/utils.cpp src/utils.h src/Octree.cpp src/Octree.h)
+        add_executable(${APP_NAME} MACOSX_BUNDLE ${SRCFILES})
     endif ()
 
     set_target_properties(${APP_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules/app.plist.in)
@@ -64,11 +60,9 @@ if (APPLE)
     set_target_properties(${APP_NAME} PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME ${APP_NAME})
     set_target_properties(${APP_NAME} PROPERTIES MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0")
     set_target_properties(${APP_NAME} PROPERTIES MACOSX_BUNDLE_LONG_VERSION_STRING "1.0")
-    set_target_properties(${APP_NAME} PROPERTIES MACOSX_BUNDLE_INFO_STRING "OpenGL boilerplate example app")
+    set_target_properties(${APP_NAME} PROPERTIES MACOSX_BUNDLE_INFO_STRING "Dual contouring OpenGL stuff")
 else()
-    FILE(GLOB SRCFILES src/*.cpp)
     add_executable(${APP_NAME} ${SRCFILES})
-    # add_executable(${APP_NAME} src/main.cpp src/utils.cpp src/utils.h)
 endif()
 
 target_link_libraries(${APP_NAME} glfw ${GLFW_LIBRARIES} glew noise-static)
