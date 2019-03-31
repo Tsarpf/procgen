@@ -574,12 +574,12 @@ void Octree::FaceProcZ(Octree* n0, Octree* n1, IndexBuffer& indexBuffer)
 		{ 7, 3 },
 	};
 	//same
-	const std::tuple<int, int, int, int> edgeXYPairs[] = {
+	const std::tuple<int, int, int, int> edgeYZPairs[] = {
 		{ 4, 6, 0, 2 },
 		{ 5, 7, 1, 3 },
 	};
 	//different but works
-	const std::tuple<int, int, int, int> edgeYZPairs[] = {
+	const std::tuple<int, int, int, int> edgeXZPairs[] = {
 		{ 4, 5, 0, 1 },
 		{ 6, 7, 2, 3 },
 	};
@@ -588,11 +588,11 @@ void Octree::FaceProcZ(Octree* n0, Octree* n1, IndexBuffer& indexBuffer)
 		FaceProcZ(LeafOrChild(n0, a), LeafOrChild(n1, b), indexBuffer);
 	}
 
-	for (const auto [a, b, c, d] : edgeXYPairs) {
+	for (const auto [a, b, c, d] : edgeYZPairs) {
 		EdgeProcYZ(LeafOrChild(n0, a), LeafOrChild(n0, b), LeafOrChild(n1, c), LeafOrChild(n1, d), indexBuffer);
 	}
 
-	for (const auto [a, b, c, d] : edgeYZPairs) {
+	for (const auto [a, b, c, d] : edgeXZPairs) {
 		EdgeProcXZ(LeafOrChild(n0, a), LeafOrChild(n0, b), LeafOrChild(n1, c), LeafOrChild(n1, d), indexBuffer);
 	}
 }
