@@ -122,16 +122,21 @@ Octree* GetOctreeDrawData(VertexBuffer& vBuffer, IndexBuffer& iBuffer, int size)
 	return tree;
 }
 
-void drawMesh(GLuint program, GLuint gl_vertexBuffer, GLuint gl_indexBuffer, int indexCount)
+void drawMesh(GLuint program, GLuint gl_vertexBuffer, GLuint gl_indexBuffer, const int indexCount, const float time)
 {
 	// reset model to identity
-    // glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 model = glm::mat4(1.0f);
     // model[0] = glm::vec4(1, 0, 0, 0);
     // model[1] = glm::vec4(0, 1, 0, 0);
     // model[2] = glm::vec4(0, 0, 1, 0);
     // model[3] = glm::vec4(0, 0, 0, 1);
-    // GLint modelUniform = glGetUniformLocation(program, "Model");
-	// glUniformMatrix4fv(program, 1, GL_FALSE, glm::value_ptr(model));
+
+	 GLint modelUniform = glGetUniformLocation(program, "Model");
+	 glm::mat4 rotate = glm::rotate(
+	 	model,
+	 	time * glm::radians(60.0f),
+	 	glm::vec3(0.0f, 1.0f, 0.0f));
+	 glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(rotate));
 
 	// draw it
 	bindBuffers(program, gl_vertexBuffer, gl_indexBuffer, sizeof(Vertex));
@@ -191,7 +196,7 @@ int main(void)
 
         //renderOctree(time, triangleProgram, octreeVAO, sizeof(Vertex) * vBuffer.size());
         //drawVisualization(time, triangleProgram, triangleVAO, genericCubePoints.size(), visualizationData);
-		drawMesh(triangleProgram, gl_vertexBuffer, gl_indexBuffer, iBuffer.size());
+		drawMesh(triangleProgram, gl_vertexBuffer, gl_indexBuffer, iBuffer.size(), time);
 
 
         glfwPollEvents();

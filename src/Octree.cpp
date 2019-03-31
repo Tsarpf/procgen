@@ -72,9 +72,17 @@ float Sphere(const glm::vec3& worldPosition, const glm::vec3& origin, float radi
 	return glm::length(worldPosition - origin) - radius;
 }
 
+// float Box(const glm::vec3& p, const glm::vec3& b)
+// {
+// 	//glm::vec3 d = abs(p) - b;
+// 	//return glm::length(glm::max( , 0.0))
+// 	//	+ min(max(d.x, max(d.y, d.z)), 0.0); // remove this line for an only partially signed sdf 
+// 	//NYI
+// }
+
 float DensityFunction(const glm::vec3 pos)
 {
-	return Sphere(pos, glm::vec3(4, 4, 4), 3.0);
+	return Sphere(pos, glm::vec3(4, 4, 4), 1.0);
 }
 
 bool Sample(const glm::vec3 pos)
@@ -425,7 +433,7 @@ void Octree::EdgeProcXY(Octree* n0, Octree* n1, Octree* n2, Octree* n3, IndexBuf
 	if (!n0 || !n1 || !n2 || !n3)
 		return;
 
-	const int dir = 0;
+	const int dir = 2;
 	if (n0->m_leaf && n1->m_leaf && n2->m_leaf && n3->m_leaf)
 	{
 		const Octree* nodes[4] = {
@@ -450,15 +458,15 @@ void Octree::EdgeProcXZ(Octree* n0, Octree* n1, Octree* n2, Octree* n3, IndexBuf
 		};
 		return ProcessEdge(nodes, dir, indexBuffer);
 	}
-	EdgeProcXZ(LeafOrChild(n0, 5), LeafOrChild(n1, 4), LeafOrChild(n2, 1), LeafOrChild(n3, 0), indexBuffer);
-	EdgeProcXZ(LeafOrChild(n0, 7), LeafOrChild(n1, 6), LeafOrChild(n2, 3), LeafOrChild(n3, 2), indexBuffer);
+	EdgeProcXZ(LeafOrChild(n0, 5), LeafOrChild(n1, 1), LeafOrChild(n2, 4), LeafOrChild(n3, 0), indexBuffer);
+	EdgeProcXZ(LeafOrChild(n0, 7), LeafOrChild(n1, 3), LeafOrChild(n2, 6), LeafOrChild(n3, 2), indexBuffer);
 }
 void Octree::EdgeProcYZ(Octree* n0, Octree* n1, Octree* n2, Octree* n3, IndexBuffer& indexBuffer)
 {
 	if (!n0 || !n1 || !n2 || !n3)
 		return;
 
-	const int dir = 2;
+	const int dir = 0;
 	if (n0->m_leaf && n1->m_leaf && n2->m_leaf && n3->m_leaf)
 	{
 		const Octree* nodes[4] = {
@@ -575,6 +583,13 @@ void Octree::FaceProcZ(Octree* n0, Octree* n1, IndexBuffer& indexBuffer)
 	}
 }
 
+
+const int edgevmap[12][2] =
+{
+	{0,4},{1,5},{2,6},{3,7},	// x-axis 
+	{0,2},{1,3},{4,6},{5,7},	// y-axis
+	{0,1},{2,3},{4,5},{6,7}		// z-axis
+};
 void Octree::ProcessEdge(const Octree* node[4], int dir, IndexBuffer& indexBuffer)
  {
 	/*
@@ -596,13 +611,8 @@ void Octree::ProcessEdge(const Octree* node[4], int dir, IndexBuffer& indexBuffe
 	const int MATERIAL_AIR = 0;
 	const int MATERIAL_SOLID = 1;
 
-	const int edgevmap[12][2] =
-	{
-		{0,4},{1,5},{2,6},{3,7},	// x-axis 
-		{0,2},{1,3},{4,6},{5,7},	// y-axis
-		{0,1},{2,3},{4,5},{6,7}		// z-axis
-	};
 	const int processEdgeMask[3][4] = { {3,2,1,0},{7,5,6,4},{11,10,9,8} };
+	//const int processEdgeMask[3][4] = { {0,1,2,3},{4,5,6,7},{8,9,10,11} };
 	int minSize = 1000000;		// arbitrary big number
 	int minIndex = 0;
 	int indices[4] = { -1, -1, -1, -1 };
@@ -719,12 +729,6 @@ Octree* ConstructLeaf(const int resolution, glm::ivec3 min)
 	const int QEF_SWEEPS = 4;
 	const int MATERIAL_AIR = 0;
 	const int MATERIAL_SOLID = 1;
-	const int edgevmap[12][2] =
-	{
-		{0,4},{1,5},{2,6},{3,7},	// x-axis 
-		{0,2},{1,3},{4,6},{5,7},	// y-axis
-		{0,1},{2,3},{4,5},{6,7}		// z-axis
-	};
 	using namespace glm;
 
 

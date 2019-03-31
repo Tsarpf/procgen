@@ -218,7 +218,7 @@ std::tuple<GLuint, GLuint> indexedCubeTest(GLuint program)
 
 	//glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
+	//glDisable(GL_CULL_FACE);
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -390,10 +390,10 @@ GLuint createCubeVAO(std::vector<float>& points) {
 
 void setupProjection(GLuint program) 
 {
-    glm::vec3 eye(-8, 12, 12);
+    glm::vec3 eye(12, 6, 12);
     glm::mat4 view = glm::lookAt(
         eye,
-        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 4.0f, 0.0f),
         glm::vec3(0.0f, 1.f, 0.f)
     );
 
