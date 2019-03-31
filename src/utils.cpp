@@ -47,13 +47,13 @@ GLFWwindow* initialize()
     if (!glfwInit())
         exit(EXIT_FAILURE);
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    //glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    window = glfwCreateWindow(800, 600, "Dual contouring methods", NULL, NULL);
+    window = glfwCreateWindow(1280, 768, "Dual contouring methods", NULL, NULL);
     if (!window) {
         glfwTerminate();
         exit(EXIT_FAILURE);
@@ -69,9 +69,165 @@ GLFWwindow* initialize()
         exit(1);
     }
 
+	const GLubyte* renderer = glGetString(GL_RENDERER);
+	const GLubyte* version = glGetString(GL_VERSION);
+	printf("Renderer: %s\n", renderer);
+	printf("OpenGL version supported %s\n", version);
+
 
     glfwSetKeyCallback(window, key_callback);
     return window;
+}
+
+void bindBuffers(GLuint program, GLuint vertex, GLuint indices, int stride)
+{
+    GLint posAttrib = glGetAttribLocation(program, "position");
+	glEnableVertexAttribArray(posAttrib);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex);
+	glVertexAttribPointer(
+		posAttrib, // attribute
+		3,                 // number of elements per vertex, here (x,y,z)
+		GL_FLOAT,          // the type of each element
+		GL_FALSE,          // take our values as-is
+		stride,                 // no extra data between each position
+		0                  // offset of first element
+	);
+
+    GLint colAttrib = glGetAttribLocation(program, "inColor");
+	glEnableVertexAttribArray(colAttrib);
+	//glBindBuffer(GL_ARRAY_BUFFER, color);
+	glVertexAttribPointer(
+		colAttrib, // attribute
+		3,                 // number of elements per vertex, here (R,G,B)
+		GL_FLOAT,          // the type of each element
+		GL_FALSE,          // take our values as-is
+		stride,                 // no extra data between each position
+		(void*)(3 * sizeof(float))                  // offset of first element
+	);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
+	//glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, 0);
+}
+
+std::tuple<GLuint, GLuint> indexedBufferSetup(GLuint program, const VertexBuffer& verts, const IndexBuffer& inds)
+{
+	GLuint vbo_cube_vertices;
+	GLuint ibo_cube_elements;
+
+	glGenBuffers(1, &vbo_cube_vertices);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_cube_vertices);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * verts.size(), verts.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &ibo_cube_elements);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_cube_elements);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * inds.size(), inds.data(), GL_STATIC_DRAW);
+
+	//int size;  glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
+	//printf("size 1 %i\n", size);
+	//printf("size 2 %f\n", size / sizeof(GLushort));
+
+	//glEnable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+	//glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_CULL_FACE);
+    //glEnable(GL_BACK);
+    glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
+
+	//glViewport(0, 0, 1280, 768);
+
+	//int size;  glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
+	//int count = size / sizeof(GLushort);
+	//printf("count %i \n", count);
+	//glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, 0);
+
+	return std::tuple(vbo_cube_vertices, ibo_cube_elements);
+}
+
+std::tuple<GLuint, GLuint> indexedCubeTest(GLuint program)
+{
+	GLuint vbo_cube_vertices;
+	GLuint ibo_cube_elements;
+
+	GLfloat cube_vertices[] = {
+		// front		   // front colors
+		-1.0, -1.0,  1.0,  1.0, 0.0, 0.0,
+		 1.0, -1.0,  1.0,  0.0, 1.0, 0.0,
+		 1.0,  1.0,  1.0,  0.0, 0.0, 1.0,
+		-1.0,  1.0,  1.0,  1.0, 1.0, 1.0,
+		// back            // back colors
+		-1.0, -1.0, -1.0,  1.0, 0.0, 0.0,
+		 1.0, -1.0, -1.0,  0.0, 1.0, 0.0,
+		 1.0,  1.0, -1.0,  0.0, 0.0, 1.0,
+		-1.0,  1.0, -1.0,  1.0, 1.0, 1.0,
+	};
+	//GLfloat cube_vertices[] = {
+	//	// front
+	//	-1.0, -1.0,  1.0,  1.0, 0.0, 0.0,
+	//	 1.0, -1.0,  1.0,  0.0, 1.0, 0.0,
+	//	 1.0,  1.0,  1.0,  0.0, 0.0, 1.0,
+	//	-1.0,  1.0,  1.0,  1.0, 1.0, 1.0,
+	//	// back            // back colors
+	//	-1.0, -1.0, -1.0,  1.0, 0.0, 0.0,
+	//	 1.0, -1.0, -1.0,  0.0, 1.0, 0.0,
+	//	 1.0,  1.0, -1.0,  0.0, 0.0, 1.0,
+	//	-1.0,  1.0, -1.0,  1.0, 1.0, 1.0,
+	//};
+	glGenBuffers(1, &vbo_cube_vertices);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_cube_vertices);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
+
+	GLushort cube_elements[] = {
+		// front
+		0, 1, 2,
+		2, 3, 0,
+		// top
+		1, 5, 6,
+		6, 2, 1,
+		// back
+		7, 6, 5,
+		5, 4, 7,
+		// bottom
+		4, 0, 3,
+		3, 7, 4,
+		// left
+		4, 5, 1,
+		1, 0, 4,
+		// right
+		3, 2, 6,
+		6, 7, 3,
+	};
+	glGenBuffers(1, &ibo_cube_elements);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_cube_elements);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_elements), cube_elements, GL_STATIC_DRAW);
+
+
+	int size;  glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
+	printf("size 1 %i\n", size);
+	printf("size 2 %f\n", size / sizeof(GLushort));
+
+	//glEnable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+	//glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_CULL_FACE);
+    //glEnable(GL_BACK);
+    glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
+
+	//glViewport(0, 0, 1280, 768);
+
+	//int size;  glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
+	//int count = size / sizeof(GLushort);
+	//printf("count %i \n", count);
+	//glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, 0);
+
+	return std::tuple(vbo_cube_vertices, ibo_cube_elements);
 }
 
 void stop(GLFWwindow* window)
@@ -130,30 +286,6 @@ bool checkProgramErrors (GLuint program) {
     return true;
 }
 
-// Attrib pointers bind to specific VAOs, should probabaly add these right after
-// binding the VAO?
-void setAttribPointers(GLuint program)
-{
-	int stride = 9 * sizeof(float); // should use sizeof vertex struct for this
-    // three position elements per vertex
-    GLint posAttrib = glGetAttribLocation(program, "position");
-    printf("%i posAttrib\n", posAttrib);
-    glEnableVertexAttribArray(posAttrib);
-    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, stride, NULL);
-
-    GLint colorAttrib = glGetAttribLocation(program, "inColor");
-    printf("%i colorAttrib\n", colorAttrib);
-    glEnableVertexAttribArray(colorAttrib);
-	void* offset = (void*)(3*sizeof(float));
-    glVertexAttribPointer(colorAttrib, 3, GL_FLOAT, GL_FALSE, stride, offset);
-
-    GLint normalAttrib = glGetAttribLocation(program, "normal");
-    printf("%i normalAttrib\n", normalAttrib);
-    glEnableVertexAttribArray(normalAttrib);
-	offset = (void*)(6 * sizeof(float));
-    glVertexAttribPointer(normalAttrib, 3, GL_FLOAT, GL_FALSE, stride, offset);
-}
-
 GLuint createIndexVAO(const VertexBuffer& vb, const IndexBuffer& ib)
 {
 	GLuint vbo = 0;
@@ -170,10 +302,10 @@ GLuint createIndexVAO(const VertexBuffer& vb, const IndexBuffer& ib)
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 
 	// clean up?
-	glBindVertexArray(0);
+	// glBindVertexArray(0);
 	return vao;
 }
 
@@ -233,7 +365,6 @@ GLuint createVAO(float* pointArray, int length)
     return vao;
 }
 
-
 GLuint createTriangleVAO() {
     float points[] = {
             0.0f,  0.5f,  0.0f,
@@ -252,7 +383,7 @@ GLuint createCubeVAO(std::vector<float>& points) {
 
 void setupProjection(GLuint program) 
 {
-    glm::vec3 eye(-10, 32, 32);
+    glm::vec3 eye(10, 12, 12);
     glm::mat4 view = glm::lookAt(
         eye,
         glm::vec3(0.0f, 0.0f, 0.0f),
@@ -263,7 +394,7 @@ void setupProjection(GLuint program)
     model[0] = glm::vec4(1, 0, 0, 0);
     model[1] = glm::vec4(0, 1, 0, 0);
     model[2] = glm::vec4(0, 0, 1, 0);
-    //model[3] = glm::vec4(0, 0, 0, 1);
+    model[3] = glm::vec4(0, 0, 0, 1);
     GLint modelUniform = glGetUniformLocation(program, "Model");
     glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 
@@ -274,7 +405,7 @@ void setupProjection(GLuint program)
     glm::mat4 proj = glm::perspective
     (
         glm::radians(45.0f),
-        800.0f / 600.0f,
+        1280.0f / 768.0f,
         0.1f,
         200.0f
     );
@@ -335,6 +466,7 @@ std::vector<float> cubePoints() {
         0, 0, 0,    1, 0, 0,    1, 0, 0,
         0, 0, 1,    0, 1, 0,    0, 1, 0,
         0, 1, 1,    0, 0, 1,    0, 0, 1,
+
                                 
         0, 0, 0,    1, 0, 0,    1, 0, 0,
         0, 1, 1,    0, 0, 1,    0, 0, 1,

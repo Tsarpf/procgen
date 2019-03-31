@@ -19,9 +19,9 @@ GLuint createTriangleProgram();
 GLuint createTriangleVAO();
 GLuint createCubeVAO(std::vector<float>&);
 GLuint createIndexVAO(const VertexBuffer& vb, const IndexBuffer& ib);
-GLuint createVAO();
-void setAttribPointers(GLuint program);
 void setupProjection(GLuint program);
+std::tuple<GLuint, GLuint> indexedCubeTest(GLuint program);
+void bindBuffers(GLuint program, GLuint vertex, GLuint indices, int stride);
 std::vector<float> cubePoints();
 
 struct VizData {

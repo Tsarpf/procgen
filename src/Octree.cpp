@@ -46,17 +46,6 @@ Octree::Octree(const int resolution, const int size, const glm::vec3 min)
     : m_resolution(resolution), m_size(size), m_min(min), m_children(nullptr), m_leaf(false)
 {
     printf("new octree min (%i, %i, %i), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
-    /*
-	if (resolution == size) {
-        std::cout << "creating a leaf" << std::endl;
-		ConstructLeafParent(resolution, min);
-	}
-	else
-	{
-        std::cout << "constructing from bottom up" << std::endl;
-		ConstructBottomUp(resolution, size, min);
-	}
-    */
     std::cout << "constructing from bottom up" << std::endl;
     ConstructBottomUp(resolution, size, min);
 }
@@ -290,10 +279,10 @@ void Octree::GenerateVertexIndices(VertexBuffer& vertexBuffer)
 	{
 		m_index = vertexBuffer.size();
 		// NYI vertex contents
-		glm::vec3 padding = { 0, 0, 0 };
+		glm::vec3 color = { 255, 255, 0 };
 		Vertex v = {
 			m_drawPos,
-			padding, // could be color, not used.
+			color,
 			m_averageNormal
 		};
 		vertexBuffer.push_back(v);
