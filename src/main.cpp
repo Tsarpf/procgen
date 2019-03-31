@@ -126,17 +126,19 @@ void drawMesh(GLuint program, GLuint gl_vertexBuffer, GLuint gl_indexBuffer, con
 {
 	// reset model to identity
     glm::mat4 model = glm::mat4(1.0f);
-    // model[0] = glm::vec4(1, 0, 0, 0);
-    // model[1] = glm::vec4(0, 1, 0, 0);
-    // model[2] = glm::vec4(0, 0, 1, 0);
-    // model[3] = glm::vec4(0, 0, 0, 1);
+    model[0] = glm::vec4(1, 0, 0, 0);
+    model[1] = glm::vec4(0, 1, 0, 0);
+    model[2] = glm::vec4(0, 0, 1, 0);
+    model[3] = glm::vec4(0, 0, 0, 1);
 
-	 GLint modelUniform = glGetUniformLocation(program, "Model");
-	 glm::mat4 rotate = glm::rotate(
-	 	model,
-	 	time * glm::radians(60.0f),
-	 	glm::vec3(0.0f, 1.0f, 0.0f));
-	 glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(rotate));
+	model = glm::translate(model, vec3(-5, -5, -5));
+
+	GLint modelUniform = glGetUniformLocation(program, "Model");
+	glm::mat4 rotate = glm::rotate(
+		model,
+		time * glm::radians(60.0f),
+		glm::vec3(0.0f, 1.0f, 0.0f));
+	//glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(rotate));
 
 	// draw it
 	bindBuffers(program, gl_vertexBuffer, gl_indexBuffer, sizeof(Vertex));
@@ -154,7 +156,7 @@ int main(void)
 
 	 VertexBuffer vBuffer;
 	 IndexBuffer iBuffer;
-	 Octree* tree = GetOctreeDrawData(vBuffer, iBuffer, 8);
+	 Octree* tree = GetOctreeDrawData(vBuffer, iBuffer, 16);
 
 	 printf("sizeof vertex %i \n", sizeof(Vertex));
 	 printf("sizeof float %i \n", sizeof(float));

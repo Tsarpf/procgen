@@ -72,17 +72,24 @@ float Sphere(const glm::vec3& worldPosition, const glm::vec3& origin, float radi
 	return glm::length(worldPosition - origin) - radius;
 }
 
-// float Box(const glm::vec3& p, const glm::vec3& b)
-// {
-// 	//glm::vec3 d = abs(p) - b;
-// 	//return glm::length(glm::max( , 0.0))
-// 	//	+ min(max(d.x, max(d.y, d.z)), 0.0); // remove this line for an only partially signed sdf 
-// 	//NYI
-// }
+float Box(const glm::vec3& p, const glm::vec3& b)
+{
+	glm::vec3 d = abs(p) - b;
+	glm::vec3 maxed(0);
+	for (int i = 0; i < 3; i++)
+	{
+		maxed[i] = std::max(d[i], 0.f);
+	}
+	return glm::length(maxed) + std::min(std::max(d.x, std::max(d.y, d.z)), 0.f);
+	//return glm::length(glm::max( , 0.0))
+	//	+ min(max(d.x, max(d.y, d.z)), 0.0); // remove this line for an only partially signed sdf 
+	//NYI
+}
 
 float DensityFunction(const glm::vec3 pos)
 {
-	return Sphere(pos, glm::vec3(4, 4, 4), 1.0);
+	//return Sphere(pos, glm::vec3(8, 8, 8), 5.0);
+	return Box(pos - glm::vec3(8,8,8), glm::vec3(5, 5, 5));
 }
 
 bool Sample(const glm::vec3 pos)
@@ -123,14 +130,13 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
     }
     while (cubeSize != size)
     {
-        std::cout << "cube size" << cubeSize << std::endl;
+        std::cout << "cube size " << cubeSize << std::endl;
         for (int x = 0; x < size; x += cubeSize)
         {
             for (int y = 0; y < size; y += cubeSize)
             {
                 for (int z = 0; z < size; z += cubeSize)
                 {
-                    std::cout << "ses x, y, z: " << x << y << z << std::endl;
                     printf("sos xyz (%i, %i, %i)\n", x, y, z);
 
                     const int childIdxX = x / cubeSize;
@@ -187,7 +193,7 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                             // Create a new octree node whose children are the ones created in previous
                             // loop iterations parents that are now currentSized
 							int field = currentSizeNodes[childIdx]->field;
-							if (field == 0 || field == 255)
+							if (field == 0)
 							{
 								// just skip adding this anywhere
 								printf("skipping (%i, %i, %i) with cubesize %i\n", x, y, z, cubeSize);
@@ -372,8 +378,8 @@ void Octree::CellProc(IndexBuffer& indexBuffer)
 		// X is dir 2 in example
 		const std::tuple<int, int> xPairs[] = {
 			{ 0, 1 },
-			{ 4, 5 },
 			{ 2, 3 },
+			{ 4, 5 },
 			{ 6, 7 },
 		};
 		// Y is dir 1 in example
@@ -458,8 +464,8 @@ void Octree::EdgeProcXZ(Octree* n0, Octree* n1, Octree* n2, Octree* n3, IndexBuf
 		};
 		return ProcessEdge(nodes, dir, indexBuffer);
 	}
-	EdgeProcXZ(LeafOrChild(n0, 5), LeafOrChild(n1, 1), LeafOrChild(n2, 4), LeafOrChild(n3, 0), indexBuffer);
-	EdgeProcXZ(LeafOrChild(n0, 7), LeafOrChild(n1, 3), LeafOrChild(n2, 6), LeafOrChild(n3, 2), indexBuffer);
+	EdgeProcXZ(LeafOrChild(n0, 5), LeafOrChild(n1, 4), LeafOrChild(n2, 1), LeafOrChild(n3, 0), indexBuffer);
+	EdgeProcXZ(LeafOrChild(n0, 7), LeafOrChild(n1, 6), LeafOrChild(n2, 3), LeafOrChild(n3, 2), indexBuffer);
 }
 void Octree::EdgeProcYZ(Octree* n0, Octree* n1, Octree* n2, Octree* n3, IndexBuffer& indexBuffer)
 {
@@ -492,10 +498,13 @@ void Octree::FaceProcX(Octree* n0, Octree* n1, IndexBuffer& indexBuffer)
 		{ 5, 4 },
 		{ 7, 6 },
 	};
+
 	const std::tuple<int, int, int, int> edgeXYPairs[] = {
 		{ 1, 0, 3, 2 },
 		{ 5, 4, 7, 6 },
 	};
+
+	//different
 	const std::tuple<int, int, int, int> edgeXZPairs[] = {
 		{ 3, 2, 7, 6 },
 		{ 1, 0, 5, 4 },
@@ -522,14 +531,16 @@ void Octree::FaceProcY(Octree* n0, Octree* n1, IndexBuffer& indexBuffer)
 
 	const std::tuple<int, int> facePairs[] = {
 		{ 2, 0 },
-		{ 1, 1 },
 		{ 6, 4 },
+		{ 3, 1 },
 		{ 7, 5 },
 	};
+	//same
 	const std::tuple<int, int, int, int> edgeXYPairs[] = {
 		{ 2, 3, 0, 1 },
 		{ 6, 7, 4, 5 },
 	};
+	//same
 	const std::tuple<int, int, int, int> edgeYZPairs[] = {
 		{ 2, 0, 6, 4 },
 		{ 3, 1, 7, 5 },
