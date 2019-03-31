@@ -38,7 +38,6 @@ void printBinary(uint8_t field)
     std::cout << output << std::endl;
 }
 
-
 GLFWwindow* initialize()
 {
     GLFWwindow *window;
@@ -131,20 +130,52 @@ bool checkProgramErrors (GLuint program) {
     return true;
 }
 
+// Attrib pointers bind to specific VAOs, should probabaly add these right after
+// binding the VAO?
 void setAttribPointers(GLuint program)
 {
+	int stride = 9 * sizeof(float); // should use sizeof vertex struct for this
     // three position elements per vertex
     GLint posAttrib = glGetAttribLocation(program, "position");
     printf("%i posAttrib\n", posAttrib);
     glEnableVertexAttribArray(posAttrib);
-    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), NULL);
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, stride, NULL);
 
     GLint colorAttrib = glGetAttribLocation(program, "inColor");
     printf("%i colorAttrib\n", colorAttrib);
     glEnableVertexAttribArray(colorAttrib);
-    glVertexAttribPointer(colorAttrib, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(2*sizeof(float)));
+	void* offset = (void*)(3*sizeof(float));
+    glVertexAttribPointer(colorAttrib, 3, GL_FLOAT, GL_FALSE, stride, offset);
+
+    GLint normalAttrib = glGetAttribLocation(program, "normal");
+    printf("%i normalAttrib\n", normalAttrib);
+    glEnableVertexAttribArray(normalAttrib);
+	offset = (void*)(6 * sizeof(float));
+    glVertexAttribPointer(normalAttrib, 3, GL_FLOAT, GL_FALSE, stride, offset);
 }
 
+GLuint createIndexVAO(const VertexBuffer& vb, const IndexBuffer& ib)
+{
+	GLuint vbo = 0;
+	glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, vb.size() * sizeof(Vertex), vb.data(), GL_STATIC_DRAW);
+
+	GLuint ibo = 0;
+	glGenBuffers(1, &ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * ib.size(), ib.data(), GL_STATIC_DRAW);
+
+    GLuint vao = 0;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+
+	// clean up?
+	glBindVertexArray(0);
+	return vao;
+}
 
 GLuint createTriangleProgram()
 {
@@ -221,7 +252,7 @@ GLuint createCubeVAO(std::vector<float>& points) {
 
 void setupProjection(GLuint program) 
 {
-    glm::vec3 eye(-5, 15, 15);
+    glm::vec3 eye(-10, 32, 32);
     glm::mat4 view = glm::lookAt(
         eye,
         glm::vec3(0.0f, 0.0f, 0.0f),
@@ -229,8 +260,8 @@ void setupProjection(GLuint program)
     );
 
     glm::mat4 model = glm::mat4(1.0f);
-    model[0] = glm::vec4(3, 0, 0, 0);
-    model[1] = glm::vec4(0, 2, 0, 0);
+    model[0] = glm::vec4(1, 0, 0, 0);
+    model[1] = glm::vec4(0, 1, 0, 0);
     model[2] = glm::vec4(0, 0, 1, 0);
     //model[3] = glm::vec4(0, 0, 0, 1);
     GLint modelUniform = glGetUniformLocation(program, "Model");
@@ -245,7 +276,7 @@ void setupProjection(GLuint program)
         glm::radians(45.0f),
         800.0f / 600.0f,
         0.1f,
-        100.0f
+        200.0f
     );
     GLint projUniform = glGetUniformLocation(program, "Projection");
     glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(proj));
@@ -282,59 +313,59 @@ std::vector<float> cubePoints() {
     std::vector<float> points =
     {
         // front face
-        // pos      // color
-        1, 0, 0,    1, 0, 0,
-        0, 1, 0,    0, 1, 0,
-        1, 1, 0,    0, 0, 1,
-
-        1, 0, 0,    1, 0, 0,
-        0, 0, 0,    0, 1, 0,
-        0, 1, 0,    0, 0, 1,
-
-        // back
-        1, 0, 1,    1, 0, 0,
-        1, 1, 1,    0, 1, 0,
-        0, 1, 1,    0, 0, 1,
-
-        1, 0, 1,    1, 0, 0,
-        0, 1, 1,    0, 1, 0,
-        0, 0, 1,    0, 0, 1,
-
-        // left
-        0, 0, 0,    1, 0, 0,
-        0, 0, 1,    0, 1, 0,
-        0, 1, 1,    0, 0, 1,
-
-        0, 0, 0,    1, 0, 0,
-        0, 1, 1,    0, 0, 1,
-        0, 1, 0,    0, 1, 0,
-
-        // right
-        1, 0, 0,    1, 0, 0,
-        1, 1, 1,    0, 1, 0,
-        1, 0, 1,    0, 0, 1,
-
-        1, 0, 0,    1, 0, 0,
-        1, 1, 0,    0, 0, 1,
-        1, 1, 1,    0, 1, 0,
-
-        // top
-        0, 1, 0,    1, 0, 0,
-        1, 1, 1,    0, 0, 1,
-        1, 1, 0,    0, 1, 0,
-
-        0, 1, 0,    1, 0, 0,
-        0, 1, 1,    0, 0, 1,
-        1, 1, 1,    0, 1, 0,
-
-        // bottom
-        0, 0, 0,    1, 0, 0,
-        1, 0, 0,    0, 1, 0,
-        1, 0, 1,    0, 0, 0,
-
-        0, 0, 0,    1, 0, 0,
-        1, 0, 1,    0, 0, 1,
-        0, 0, 1,    0, 1, 0,
+        // pos      // color    // normal, here just placeholding not used
+        1, 0, 0,    1, 0, 0,    1, 0, 0,
+        0, 1, 0,    0, 1, 0,    0, 1, 0,
+        1, 1, 0,    0, 0, 1,    0, 0, 1,
+                                
+        1, 0, 0,    1, 0, 0,    1, 0, 0,
+        0, 0, 0,    0, 1, 0,    0, 1, 0,
+        0, 1, 0,    0, 0, 1,    0, 0, 1,
+                                
+        // back                 
+        1, 0, 1,    1, 0, 0,    1, 0, 0,
+        1, 1, 1,    0, 1, 0,    0, 1, 0,
+        0, 1, 1,    0, 0, 1,    0, 0, 1,
+                                
+        1, 0, 1,    1, 0, 0,    1, 0, 0,
+        0, 1, 1,    0, 1, 0,    0, 1, 0,
+        0, 0, 1,    0, 0, 1,    0, 0, 1,
+                                
+        // left                 
+        0, 0, 0,    1, 0, 0,    1, 0, 0,
+        0, 0, 1,    0, 1, 0,    0, 1, 0,
+        0, 1, 1,    0, 0, 1,    0, 0, 1,
+                                
+        0, 0, 0,    1, 0, 0,    1, 0, 0,
+        0, 1, 1,    0, 0, 1,    0, 0, 1,
+        0, 1, 0,    0, 1, 0,    0, 1, 0,
+                                
+        // right                
+        1, 0, 0,    1, 0, 0,    1, 0, 0,
+        1, 1, 1,    0, 1, 0,    0, 1, 0,
+        1, 0, 1,    0, 0, 1,    0, 0, 1,
+                                
+        1, 0, 0,    1, 0, 0,    1, 0, 0,
+        1, 1, 0,    0, 0, 1,    0, 0, 1,
+        1, 1, 1,    0, 1, 0,    0, 1, 0,
+                                
+        // top                  
+        0, 1, 0,    1, 0, 0,    1, 0, 0,
+        1, 1, 1,    0, 0, 1,    0, 0, 1,
+        1, 1, 0,    0, 1, 0,    0, 1, 0,
+                                
+        0, 1, 0,    1, 0, 0,    1, 0, 0,
+        0, 1, 1,    0, 0, 1,    0, 0, 1,
+        1, 1, 1,    0, 1, 0,    0, 1, 0,
+                                
+        // bottom               
+        0, 0, 0,    1, 0, 0,    1, 0, 0,
+        1, 0, 0,    0, 1, 0,    0, 1, 0,
+        1, 0, 1,    0, 0, 0,    0, 0, 0,
+                                
+        0, 0, 0,    1, 0, 0,    1, 0, 0,
+        1, 0, 1,    0, 0, 1,    0, 0, 1,
+        0, 0, 1,    0, 1, 0,    0, 1, 0,
     };
     return points;
 }

@@ -18,6 +18,7 @@ void stop(GLFWwindow* window);
 GLuint createTriangleProgram();
 GLuint createTriangleVAO();
 GLuint createCubeVAO(std::vector<float>&);
+GLuint createIndexVAO(const VertexBuffer& vb, const IndexBuffer& ib);
 GLuint createVAO();
 void setAttribPointers(GLuint program);
 void setupProjection(GLuint program);

@@ -66,24 +66,16 @@ Octree::Octree(const int resolution, glm::vec3 min)
     : m_resolution(resolution), m_size(resolution), m_min(min), m_children(nullptr), m_leaf(true)
 {
     //m_children = std::unique_ptr<OctreeChildren>(nullptr);
-    printf("leaf node constructor thang min (%i, %i, %i), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
+    //printf("leaf node constructor thang min (%i, %i, %i), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
     // NYI
     // Create leaf node draw data here.
     //std::cout << "creating leaf node at resolution: " << resolution << std::endl;
     //std::cout << "and min: " <<  min.x << min.y << min.z << std::endl;
 }
 
-
-
 int index(int x, int y, int z, int dimensionLength)
 {
 	return x + dimensionLength * (y + dimensionLength * z);
-}
-
-bool Octree::HasSomethingToRender()
-{
-    //NYI
-    return true;
 }
 
 float Sphere(const glm::vec3& worldPosition, const glm::vec3& origin, float radius)
@@ -93,12 +85,12 @@ float Sphere(const glm::vec3& worldPosition, const glm::vec3& origin, float radi
 
 float DensityFunction(const glm::vec3 pos)
 {
-	return Sphere(pos, glm::vec3(4, 2, 4), 1.0);
+	return Sphere(pos, glm::vec3(3, 3, 3), 1.0);
 }
 
 bool Sample(const glm::vec3 pos)
 {
-	printf("density at (%f, %f, %f) %f\n", pos.x, pos.y, pos.z, DensityFunction(pos));
+	//printf("density at (%f, %f, %f) %f\n", pos.x, pos.y, pos.z, DensityFunction(pos));
 	return DensityFunction(pos) > 0;
 	//return pos.x == 0 ? true : false;
 }
@@ -157,6 +149,7 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                     Octree* node = nullptr;
                     if (cubeSize == resolution * 2)
                     {
+						printf("constructing leaf parent (%i, %i, %i) with cubesize %i\n", x, y, z, cubeSize);
                         node = Octree::ConstructLeafParent(resolution, pos); // null if nothing to draw
                         if (node)
                         {
@@ -196,7 +189,15 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                             //std::cout << "has children" << std::endl;
                             // Create a new octree node whose children are the ones created in previous
                             // loop iterations parents that are now currentSized
-                            node = new Octree(std::move(currentSizeNodes[childIdx]), cubeSize, pos, resolution);
+							int field = currentSizeNodes[childIdx]->field;
+							if (field == 0 || field == 255)
+							{
+								// just skip adding this anywhere
+								printf("skipping (%i, %i, %i) with cubesize %i\n", x, y, z, cubeSize);
+								continue;
+							}
+
+							node = new Octree(std::move(currentSizeNodes[childIdx]), cubeSize, pos, resolution);
 
                             //////////////////////////////////////////////////////////// This is the same as lines 180 ->
                             if (!parentSizeNodes[parentIdx])
@@ -271,11 +272,9 @@ OctreeChildren* Octree::GetChildren() const
     return m_children.get() ? m_children.get() : nullptr;
 }
 
-void Octree::MeshFromOctree(IndexBuffer& indexBuffer)
+void Octree::MeshFromOctree(IndexBuffer& indexBuffer, VertexBuffer& vertexBuffer)
 {
-	VertexBuffer vertexBuffer;
 	GenerateVertexIndices(vertexBuffer);
-
 	CellProc(indexBuffer);
 }
 
@@ -287,18 +286,25 @@ void Octree::GenerateVertexIndices(VertexBuffer& vertexBuffer)
 	// Mebbe just create the vertices in the middle of the node at first,
 	// work with sharper features etc. later?
 
-	if (IsLeaf())
+	if (m_leaf)
 	{
 		m_index = vertexBuffer.size();
 		// NYI vertex contents
-		Vertex v = {};
+		glm::vec3 padding = { 0, 0, 0 };
+		Vertex v = {
+			m_drawPos,
+			padding, // could be color, not used.
+			m_averageNormal
+		};
 		vertexBuffer.push_back(v);
 	}
 	else
 	{
 		for (int i = 0; i < 8; i++)
 		{
-			m_children->children[i]->GenerateVertexIndices(vertexBuffer);
+			if (m_children->children[i]) {
+				m_children->children[i]->GenerateVertexIndices(vertexBuffer);
+			}
 		}
 	}
 }
@@ -328,12 +334,12 @@ void Octree::GenerateVertexIndices(VertexBuffer& vertexBuffer)
 
 // XY/XZ/YZ means the cubes are ordered in that way, eg for XZ the cubes are on the bottom (0 1 4 5) and top four (2 3 6 7)
 
-const Octree& LeafOrChild(const Octree& node, size_t idx)
+Octree* LeafOrChild(Octree* node, size_t idx)
 {
-	if (node.IsLeaf())
+	if (node->IsLeaf())
 		return node;
 
-	return *node.GetChildren()->children[idx];
+	return node->GetChildren()->children[idx];
 }
 
 bool Octree::IsLeaf() const
@@ -366,50 +372,75 @@ void Octree::CellProc(IndexBuffer& indexBuffer)
 		}
 
 		// Faces
-		// Y is dir 2 in example
-		FaceProcX(*children[0], *children[1], indexBuffer);
-		FaceProcX(*children[4], *children[5], indexBuffer);
-		FaceProcX(*children[2], *children[3], indexBuffer);
-		FaceProcX(*children[6], *children[7], indexBuffer);
-
+		// X is dir 2 in example
+		const std::tuple<int, int> xPairs[] = {
+			{ 0, 1 },
+			{ 4, 5 },
+			{ 2, 3 },
+			{ 6, 7 },
+		};
 		// Y is dir 1 in example
-		FaceProcY(*children[0], *children[2], indexBuffer);
-		FaceProcY(*children[1], *children[3], indexBuffer);
-		FaceProcY(*children[4], *children[6], indexBuffer);
-		FaceProcY(*children[5], *children[7], indexBuffer);
-
-
+		const std::tuple<int, int> yPairs[] = {
+			{ 0, 2 },
+			{ 1, 3 },
+			{ 4, 6 },
+			{ 5, 7 },
+		};
 		// Z is dir 0 in example
-		FaceProcZ(*children[0], *children[4], indexBuffer);
-		FaceProcZ(*children[1], *children[5], indexBuffer);
-		FaceProcZ(*children[2], *children[6], indexBuffer);
-		FaceProcZ(*children[3], *children[7], indexBuffer);
-
-		// Edges
+		const std::tuple<int, int> zPairs[] = {
+			{ 0, 4 },
+			{ 1, 5 },
+			{ 2, 6 },
+			{ 3, 7 },
+		};
 		// dir 0 in edgeProcEdgeMask
-		EdgeProcXY(*children[0], *children[1], *children[2], *children[3], indexBuffer);
-		EdgeProcXY(*children[4], *children[5], *children[6], *children[7], indexBuffer);
-
+		const std::tuple<int, int, int, int> xyPairs[] = {
+			{ 0, 1, 2, 3},
+			{ 4, 5, 6, 7},
+		};
 		// dir 1 in edgeProcEdgeMask
-		EdgeProcXZ(*children[0], *children[1], *children[4], *children[5], indexBuffer);
-		EdgeProcXZ(*children[2], *children[3], *children[6], *children[7], indexBuffer);
-
+		const std::tuple<int, int, int, int> xzPairs[] = {
+			{ 0, 1, 4, 5},
+			{ 2, 3, 6, 7},
+		};
 		// dir 2 in edgeProcEdgeMask
-		EdgeProcYZ(*children[0], *children[2], *children[4], *children[6], indexBuffer);
-		EdgeProcYZ(*children[1], *children[3], *children[5], *children[7], indexBuffer);
+		const std::tuple<int, int, int, int> yzPairs[] = {
+			{ 0, 2, 4, 6},
+			{ 1, 3, 5, 7},
+		};
+		for (const auto[a, b] : xPairs) {
+			FaceProcX(children[a], children[b], indexBuffer);
+		}
+		for (const auto[a, b] : yPairs) {
+			FaceProcY(children[a], children[b], indexBuffer);
+		}
+		for (const auto[a, b] : zPairs) {
+			FaceProcZ(children[a], children[b], indexBuffer);
+		}
+		for (const auto[a, b, c, d] : xyPairs) {
+			EdgeProcXY(children[a], children[b], children[c], children[d], indexBuffer);
+		}
+		for (const auto[a, b, c, d] : xzPairs) {
+			EdgeProcXZ(children[a], children[b], children[c], children[d], indexBuffer);
+		}
+		for (const auto[a, b, c, d] : yzPairs) {
+			EdgeProcYZ(children[a], children[b], children[c], children[d], indexBuffer);
+		}
 	}
 	
 	// TODO else do nothing?
-	//...? todo checking if already leaf node, if so, pass current node instead of some child
 }
 
-void Octree::EdgeProcXY(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3, IndexBuffer& indexBuffer)
+void Octree::EdgeProcXY(Octree* n0, Octree* n1, Octree* n2, Octree* n3, IndexBuffer& indexBuffer)
 {
+	if (!n0 || !n1 || !n2 || !n3)
+		return;
+
 	const int dir = 0;
-	if (n0.m_leaf && n1.m_leaf && n2.m_leaf && n3.m_leaf)
+	if (n0->m_leaf && n1->m_leaf && n2->m_leaf && n3->m_leaf)
 	{
 		const Octree* nodes[4] = {
-			&n0, &n1, &n2, &n3
+			n0, n1, n2, n3
 		};
 		return ProcessEdge(nodes, dir, indexBuffer);
 	}
@@ -417,26 +448,32 @@ void Octree::EdgeProcXY(const Octree& n0, const Octree& n1, const Octree& n2, co
 	EdgeProcXY(LeafOrChild(n0, 3), LeafOrChild(n1, 2), LeafOrChild(n2, 1), LeafOrChild(n3, 0), indexBuffer);
 	EdgeProcXY(LeafOrChild(n0, 7), LeafOrChild(n1, 6), LeafOrChild(n2, 5), LeafOrChild(n3, 4), indexBuffer);
 }
-void Octree::EdgeProcXZ(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3, IndexBuffer& indexBuffer)
+void Octree::EdgeProcXZ(Octree* n0, Octree* n1, Octree* n2, Octree* n3, IndexBuffer& indexBuffer)
 {
+	if (!n0 || !n1 || !n2 || !n3)
+		return;
+
 	const int dir = 1;
-	if (n0.m_leaf && n1.m_leaf && n2.m_leaf && n3.m_leaf)
+	if (n0->m_leaf && n1->m_leaf && n2->m_leaf && n3->m_leaf)
 	{
 		const Octree* nodes[4] = {
-			&n0, &n1, &n2, &n3
+			n0, n1, n2, n3
 		};
 		return ProcessEdge(nodes, dir, indexBuffer);
 	}
 	EdgeProcXZ(LeafOrChild(n0, 5), LeafOrChild(n1, 4), LeafOrChild(n2, 1), LeafOrChild(n3, 0), indexBuffer);
 	EdgeProcXZ(LeafOrChild(n0, 7), LeafOrChild(n1, 6), LeafOrChild(n2, 3), LeafOrChild(n3, 2), indexBuffer);
 }
-void Octree::EdgeProcYZ(const Octree& n0, const Octree& n1, const Octree& n2, const Octree& n3, IndexBuffer& indexBuffer)
+void Octree::EdgeProcYZ(Octree* n0, Octree* n1, Octree* n2, Octree* n3, IndexBuffer& indexBuffer)
 {
+	if (!n0 || !n1 || !n2 || !n3)
+		return;
+
 	const int dir = 2;
-	if (n0.m_leaf && n1.m_leaf && n2.m_leaf && n3.m_leaf)
+	if (n0->m_leaf && n1->m_leaf && n2->m_leaf && n3->m_leaf)
 	{
 		const Octree* nodes[4] = {
-			&n0, &n1, &n2, &n3
+			n0, n1, n2, n3
 		};
 		return ProcessEdge(nodes, dir, indexBuffer);
 	}
@@ -444,11 +481,14 @@ void Octree::EdgeProcYZ(const Octree& n0, const Octree& n1, const Octree& n2, co
 	EdgeProcYZ(LeafOrChild(n0, 7), LeafOrChild(n1, 5), LeafOrChild(n2, 3), LeafOrChild(n3, 1), indexBuffer);
 }
 
-// Faces spawn four calls to faceproc, 
-// and four calls to edgeproc
-void Octree::FaceProcX(const Octree& n0, const Octree& n1, IndexBuffer& indexBuffer)
+void Octree::FaceProcX(Octree* n0, Octree* n1, IndexBuffer& indexBuffer)
 {
-	//const std::tuple<int, int> pairs[] = {
+	if (!n0 || !n1)
+		return;
+
+	if (n0->m_leaf && n1->m_leaf)
+		return;
+
 	const std::tuple<int, int> facePairs[] = {
 		{ 1, 0 },
 		{ 3, 2 },
@@ -475,8 +515,15 @@ void Octree::FaceProcX(const Octree& n0, const Octree& n1, IndexBuffer& indexBuf
 		EdgeProcXZ(LeafOrChild(n0, a), LeafOrChild(n1, b), LeafOrChild(n0, c), LeafOrChild(n1, d), indexBuffer);
 	}
 }
-void Octree::FaceProcY(const Octree& n0, const Octree& n1, IndexBuffer& indexBuffer)
+
+void Octree::FaceProcY(Octree* n0, Octree* n1, IndexBuffer& indexBuffer)
 {
+	if (!n0 || !n1)
+		return;
+
+	if (n0->m_leaf && n1->m_leaf)
+		return;
+
 	const std::tuple<int, int> facePairs[] = {
 		{ 2, 0 },
 		{ 1, 1 },
@@ -504,8 +551,14 @@ void Octree::FaceProcY(const Octree& n0, const Octree& n1, IndexBuffer& indexBuf
 		EdgeProcXZ(LeafOrChild(n0, a), LeafOrChild(n1, b), LeafOrChild(n0, c), LeafOrChild(n1, d), indexBuffer);
 	}
 }
-void Octree::FaceProcZ(const Octree& n0, const Octree& n1, IndexBuffer& indexBuffer)
+void Octree::FaceProcZ(Octree* n0, Octree* n1, IndexBuffer& indexBuffer)
 {
+	if (!n0 || !n1)
+		return;
+
+	if (n0->m_leaf && n1->m_leaf)
+		return;
+
 	const std::tuple<int, int> facePairs[] = {
 		{ 4, 0 },
 		{ 5, 1 },
@@ -574,8 +627,8 @@ void Octree::ProcessEdge(const Octree* node[4], int dir, IndexBuffer& indexBuffe
 		const int c1 = edgevmap[edge][0];
 		const int c2 = edgevmap[edge][1];
 
-		const int m1 = (node[i]->m_children->field >> c1) & 1;
-		const int m2 = (node[i]->m_children->field >> c2) & 1;
+		const int m1 = (node[i]->m_corners >> c1) & 1;
+		const int m2 = (node[i]->m_corners >> c2) & 1;
 
 		if (node[i]->m_size < minSize)
 		{
@@ -706,7 +759,7 @@ Octree* ConstructLeaf(const int resolution, glm::ivec3 min)
 	if (corners == 0 || corners == 255)
 	{
 		// voxel is full inside or outside the volume
-		printf("leaf completely in/out, not drawing\n");
+		//printf("leaf completely in/out, not drawing\n");
 		delete leaf;
 		return nullptr;
 	}
@@ -796,7 +849,7 @@ Octree* Octree::ConstructLeafParent(const int resolution, const glm::vec3 min)
     }
 
     //printBinary(field);
-    if (field != 0 || field != 255) 
+    if (field != 0 && field != 255) 
     {
 		// TODO: maybe check here field = 0xFF aka all children exist so we can possibly
 		// approximate all children with a single vertex. Check QEFs. Set m_leaf'ness.

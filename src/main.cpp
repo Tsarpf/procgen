@@ -29,6 +29,11 @@ void render(GLuint vao, int pointCount)
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0, pointCount);
 }
+void renderIndexed(GLuint vao, int pointCount)
+{
+    glBindVertexArray(vao);
+    glDrawElements(GL_TRIANGLES, pointCount, GL_UNSIGNED_INT, (void*)0);
+}
 
 std::vector<VizData> drawOctree(int size)
 {
@@ -53,7 +58,7 @@ void initializeOpenGL(GLuint program)
 {
     setAttribPointers(program);
     setupProjection(program);
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
 
     // Draw wireframed
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -72,7 +77,7 @@ void rotateModel(float time, GLuint program)
     glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 }
 
-void drawVisualization(const float time, const GLuint program, const GLuint triangleVAO, const std::vector<float>& genericCubePoints,
+void drawVisualization(const float time, const GLuint program, const GLuint vao, const int elementCount,
                        const std::vector<VizData>& nodes)
 {
 	printf("draw visualization thing\n");
@@ -101,8 +106,49 @@ void drawVisualization(const float time, const GLuint program, const GLuint tria
         //glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model * translate * rotate * scale));
 
         glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model * rotate * translate * scale));
-        render(triangleVAO, genericCubePoints.size());
+        render(vao, elementCount);
     }
+}
+
+void renderOctree(const float time, const GLuint program, const GLuint vao, const int elementCount)
+{
+	printf("draw visualization thing\n");
+    //GLint modelUniform = glGetUniformLocation(program, "Model");
+
+	//renderIndexed(vao, elementCount);
+    GLint modelUniform = glGetUniformLocation(program, "Model");
+	glm::mat4 translate = glm::translate
+	(
+		glm::mat4(1.0f),
+		glm::vec3(0,0,0)
+	);
+
+	glm::mat4 rotate = glm::mat4(1.0f);
+	rotate = glm::rotate(
+		rotate,
+		time * glm::radians(30.0f),
+		glm::vec3(0.0f, 1.0f, 0.0f));
+
+	glm::mat4 scale = glm::mat4(1.0f);
+	scale[0] = glm::vec4(1, 0, 0, 0);
+	scale[1] = glm::vec4(0, 1, 0, 0);
+	scale[2] = glm::vec4(0, 0, 1, 0);
+
+	glm::mat4 model = glm::mat4(1.0f);
+
+	glm:mat4 result = model * rotate * translate * scale;
+	//glm::mat4 result = model * translate * rotate * scale;
+	glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(result));
+	render(vao, elementCount);
+}
+
+void GetOctreeDrawData(VertexBuffer& vBuffer, IndexBuffer& iBuffer, int size)
+{
+    Octree* tree = new Octree(1, size, vec3(0, 0, 0));
+
+
+	printf("--------- Octree initialized, meshing ---------------\n");
+	tree->MeshFromOctree(iBuffer, vBuffer);
 }
 
 int main(void)
@@ -127,6 +173,11 @@ int main(void)
 
     std::vector<VizData> visualizationData = drawOctree(8);
 
+	VertexBuffer vBuffer;
+	IndexBuffer iBuffer;
+	GetOctreeDrawData(vBuffer, iBuffer, 8);
+	GLuint octreeVAO = createIndexVAO(vBuffer, iBuffer);
+
     initializeOpenGL(triangleProgram);
     while (!glfwWindowShouldClose(window))
     {
@@ -136,7 +187,8 @@ int main(void)
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        drawVisualization(time, triangleProgram, triangleVAO, genericCubePoints, visualizationData);
+        renderOctree(time, triangleProgram, octreeVAO, sizeof(Vertex) * vBuffer.size());
+        //drawVisualization(time, triangleProgram, triangleVAO, genericCubePoints.size(), visualizationData);
 
         glfwPollEvents();
         glfwSwapBuffers(window);
