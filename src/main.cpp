@@ -28,6 +28,7 @@ void render(GLuint vao, int pointCount)
 {
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0, pointCount);
+    glBindVertexArray(0);
 }
 void renderIndexed(int pointCount)
 {
@@ -37,9 +38,8 @@ void renderIndexed(int pointCount)
 	//glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, 0);
 }
 
-std::vector<VizData> drawOctree(int size)
+std::vector<VizData> drawOctree(Octree* tree)
 {
-    Octree *tree = new Octree(1, size, vec3(0, 0, 0));
     printf("-------- visualizing octree --------\n");
     std::vector<VizData> viz = visualizeOctree(tree);
     int count = 0;
@@ -81,8 +81,7 @@ void rotateModel(float time, GLuint program)
     glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 }
 
-void drawVisualization(const float time, const GLuint program, const GLuint vao, const int elementCount,
-                       const std::vector<VizData>& nodes)
+void drawVisualization(const float time, const GLuint program, const GLuint vao, const int elementCount, const std::vector<VizData>& nodes)
 {
 	printf("draw visualization thing\n");
     GLint modelUniform = glGetUniformLocation(program, "Model");
@@ -114,44 +113,30 @@ void drawVisualization(const float time, const GLuint program, const GLuint vao,
     }
 }
 
-void renderOctree(const float time, const GLuint program, const GLuint vao, const int elementCount)
-{
-	printf("draw visualization thing\n");
-    //GLint modelUniform = glGetUniformLocation(program, "Model");
-
-	//renderIndexed(vao, elementCount);
-    //  GLint modelUniform = glGetUniformLocation(program, "Model");
-	//  glm::mat4 translate = glm::translate
-	//  (
-	//  	glm::mat4(1.0f),
-	//  	glm::vec3(0,0,0)
-	//  );
-
-	//  glm::mat4 rotate = glm::mat4(1.0f);
-	//  rotate = glm::rotate(
-	//  	rotate,
-	//  	time * glm::radians(30.0f),
-	//  	glm::vec3(0.0f, 1.0f, 0.0f));
-
-	//  glm::mat4 scale = glm::mat4(1.0f);
-	//  scale[0] = glm::vec4(1, 0, 0, 0);
-	//  scale[1] = glm::vec4(0, 1, 0, 0);
-	//  scale[2] = glm::vec4(0, 0, 1, 0);
-
-	//  glm::mat4 model = glm::mat4(1.0f);
-
-	//  glm:mat4 result = model * rotate * translate * scale;
-	//  //glm::mat4 result = model * translate * rotate * scale;
-	//  glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(result));
-	//renderIndexed(vao, elementCount);
-}
-
-void GetOctreeDrawData(VertexBuffer& vBuffer, IndexBuffer& iBuffer, int size)
+Octree* GetOctreeDrawData(VertexBuffer& vBuffer, IndexBuffer& iBuffer, int size)
 {
     Octree* tree = new Octree(1, size, vec3(0, 0, 0));
 
 	printf("--------- Octree initialized, meshing ---------------\n");
 	tree->MeshFromOctree(iBuffer, vBuffer);
+	return tree;
+}
+
+void drawMesh(GLuint program, GLuint gl_vertexBuffer, GLuint gl_indexBuffer, int indexCount)
+{
+	// reset model to identity
+    // glm::mat4 model = glm::mat4(1.0f);
+    // model[0] = glm::vec4(1, 0, 0, 0);
+    // model[1] = glm::vec4(0, 1, 0, 0);
+    // model[2] = glm::vec4(0, 0, 1, 0);
+    // model[3] = glm::vec4(0, 0, 0, 1);
+    // GLint modelUniform = glGetUniformLocation(program, "Model");
+	// glUniformMatrix4fv(program, 1, GL_FALSE, glm::value_ptr(model));
+
+	// draw it
+	bindBuffers(program, gl_vertexBuffer, gl_indexBuffer, sizeof(Vertex));
+	renderIndexed(indexCount);
+
 }
 
 int main(void)
@@ -164,16 +149,15 @@ int main(void)
 
 	 VertexBuffer vBuffer;
 	 IndexBuffer iBuffer;
-	 GetOctreeDrawData(vBuffer, iBuffer, 8);
+	 Octree* tree = GetOctreeDrawData(vBuffer, iBuffer, 8);
 
 	 printf("sizeof vertex %i \n", sizeof(Vertex));
 	 printf("sizeof float %i \n", sizeof(float));
 
 	// GLuint octreeVAO = createIndexVAO(vBuffer, iBuffer);
 
-    //GLuint triangleVAO = createTriangleVAO();
-    //std::vector<float> genericCubePoints = cubePoints();
-    //GLuint triangleVAO = createCubeVAO(genericCubePoints);
+    std::vector<float> genericCubePoints = cubePoints();
+    GLuint triangleVAO = createCubeVAO(genericCubePoints);
     GLuint triangleProgram = createTriangleProgram();
 
 
@@ -182,7 +166,7 @@ int main(void)
     // double value = myModule.GetValue(1.25, 0.75, 0.5);
     // std::cout << value << std::endl;
 
-    // std::vector<VizData> visualizationData = drawOctree(8);
+    std::vector<VizData> visualizationData = drawOctree(tree);
 
 	// debug
 	//GLuint ibo = 0;
@@ -207,9 +191,8 @@ int main(void)
 
         //renderOctree(time, triangleProgram, octreeVAO, sizeof(Vertex) * vBuffer.size());
         //drawVisualization(time, triangleProgram, triangleVAO, genericCubePoints.size(), visualizationData);
+		drawMesh(triangleProgram, gl_vertexBuffer, gl_indexBuffer, iBuffer.size());
 
-		bindBuffers(triangleProgram, gl_vertexBuffer, gl_indexBuffer, sizeof(Vertex));
-		renderIndexed(iBuffer.size());
 
         glfwPollEvents();
         glfwSwapBuffers(window);

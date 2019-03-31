@@ -74,7 +74,7 @@ float Sphere(const glm::vec3& worldPosition, const glm::vec3& origin, float radi
 
 float DensityFunction(const glm::vec3 pos)
 {
-	return Sphere(pos, glm::vec3(4, 4, 4), 2.0);
+	return Sphere(pos, glm::vec3(4, 4, 4), 3.0);
 }
 
 bool Sample(const glm::vec3 pos)
@@ -279,7 +279,7 @@ void Octree::GenerateVertexIndices(VertexBuffer& vertexBuffer)
 	{
 		m_index = vertexBuffer.size();
 		// NYI vertex contents
-		glm::vec3 color = { 1.0, 0.0, 1.0};
+		glm::vec3 color = { 255.0, 0.0, 100.0};
 		Vertex v = {
 			m_drawPos,
 			color,

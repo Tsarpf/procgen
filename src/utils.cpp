@@ -11,11 +11,6 @@
 #include <glm/gtc/matrix_transform.hpp> 
 #include <glm/gtc/type_ptr.hpp>
 
-// Mostly just mix & matched to my liking from:
-// https://github.com/capnramses/antons_opengl_tutorials_book/blob/master/40_compute_shader/gl_utils.cpp
-// http://www.glfw.org/docs/3.0/quick.html
-// http://www.nexcius.net/2012/11/20/how-to-load-a-glsl-shader-in-opengl-using-c/
-
 static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
@@ -119,7 +114,6 @@ void bindBuffers(GLuint program, GLuint vertex, GLuint indices, int stride)
 	);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
-	//glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, 0);
 }
 
 std::tuple<GLuint, GLuint> indexedBufferSetup(GLuint program, const VertexBuffer& verts, const IndexBuffer& inds)
@@ -144,7 +138,7 @@ std::tuple<GLuint, GLuint> indexedBufferSetup(GLuint program, const VertexBuffer
 	glDisable(GL_CULL_FACE);
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 	//glEnable(GL_DEPTH_TEST);
     //glEnable(GL_CULL_FACE);
     //glEnable(GL_BACK);
@@ -396,7 +390,7 @@ GLuint createCubeVAO(std::vector<float>& points) {
 
 void setupProjection(GLuint program) 
 {
-    glm::vec3 eye(10, 24, 12);
+    glm::vec3 eye(-8, 12, 12);
     glm::mat4 view = glm::lookAt(
         eye,
         glm::vec3(0.0f, 0.0f, 0.0f),
