@@ -88,8 +88,8 @@ float Box(const glm::vec3& p, const glm::vec3& b)
 
 float DensityFunction(const glm::vec3 pos)
 {
-	return Sphere(pos, glm::vec3(8, 8, 8), 5.0);
-	//return Box(pos - glm::vec3(8,8,8), glm::vec3(5, 5, 5));
+	//return Sphere(pos, glm::vec3(8, 8, 8), 5.0);
+	return Box(pos - glm::vec3(8,8,8), glm::vec3(5, 5, 5));
 }
 
 bool Sample(const glm::vec3 pos)
@@ -443,7 +443,7 @@ void Octree::EdgeProcXY(Octree* n0, Octree* n1, Octree* n2, Octree* n3, IndexBuf
 	if (n0->m_leaf && n1->m_leaf && n2->m_leaf && n3->m_leaf)
 	{
 		const Octree* nodes[4] = {
-			n0, n1, n2, n3
+			n0, n2, n1, n3
 		};
 		return ProcessEdge(nodes, dir, indexBuffer);
 	}
@@ -476,7 +476,7 @@ void Octree::EdgeProcYZ(Octree* n0, Octree* n1, Octree* n2, Octree* n3, IndexBuf
 	if (n0->m_leaf && n1->m_leaf && n2->m_leaf && n3->m_leaf)
 	{
 		const Octree* nodes[4] = {
-			n0, n1, n2, n3
+			n0, n2, n1, n3
 		};
 		return ProcessEdge(nodes, dir, indexBuffer);
 	}

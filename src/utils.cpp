@@ -129,32 +129,18 @@ std::tuple<GLuint, GLuint> indexedBufferSetup(GLuint program, const VertexBuffer
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_cube_elements);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * inds.size(), inds.data(), GL_STATIC_DRAW);
 
-	//int size;  glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
-	//printf("size 1 %i\n", size);
-	//printf("size 2 %f\n", size / sizeof(GLushort));
-
 	//glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	//glDisable(GL_CULL_FACE);
 
 
-    //glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE); // sets cullingments
 
 
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-	//glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_CULL_FACE);
-    //glEnable(GL_BACK);
     glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
-
-	//glViewport(0, 0, 1280, 768);
-
-	//int size;  glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
-	//int count = size / sizeof(GLushort);
-	//printf("count %i \n", count);
-	//glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, 0);
 
 	return std::tuple(vbo_cube_vertices, ibo_cube_elements);
 }
@@ -395,7 +381,7 @@ GLuint createCubeVAO(std::vector<float>& points) {
 
 void setupProjection(GLuint program) 
 {
-    glm::vec3 eye(-12, 20, 12);
+    glm::vec3 eye(24, 20, -24);
     glm::mat4 view = glm::lookAt(
         eye,
         glm::vec3(8.0f, 4.0f, 8.0f),
