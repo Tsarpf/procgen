@@ -138,7 +138,7 @@ void drawMesh(GLuint program, GLuint gl_vertexBuffer, GLuint gl_indexBuffer, con
 		model,
 		time * glm::radians(60.0f),
 		glm::vec3(0.0f, 1.0f, 0.0f));
-	//glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(rotate));
+	glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(rotate));
 
 	// draw it
 	bindBuffers(program, gl_vertexBuffer, gl_indexBuffer, sizeof(Vertex));

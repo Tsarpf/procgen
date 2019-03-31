@@ -135,7 +135,12 @@ std::tuple<GLuint, GLuint> indexedBufferSetup(GLuint program, const VertexBuffer
 
 	//glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
+	//glDisable(GL_CULL_FACE);
+
+
+    //glEnable(GL_CULL_FACE);
+
+
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -390,7 +395,7 @@ GLuint createCubeVAO(std::vector<float>& points) {
 
 void setupProjection(GLuint program) 
 {
-    glm::vec3 eye(-26, 20, -16);
+    glm::vec3 eye(-12, 20, 12);
     glm::mat4 view = glm::lookAt(
         eye,
         glm::vec3(8.0f, 4.0f, 8.0f),

@@ -88,8 +88,8 @@ float Box(const glm::vec3& p, const glm::vec3& b)
 
 float DensityFunction(const glm::vec3 pos)
 {
-	//return Sphere(pos, glm::vec3(8, 8, 8), 5.0);
-	return Box(pos - glm::vec3(8,8,8), glm::vec3(5, 5, 5));
+	return Sphere(pos, glm::vec3(8, 8, 8), 5.0);
+	//return Box(pos - glm::vec3(8,8,8), glm::vec3(5, 5, 5));
 }
 
 bool Sample(const glm::vec3 pos)
@@ -499,6 +499,7 @@ void Octree::FaceProcX(Octree* n0, Octree* n1, IndexBuffer& indexBuffer)
 		{ 7, 6 },
 	};
 
+	//same
 	const std::tuple<int, int, int, int> edgeXYPairs[] = {
 		{ 1, 0, 3, 2 },
 		{ 5, 4, 7, 6 },
@@ -555,7 +556,7 @@ void Octree::FaceProcY(Octree* n0, Octree* n1, IndexBuffer& indexBuffer)
 	}
 
 	for (const auto [a, b, c, d] : edgeYZPairs) {
-		EdgeProcXZ(LeafOrChild(n0, a), LeafOrChild(n1, b), LeafOrChild(n0, c), LeafOrChild(n1, d), indexBuffer);
+		EdgeProcYZ(LeafOrChild(n0, a), LeafOrChild(n1, b), LeafOrChild(n0, c), LeafOrChild(n1, d), indexBuffer);
 	}
 }
 void Octree::FaceProcZ(Octree* n0, Octree* n1, IndexBuffer& indexBuffer)
@@ -572,10 +573,12 @@ void Octree::FaceProcZ(Octree* n0, Octree* n1, IndexBuffer& indexBuffer)
 		{ 6, 2 },
 		{ 7, 3 },
 	};
+	//same
 	const std::tuple<int, int, int, int> edgeXYPairs[] = {
 		{ 4, 6, 0, 2 },
 		{ 5, 7, 1, 3 },
 	};
+	//different but works
 	const std::tuple<int, int, int, int> edgeYZPairs[] = {
 		{ 4, 5, 0, 1 },
 		{ 6, 7, 2, 3 },
