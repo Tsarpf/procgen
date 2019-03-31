@@ -82,6 +82,7 @@ GLFWwindow* initialize()
 void bindBuffers(GLuint program, GLuint vertex, GLuint indices, int stride)
 {
     GLint posAttrib = glGetAttribLocation(program, "position");
+	printf("posattrib %i \n", posAttrib);
 	glEnableVertexAttribArray(posAttrib);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex);
 	glVertexAttribPointer(
@@ -94,8 +95,8 @@ void bindBuffers(GLuint program, GLuint vertex, GLuint indices, int stride)
 	);
 
     GLint colAttrib = glGetAttribLocation(program, "inColor");
+	printf("colattrib %i \n", colAttrib);
 	glEnableVertexAttribArray(colAttrib);
-	//glBindBuffer(GL_ARRAY_BUFFER, color);
 	glVertexAttribPointer(
 		colAttrib, // attribute
 		3,                 // number of elements per vertex, here (R,G,B)
@@ -103,6 +104,18 @@ void bindBuffers(GLuint program, GLuint vertex, GLuint indices, int stride)
 		GL_FALSE,          // take our values as-is
 		stride,                 // no extra data between each position
 		(void*)(3 * sizeof(float))                  // offset of first element
+	);
+
+    GLint normAttrib = glGetAttribLocation(program, "normal");
+	glEnableVertexAttribArray(normAttrib);
+	printf("normAttrib %i \n", normAttrib);
+	glVertexAttribPointer(
+		normAttrib, // attribute
+		3,                 // number of elements per vertex, here (R,G,B)
+		GL_FLOAT,          // the type of each element
+		GL_FALSE,          // take our values as-is
+		stride,                 // no extra data between each position
+		(void*)(6 * sizeof(float))                  // offset of first element
 	);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
@@ -120,7 +133,7 @@ std::tuple<GLuint, GLuint> indexedBufferSetup(GLuint program, const VertexBuffer
 
 	glGenBuffers(1, &ibo_cube_elements);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_cube_elements);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * inds.size(), inds.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * inds.size(), inds.data(), GL_STATIC_DRAW);
 
 	//int size;  glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
 	//printf("size 1 %i\n", size);
@@ -131,7 +144,7 @@ std::tuple<GLuint, GLuint> indexedBufferSetup(GLuint program, const VertexBuffer
 	glDisable(GL_CULL_FACE);
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 	//glEnable(GL_DEPTH_TEST);
     //glEnable(GL_CULL_FACE);
     //glEnable(GL_BACK);
@@ -383,7 +396,7 @@ GLuint createCubeVAO(std::vector<float>& points) {
 
 void setupProjection(GLuint program) 
 {
-    glm::vec3 eye(10, 12, 12);
+    glm::vec3 eye(10, 24, 12);
     glm::mat4 view = glm::lookAt(
         eye,
         glm::vec3(0.0f, 0.0f, 0.0f),

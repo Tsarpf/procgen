@@ -31,6 +31,8 @@ void render(GLuint vao, int pointCount)
 }
 void renderIndexed(int pointCount)
 {
+	printf("unsigned int %i, GL_UNSIGNED_SHORT \n", sizeof(unsigned int), sizeof(GL_UNSIGNED_SHORT));
+    //glDrawElements(GL_TRIANGLES, pointCount, GL_UNSIGNED_INT , 0);
     glDrawElements(GL_TRIANGLES, pointCount, GL_UNSIGNED_SHORT, 0);
 	//glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, 0);
 }
@@ -160,9 +162,13 @@ int main(void)
 
     // glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
 
-	// VertexBuffer vBuffer;
-	// IndexBuffer iBuffer;
-	// GetOctreeDrawData(vBuffer, iBuffer, 8);
+	 VertexBuffer vBuffer;
+	 IndexBuffer iBuffer;
+	 GetOctreeDrawData(vBuffer, iBuffer, 8);
+
+	 printf("sizeof vertex %i \n", sizeof(Vertex));
+	 printf("sizeof float %i \n", sizeof(float));
+
 	// GLuint octreeVAO = createIndexVAO(vBuffer, iBuffer);
 
     //GLuint triangleVAO = createTriangleVAO();
@@ -183,8 +189,9 @@ int main(void)
 	//glGenBuffers(1, &ibo);
 	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * iBuffer.size(), iBuffer.data(), GL_STATIC_DRAW);
-	auto [vertexBuffer, indexBuffer] = indexedCubeTest(triangleProgram);
-	//auto [gl_vertexBuffer, gl_indexBuffer] = indexedCubeTest(triangleProgram);
+
+	//auto [vertexBuffer, indexBuffer] = indexedCubeTest(triangleProgram);
+	auto [gl_vertexBuffer, gl_indexBuffer] = indexedBufferSetup(triangleProgram, vBuffer, iBuffer);
     setupProjection(triangleProgram);
 	// debug
 
@@ -201,8 +208,8 @@ int main(void)
         //renderOctree(time, triangleProgram, octreeVAO, sizeof(Vertex) * vBuffer.size());
         //drawVisualization(time, triangleProgram, triangleVAO, genericCubePoints.size(), visualizationData);
 
-		bindBuffers(triangleProgram, vertexBuffer, indexBuffer, sizeof(float) * 6);
-		renderIndexed(6 * 6);
+		bindBuffers(triangleProgram, gl_vertexBuffer, gl_indexBuffer, sizeof(Vertex));
+		renderIndexed(iBuffer.size());
 
         glfwPollEvents();
         glfwSwapBuffers(window);
