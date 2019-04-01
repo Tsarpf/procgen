@@ -1,5 +1,10 @@
 Working on comprehending and possibly in the future extending various (dual) contouring methods.
 
+It now actually works (on my machine)! 
+
+![cube](https://cldup.com/LABApkDK26.gif)
+![sphere](https://cldup.com/yEe4nxdPHS.gif)
+
 To build
 ```
 mkdir build
