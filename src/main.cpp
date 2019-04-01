@@ -6,7 +6,7 @@
 
 #include <GLFW/glfw3.h>
 
-#define GLM_FORCE_PURE
+//#define GLM_FORCE_PURE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -132,7 +132,7 @@ int main(void)
 
 	VertexBuffer vBuffer;
 	IndexBuffer iBuffer;
-	Octree* tree = GetOctreeDrawData(vBuffer, iBuffer, 16);
+	Octree* tree = GetOctreeDrawData(vBuffer, iBuffer, 128);
 
 	std::vector<float> genericCubePoints = cubePoints();
 	GLuint triangleVAO = createCubeVAO(genericCubePoints);

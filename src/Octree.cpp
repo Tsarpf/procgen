@@ -25,16 +25,16 @@ const glm::ivec3 CHILD_MIN_OFFSETS[] =
 Octree::~Octree()
 {
     /////// NYI, should f.ex delete the OctreeChildren->children
-    printf("destroying Octree\n");
+    //printf("destroying Octree\n"); // helluva lot of these. TODO: fix
 }
 
 
-// Used to initialize with children
+// Used to initialize with ready built children
 Octree::Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min, int resolution)
 : m_children(std::move(children)), m_resolution(resolution), m_size(size), m_min(min), m_leaf(false)
 {
-    printf("with children min (%i, %i, %i), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
-    printBinary(m_children->field);
+    //printf("new octree with already made children min (%i, %i, %i), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
+    //printBinary(m_children->field);
 }
 
 
@@ -75,7 +75,7 @@ float Box(const glm::vec3& p, const glm::vec3& b)
 
 float DensityFunction(const glm::vec3 pos)
 {
-	return Sphere(pos, glm::vec3(8, 8, 8), 5.0);
+	return Sphere(pos, glm::vec3(20, 20, 20), 16.0);
 	//return Box(pos - glm::vec3(8,8,8), glm::vec3(5, 5, 5));
 }
 
@@ -160,7 +160,7 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
                         }
                         else // node is null
                         {
-                            std::cout << "no stuff in node" << std::endl;
+                            //std::cout << "no stuff in node" << std::endl;
                             // TODO: really do nothing?
                         }
                     }
@@ -309,17 +309,6 @@ Octree* LeafOrChild(Octree* node, size_t idx)
 
 bool Octree::IsLeaf() const
 {
-	if (m_children && m_children->field > 0)
-	{
-		assert(m_leaf == false);
-		printf("checking children leafness? %i is leaf, but returning %i\n", false, m_leaf);
-	}
-	else
-	{
-		assert(m_leaf == true);
-		printf("checking children leafness? %i is leaf, but returning %i\n", true, m_leaf);
-	}
-
 	return m_leaf;
 }
 
@@ -776,7 +765,6 @@ Octree* ConstructLeaf(const int resolution, glm::ivec3 min)
 
 Octree* Octree::ConstructLeafParent(const int resolution, const glm::vec3 min)
 {
-    printf("construct leaf min (%i, %i, %i)\n", min.x, min.y, min.z);
     uint8_t field = 0;
     std::array<Octree*, 8> children = {};
     for(float x = 0; x < 2; x++)
@@ -807,7 +795,6 @@ Octree* Octree::ConstructLeafParent(const int resolution, const glm::vec3 min)
 		// approximate all children with a single vertex. Check QEFs. Set m_leaf'ness.
 		// ^ wot?
 
-        std::cout << "field is over 0" << std::endl;
         auto c = std::unique_ptr<OctreeChildren>(new OctreeChildren());
         c->field = field;
         //printBinary(c->field);

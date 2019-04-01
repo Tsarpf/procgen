@@ -269,13 +269,13 @@ GLuint createTriangleProgram()
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
 #ifdef _WIN32
-	printf("is win32");
+	printf("platform win32\n");
 	std::string vertStr = readFile("../src/simple.vert");
 	const char* vertStrC = vertStr.c_str();
 	std::string fragStr = readFile("../src/simple.frag");
 	const char* fragStrC = fragStr.c_str();
 #else
-	printf("is not win32");
+	printf("platform something not-win32\n");
 	std::string vertStr = readFile("../src/simple.vert");
 	const char* vertStrC = vertStr.c_str();
 	std::string fragStr = readFile("../src/simple.frag");
@@ -336,7 +336,7 @@ GLuint createCubeVAO(std::vector<float>& points) {
 
 void setupProjection(GLuint program)
 {
-	glm::vec3 eye(24, 20, -24);
+	glm::vec3 eye(40, 40, -40);
 	glm::mat4 view = glm::lookAt(
 		eye,
 		glm::vec3(0.0f, 4.0f, 0.0f),
