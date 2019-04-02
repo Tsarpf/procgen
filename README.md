@@ -15,7 +15,11 @@ cmake ..
 And enable C++17 features in your compiler. They're only used for structured bindings right now so easy to remove as well.
 
 ## Licensing
-Assume everything written by me so far is WTFPL or whatever. There are some LGPL functions (they specifically start with a comment noting the license) copied from here https://github.com/nickgildea/DualContouringSample, that are originally from the DC paper's example implementation.
+Assume everything written by me so far is WTFPL or whatever. 
+
+There are some LGPL functions (they specifically start with a comment noting the license) copied from here https://github.com/nickgildea/DualContouringSample, that are originally from the DC paper's example implementation.
+
+The svd and qef (.cpp) implementations are also from nickgildeas repo, where it says "The QEF implementation was written by /u/unzret (on reddit.com)" and the license is the "unlicense", see the beginning of those files for details.
 
 ## Dependencies
 
