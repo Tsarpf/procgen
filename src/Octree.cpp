@@ -73,9 +73,22 @@ float Box(const glm::vec3& p, const glm::vec3& b)
 	return glm::length(maxed) + std::min(std::max(d.x, std::max(d.y, d.z)), 0.f);
 }
 
+#include <noise/noise.h>
+using namespace noise;
+float Noise(const glm::vec3& p)
+{
+	double epsilon = 0.1;
+	static module::Perlin myModule;
+	float divider = 100;
+	double value = myModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
+	//std::cout << value << std::endl;
+	return value;
+}
+
 float DensityFunction(const glm::vec3 pos)
 {
-	return Sphere(pos, glm::vec3(20, 20, 20), 16.0);
+	return Noise(pos);
+	//return Sphere(pos, glm::vec3(20, 20, 20), 16.0);
 	//return Box(pos - glm::vec3(8,8,8), glm::vec3(5, 5, 5));
 }
 

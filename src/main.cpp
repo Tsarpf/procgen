@@ -14,12 +14,10 @@
 #pragma comment(lib, "OpenGL32.lib")
 #pragma comment(lib, "noise.lib")
 
-#include <noise/noise.h>
 
 #include "utils.h"
 #include "Octree.h"
 
-using namespace noise;
 using namespace glm;
 
 #define GLSL(src) #src
@@ -87,16 +85,16 @@ void drawVisualization(const float time, const GLuint program, const GLuint vao,
 	}
 }
 
-Octree* GetOctreeDrawData(VertexBuffer& vBuffer, IndexBuffer& iBuffer, int size)
+Octree* GetOctreeDrawData(VertexBuffer& vBuffer, IndexBuffer& iBuffer, int size, const vec3& position)
 {
-	Octree* tree = new Octree(1, size, vec3(0, 0, 0));
+	Octree* tree = new Octree(1, size, position);
 
 	printf("--------- Octree initialized, meshing ---------------\n");
 	tree->MeshFromOctree(iBuffer, vBuffer);
 	return tree;
 }
 
-void drawMesh(GLuint program, GLuint gl_vertexBuffer, GLuint gl_indexBuffer, const int indexCount, const float time)
+void drawMesh(GLuint program, GLuint gl_vertexBuffer, GLuint gl_indexBuffer, GLuint gl_vao, const int indexCount, const float time)
 {
 	glm::mat4 model = glm::mat4(1.0f);
 	model[0] = glm::vec4(1, 0, 0, 0);
@@ -114,35 +112,39 @@ void drawMesh(GLuint program, GLuint gl_vertexBuffer, GLuint gl_indexBuffer, con
 	glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(rotate));
 
 	// draw it
-	bindBuffers(program, gl_vertexBuffer, gl_indexBuffer, sizeof(Vertex));
+	bindBuffers(program, gl_vertexBuffer, gl_indexBuffer, gl_vao, sizeof(Vertex));
 	renderIndexed(indexCount);
 
 }
 
 int main(void)
 {
-	// Check noise lib works
-	// module::Perlin myModule;
-	// double value = myModule.GetValue(1.25, 0.75, 0.5);
-	// std::cout << value << std::endl;
-
 	auto t_start = std::chrono::high_resolution_clock::now();
 
 	GLFWwindow *window = initialize();
+	GLuint triangleProgram = createTriangleProgram();
+
+	const int octreeSize = 32;
 
 	VertexBuffer vBuffer;
 	IndexBuffer iBuffer;
-	Octree* tree = GetOctreeDrawData(vBuffer, iBuffer, 128);
+	Octree* tree = GetOctreeDrawData(vBuffer, iBuffer, octreeSize, vec3(0, 0, 0));
+	auto[gl_vertexBuffer, gl_indexBuffer, gl_vao] = indexedBufferSetup(vBuffer, iBuffer);
 
-	std::vector<float> genericCubePoints = cubePoints();
-	GLuint triangleVAO = createCubeVAO(genericCubePoints);
-	GLuint triangleProgram = createTriangleProgram();
-	std::vector<VizData> visualizationData = drawOctree(tree);
+	VertexBuffer vBuffer_2;
+	IndexBuffer iBuffer_2;
+	Octree* tree_2 = GetOctreeDrawData(vBuffer_2, iBuffer_2, octreeSize, vec3(0, octreeSize, 0));
+	auto[gl_vertexBuffer_2, gl_indexBuffer_2, gl_vao_2] = indexedBufferSetup(vBuffer_2, iBuffer_2);
+
+	// doesn't work with these commented out lol
+	 //std::vector<float> genericCubePoints = cubePoints();
+	 //GLuint triangleVAO = createCubeVAO(genericCubePoints);
+
+	//std::vector<VizData> visualizationData = drawOctree(tree);
 
 	// for running just a prebuilt cube without any DC
 	//auto [vertexBuffer, indexBuffer] = indexedCubeTest(triangleProgram); 
 
-	auto[gl_vertexBuffer, gl_indexBuffer] = indexedBufferSetup(triangleProgram, vBuffer, iBuffer);
 	setupProjection(triangleProgram);
 
 	// OpenGL flags, could be somewhere nicer.
@@ -165,7 +167,8 @@ int main(void)
 		//drawVisualization(time, triangleProgram, triangleVAO, genericCubePoints.size(), visualizationData);
 		
 		// draw the actual dual contoured mesh
-		drawMesh(triangleProgram, gl_vertexBuffer, gl_indexBuffer, iBuffer.size(), time);
+		drawMesh(triangleProgram, gl_vertexBuffer, gl_indexBuffer, gl_vao, iBuffer.size(), time);
+		drawMesh(triangleProgram, gl_vertexBuffer_2, gl_indexBuffer_2, gl_vao_2, iBuffer_2.size(), time);
 
 
 		glfwPollEvents();

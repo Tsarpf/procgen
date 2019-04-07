@@ -74,8 +74,9 @@ GLFWwindow* initialize()
 	return window;
 }
 
-void bindBuffers(GLuint program, GLuint vertex, GLuint indices, int stride)
+void bindBuffers(GLuint program, GLuint vertex, GLuint indices, GLuint vao, int stride)
 {
+	glBindVertexArray(vao);
 	GLint posAttrib = glGetAttribLocation(program, "position");
 	printf("posattrib %i \n", posAttrib);
 	glEnableVertexAttribArray(posAttrib);
@@ -116,21 +117,24 @@ void bindBuffers(GLuint program, GLuint vertex, GLuint indices, int stride)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
 }
 
-std::tuple<GLuint, GLuint> indexedBufferSetup(GLuint program, const VertexBuffer& verts, const IndexBuffer& inds)
+std::tuple<GLuint, GLuint, GLuint> indexedBufferSetup(const VertexBuffer& verts, const IndexBuffer& inds)
 {
-	GLuint vbo_cube_vertices;
-	GLuint ibo_cube_elements;
+	GLuint vbo;
+	GLuint ibo;
+	GLuint vao = 0;
 
-	glGenBuffers(1, &vbo_cube_vertices);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_cube_vertices);
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * verts.size(), verts.data(), GL_STATIC_DRAW);
 
-	glGenBuffers(1, &ibo_cube_elements);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_cube_elements);
+	glGenBuffers(1, &ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * inds.size(), inds.data(), GL_STATIC_DRAW);
 
-
-	return std::tuple(vbo_cube_vertices, ibo_cube_elements);
+	return std::tuple(vbo, ibo, vao);
 }
 
 // For testing simplest possible setup.
@@ -336,7 +340,7 @@ GLuint createCubeVAO(std::vector<float>& points) {
 
 void setupProjection(GLuint program)
 {
-	glm::vec3 eye(40, 40, -40);
+	glm::vec3 eye(80, 80, -40);
 	glm::mat4 view = glm::lookAt(
 		eye,
 		glm::vec3(0.0f, 4.0f, 0.0f),

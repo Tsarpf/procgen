@@ -21,8 +21,8 @@ GLuint createCubeVAO(std::vector<float>&);
 GLuint createIndexVAO(const VertexBuffer& vb, const IndexBuffer& ib);
 void setupProjection(GLuint program);
 std::tuple<GLuint, GLuint> indexedCubeTest(GLuint program);
-std::tuple<GLuint, GLuint> indexedBufferSetup(GLuint program, const VertexBuffer& verts, const IndexBuffer& inds);
-void bindBuffers(GLuint program, GLuint vertex, GLuint indices, int stride);
+std::tuple<GLuint, GLuint, GLuint> indexedBufferSetup(const VertexBuffer& verts, const IndexBuffer& inds);
+void bindBuffers(GLuint program, GLuint vertex, GLuint indices, GLuint vao, int stride);
 std::vector<float> cubePoints();
 
 struct VizData {
