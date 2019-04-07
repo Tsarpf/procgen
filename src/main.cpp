@@ -17,6 +17,7 @@
 
 #include "utils.h"
 #include "Octree.h"
+#include "OctreeMesh.h"
 
 using namespace glm;
 
@@ -85,35 +86,8 @@ void drawVisualization(const float time, const GLuint program, const GLuint vao,
 	}
 }
 
-Octree* GetOctreeDrawData(VertexBuffer& vBuffer, IndexBuffer& iBuffer, int size, const vec3& position)
-{
-	Octree* tree = new Octree(1, size, position);
-
-	printf("--------- Octree initialized, meshing ---------------\n");
-	tree->MeshFromOctree(iBuffer, vBuffer);
-	return tree;
-}
-
 void drawMesh(GLuint program, GLuint gl_vertexBuffer, GLuint gl_indexBuffer, GLuint gl_vao, const int indexCount, const float time)
 {
-	glm::mat4 model = glm::mat4(1.0f);
-	model[0] = glm::vec4(1, 0, 0, 0);
-	model[1] = glm::vec4(0, 1, 0, 0);
-	model[2] = glm::vec4(0, 0, 1, 0);
-	model[3] = glm::vec4(0, 0, 0, 1);
-
-	model = glm::translate(model, vec3(-5, -5, -5));
-
-	GLint modelUniform = glGetUniformLocation(program, "Model");
-	glm::mat4 rotate = glm::rotate(
-		model,
-		time * glm::radians(60.0f),
-		glm::vec3(0.0f, 1.0f, 0.0f));
-	glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(rotate));
-
-	// draw it
-	bindBuffers(program, gl_vertexBuffer, gl_indexBuffer, gl_vao, sizeof(Vertex));
-	renderIndexed(indexCount);
 
 }
 
@@ -126,22 +100,18 @@ int main(void)
 
 	const int octreeSize = 32;
 
-	VertexBuffer vBuffer;
-	IndexBuffer iBuffer;
-	Octree* tree = GetOctreeDrawData(vBuffer, iBuffer, octreeSize, vec3(0, 0, 0));
-	auto[gl_vertexBuffer, gl_indexBuffer, gl_vao] = indexedBufferSetup(vBuffer, iBuffer);
-
-	VertexBuffer vBuffer_2;
-	IndexBuffer iBuffer_2;
-	Octree* tree_2 = GetOctreeDrawData(vBuffer_2, iBuffer_2, octreeSize, vec3(0, octreeSize, 0));
-	auto[gl_vertexBuffer_2, gl_indexBuffer_2, gl_vao_2] = indexedBufferSetup(vBuffer_2, iBuffer_2);
-
-	// doesn't work with these commented out lol
-	 //std::vector<float> genericCubePoints = cubePoints();
-	 //GLuint triangleVAO = createCubeVAO(genericCubePoints);
+	std::vector<OctreeMesh*> meshes;
+	for (int x = 0; x < 3; x++)
+	{
+		for (int z = 0; z < 3; z++)
+		{
+			OctreeMesh* mesh = new OctreeMesh(triangleProgram, octreeSize, vec3(x * octreeSize, 0, z * octreeSize));
+			mesh->Load();
+			meshes.push_back(mesh);
+		}
+	}
 
 	//std::vector<VizData> visualizationData = drawOctree(tree);
-
 	// for running just a prebuilt cube without any DC
 	//auto [vertexBuffer, indexBuffer] = indexedCubeTest(triangleProgram); 
 
@@ -166,10 +136,10 @@ int main(void)
 		// visualize the octree
 		//drawVisualization(time, triangleProgram, triangleVAO, genericCubePoints.size(), visualizationData);
 		
-		// draw the actual dual contoured mesh
-		drawMesh(triangleProgram, gl_vertexBuffer, gl_indexBuffer, gl_vao, iBuffer.size(), time);
-		drawMesh(triangleProgram, gl_vertexBuffer_2, gl_indexBuffer_2, gl_vao_2, iBuffer_2.size(), time);
-
+		for (auto mesh : meshes)
+		{
+			mesh->Draw(time);
+		}
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);

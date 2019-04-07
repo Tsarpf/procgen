@@ -6,9 +6,13 @@
 #include <iostream>
 #include <cstdint>
 #include <memory>
+#include <noise/noise.h>
 
 #include "Octree.h"
 #include "utils.h"
+#include "Mesh.h"
+
+using namespace noise;
 
 const glm::ivec3 CHILD_MIN_OFFSETS[] =
 {
@@ -73,15 +77,12 @@ float Box(const glm::vec3& p, const glm::vec3& b)
 	return glm::length(maxed) + std::min(std::max(d.x, std::max(d.y, d.z)), 0.f);
 }
 
-#include <noise/noise.h>
-using namespace noise;
 float Noise(const glm::vec3& p)
 {
 	double epsilon = 0.1;
 	static module::Perlin myModule;
-	float divider = 100;
+	float divider = 200;
 	double value = myModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
-	//std::cout << value << std::endl;
 	return value;
 }
 
@@ -242,6 +243,10 @@ void Octree::ConstructBottomUp(const int resolution, const int size, const glm::
         }
     }
     
+	if (!currentSizeNodes[0])
+	{
+		m_leaf = true;
+	}
     // currentSizeNodes length should be 1 now.
     m_children = std::move(currentSizeNodes[0]);
 }

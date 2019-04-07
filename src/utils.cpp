@@ -74,69 +74,6 @@ GLFWwindow* initialize()
 	return window;
 }
 
-void bindBuffers(GLuint program, GLuint vertex, GLuint indices, GLuint vao, int stride)
-{
-	glBindVertexArray(vao);
-	GLint posAttrib = glGetAttribLocation(program, "position");
-	printf("posattrib %i \n", posAttrib);
-	glEnableVertexAttribArray(posAttrib);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex);
-	glVertexAttribPointer(
-		posAttrib, // attribute
-		3,                 // number of elements per vertex, here (x,y,z)
-		GL_FLOAT,          // the type of each element
-		GL_FALSE,          // take our values as-is
-		stride,                 // no extra data between each position
-		0                  // offset of first element
-	);
-
-	GLint colAttrib = glGetAttribLocation(program, "inColor");
-	printf("colattrib %i \n", colAttrib);
-	glEnableVertexAttribArray(colAttrib);
-	glVertexAttribPointer(
-		colAttrib, // attribute
-		3,                 // number of elements per vertex, here (R,G,B)
-		GL_FLOAT,          // the type of each element
-		GL_FALSE,          // take our values as-is
-		stride,                 // no extra data between each position
-		(void*)(3 * sizeof(float))                  // offset of first element
-	);
-
-	GLint normAttrib = glGetAttribLocation(program, "normal");
-	glEnableVertexAttribArray(normAttrib);
-	printf("normAttrib %i \n", normAttrib);
-	glVertexAttribPointer(
-		normAttrib, // attribute
-		3,                 // number of elements per vertex, here (R,G,B)
-		GL_FLOAT,          // the type of each element
-		GL_FALSE,          // take our values as-is
-		stride,                 // no extra data between each position
-		(void*)(6 * sizeof(float))                  // offset of first element
-	);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
-}
-
-std::tuple<GLuint, GLuint, GLuint> indexedBufferSetup(const VertexBuffer& verts, const IndexBuffer& inds)
-{
-	GLuint vbo;
-	GLuint ibo;
-	GLuint vao = 0;
-
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * verts.size(), verts.data(), GL_STATIC_DRAW);
-
-	glGenBuffers(1, &ibo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * inds.size(), inds.data(), GL_STATIC_DRAW);
-
-	return std::tuple(vbo, ibo, vao);
-}
-
 // For testing simplest possible setup.
 std::tuple<GLuint, GLuint> indexedCubeTest(GLuint program)
 {

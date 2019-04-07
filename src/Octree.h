@@ -13,16 +13,8 @@
 #include <memory>
 
 #include <glm/glm.hpp>
-struct Vertex
-{
-	glm::vec3 position;
-	glm::vec3 color;
-	glm::vec3 normal;
-	float padding;
-};
 
-typedef std::vector<unsigned short> IndexBuffer;
-typedef std::vector<Vertex> VertexBuffer;
+#include "Mesh.h"
 
 struct OctreeChildren;
 
