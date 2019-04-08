@@ -99,11 +99,12 @@ int main(void)
 	GLuint triangleProgram = createTriangleProgram();
 
 	const int octreeSize = 32;
+	const int axisCount = 5;
 
 	std::vector<OctreeMesh*> meshes;
-	for (int x = 0; x < 3; x++)
+	for (int x = 0; x < axisCount; x++)
 	{
-		for (int z = 0; z < 3; z++)
+		for (int z = 0; z < axisCount; z++)
 		{
 			OctreeMesh* mesh = new OctreeMesh(triangleProgram, octreeSize, vec3(x * octreeSize, 0, z * octreeSize));
 			mesh->Load();

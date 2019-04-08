@@ -66,9 +66,9 @@ float Sphere(const glm::vec3& worldPosition, const glm::vec3& origin, float radi
 	return glm::length(worldPosition - origin) - radius;
 }
 
-float Box(const glm::vec3& p, const glm::vec3& b)
+float Box(const glm::vec3& p, const glm::vec3& size)
 {
-	glm::vec3 d = abs(p) - b;
+	glm::vec3 d = abs(p) - size;
 	glm::vec3 maxed(0);
 	for (int i = 0; i < 3; i++)
 	{
@@ -79,18 +79,18 @@ float Box(const glm::vec3& p, const glm::vec3& b)
 
 float Noise(const glm::vec3& p)
 {
-	double epsilon = 0.1;
+	double epsilon = 0.01;
 	static module::Perlin myModule;
-	float divider = 200;
+	float divider = 25;
 	double value = myModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
 	return value;
 }
 
 float DensityFunction(const glm::vec3 pos)
 {
-	return Noise(pos);
+	//return Noise(pos);
 	//return Sphere(pos, glm::vec3(20, 20, 20), 16.0);
-	//return Box(pos - glm::vec3(8,8,8), glm::vec3(5, 5, 5));
+	return Box(pos - glm::vec3(74,8,74), glm::vec3(64, 8, 64));
 }
 
 bool Sample(const glm::vec3 pos)

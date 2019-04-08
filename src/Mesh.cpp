@@ -30,6 +30,7 @@ void Mesh::Draw(const float time)
 		// nothing to draw
 		return;
 	}
+
 	glm::mat4 model = glm::mat4(1.0f);
 	model[0] = glm::vec4(1, 0, 0, 0);
 	model[1] = glm::vec4(0, 1, 0, 0);
@@ -67,16 +68,16 @@ void Mesh::BindBuffers()
 		0                  // offset of first element
 	);
 
-	GLint colAttrib = glGetAttribLocation(m_gl_program, "inColor");
-	glEnableVertexAttribArray(colAttrib);
-	glVertexAttribPointer(
-		colAttrib, // attribute
-		3,                 // number of elements per vertex, here (R,G,B)
-		GL_FLOAT,          // the type of each element
-		GL_FALSE,          // take our values as-is
-		m_stride,                 // no extra data between each position
-		(void*)(3 * sizeof(float))                  // offset of first element
-	);
+	//GLint colAttrib = glGetAttribLocation(m_gl_program, "inColor");
+	//glEnableVertexAttribArray(colAttrib);
+	//glVertexAttribPointer(
+	//	colAttrib, // attribute
+	//	3,                 // number of elements per vertex, here (R,G,B)
+	//	GL_FLOAT,          // the type of each element
+	//	GL_FALSE,          // take our values as-is
+	//	m_stride,                 // no extra data between each position
+	//	(void*)(3 * sizeof(float))                  // offset of first element
+	//);
 
 	GLint normAttrib = glGetAttribLocation(m_gl_program, "normal");
 	glEnableVertexAttribArray(normAttrib);

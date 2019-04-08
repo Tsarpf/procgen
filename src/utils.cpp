@@ -277,7 +277,7 @@ GLuint createCubeVAO(std::vector<float>& points) {
 
 void setupProjection(GLuint program)
 {
-	glm::vec3 eye(80, 80, -40);
+	glm::vec3 eye(80, 40, 80);
 	glm::mat4 view = glm::lookAt(
 		eye,
 		glm::vec3(0.0f, 4.0f, 0.0f),
@@ -296,12 +296,13 @@ void setupProjection(GLuint program)
 	printf("%i view\n", viewUniform);
 	glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
 
+	const float farClip = 600;
 	glm::mat4 proj = glm::perspective
 	(
 		glm::radians(45.0f),
 		1280.0f / 768.0f,
 		0.1f,
-		200.0f
+		farClip
 	);
 	GLint projUniform = glGetUniformLocation(program, "Projection");
 	glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(proj));
