@@ -11,7 +11,7 @@
 #include <glm/gtc/matrix_transform.hpp> 
 #include <glm/gtc/type_ptr.hpp>
 
-static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+static void exit_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
 }
@@ -70,7 +70,7 @@ GLFWwindow* initialize()
 	printf("OpenGL version supported %s\n", version);
 
 
-	glfwSetKeyCallback(window, key_callback);
+	glfwSetKeyCallback(window, exit_callback);
 	return window;
 }
 

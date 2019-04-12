@@ -25,6 +25,7 @@ public:
 	Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min, int resolution);
 	~Octree();
 
+	void ConstructBottomUp();
 	void MeshFromOctree(IndexBuffer& indexBuffer, VertexBuffer& vertexBuffer);
 	OctreeChildren* GetChildren() const;
 
@@ -41,8 +42,6 @@ public:
 	int m_corners;
 
 private:
-	void ConstructBottomUp(const int maxResolution, const int size, const glm::vec3 min);
-	
 	static Octree* ConstructLeafParent(const int resolution, const glm::vec3 min);
 	static bool Sample(const glm::vec3 pos);
 
@@ -71,5 +70,6 @@ struct OctreeChildren {
 	std::array<Octree*, 8> children;
 };
 
+int index(int x, int y, int z, int dimensionLength);
 
 #endif //PROJECT_OCTREE_H

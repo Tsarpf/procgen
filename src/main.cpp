@@ -29,11 +29,6 @@ void render(GLuint vao, int pointCount)
 	glDrawArrays(GL_TRIANGLES, 0, pointCount);
 	glBindVertexArray(0);
 }
-void renderIndexed(int pointCount)
-{
-	printf("unsigned int %i, GL_UNSIGNED_SHORT \n", sizeof(unsigned int), sizeof(GL_UNSIGNED_SHORT));
-	glDrawElements(GL_TRIANGLES, pointCount, GL_UNSIGNED_SHORT, 0);
-}
 
 std::vector<VizData> drawOctree(Octree* tree)
 {
@@ -86,9 +81,13 @@ void drawVisualization(const float time, const GLuint program, const GLuint vao,
 	}
 }
 
-void drawMesh(GLuint program, GLuint gl_vertexBuffer, GLuint gl_indexBuffer, GLuint gl_vao, const int indexCount, const float time)
-{
-
+OctreeMesh* the_mesh_todo_refactor_to_somewhere;
+static void space_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+	{
+		printf("space pressed\n");
+		the_mesh_todo_refactor_to_somewhere->EnlargePlus(xplus);
+	}
 }
 
 int main(void)
@@ -96,22 +95,27 @@ int main(void)
 	auto t_start = std::chrono::high_resolution_clock::now();
 
 	GLFWwindow *window = initialize();
+	glfwSetKeyCallback(window, space_callback);
+
 	GLuint triangleProgram = createTriangleProgram();
 
 	const int octreeSize = 32;
-	const int axisCount = 5;
+	const int axisCount = 3;
 
-	std::vector<OctreeMesh*> meshes;
-	for (int x = 0; x < axisCount; x++)
-	{
-		for (int z = 0; z < axisCount; z++)
-		{
-			OctreeMesh* mesh = new OctreeMesh(triangleProgram, octreeSize, vec3(x * octreeSize, 0, z * octreeSize));
-			mesh->Load();
-			meshes.push_back(mesh);
-		}
-	}
+	//std::vector<OctreeMesh*> meshes;
+	//for (int x = 0; x < axisCount; x++)
+	//{
+	//	for (int z = 0; z < axisCount; z++)
+	//	{
+	//		OctreeMesh* mesh = new OctreeMesh(triangleProgram, octreeSize, vec3(x * octreeSize, 0, z * octreeSize));
+	//		mesh->Load();
+	//		meshes.push_back(mesh);
+	//	}
+	//}
+	OctreeMesh* mesh = new OctreeMesh(triangleProgram, octreeSize, vec3(0, 0, 0));
+	mesh->Load();
 
+	the_mesh_todo_refactor_to_somewhere = mesh;
 	//std::vector<VizData> visualizationData = drawOctree(tree);
 	// for running just a prebuilt cube without any DC
 	//auto [vertexBuffer, indexBuffer] = indexedCubeTest(triangleProgram); 
@@ -137,10 +141,11 @@ int main(void)
 		// visualize the octree
 		//drawVisualization(time, triangleProgram, triangleVAO, genericCubePoints.size(), visualizationData);
 		
-		for (auto mesh : meshes)
-		{
-			mesh->Draw(time);
-		}
+		//for (auto mesh : meshes)
+		//{
+		//	mesh->Draw(time);
+		//}
+		mesh->Draw(time);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);

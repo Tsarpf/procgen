@@ -32,6 +32,7 @@ Octree::~Octree()
     //printf("destroying Octree\n"); // helluva lot of these. TODO: fix
 }
 
+// TODO: Don't use different constructors for different types of octrees, use member functions that state what they do
 
 // Used to initialize with ready built children
 Octree::Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min, int resolution)
@@ -41,13 +42,11 @@ Octree::Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min
     //printBinary(m_children->field);
 }
 
-
 // Called when creating a completely new octree from scratch
 Octree::Octree(const int resolution, const int size, const glm::vec3 min)
     : m_resolution(resolution), m_size(size), m_min(min), m_children(nullptr), m_leaf(false)
 {
     printf("constructing new octree at min (%i, %i, %i), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
-    ConstructBottomUp(resolution, size, min);
 }
 
 // Leaf node constructor
@@ -108,8 +107,11 @@ glm::vec3 CalculateSurfaceNormal(const glm::vec3& p)
 	return glm::normalize(glm::vec3(dx, dy, dz));
 }
 
-void Octree::ConstructBottomUp(const int resolution, const int size, const glm::vec3 min)
+void Octree::ConstructBottomUp()
 {
+	const int resolution = m_resolution;
+	const int size = m_size;
+	const glm::vec3 min = m_min;
 	std::cout << "Constructing new octree from bottom up" << std::endl;
 
     // First loop through the area in 1x1x1 cubes, then 2x2x2, etc.

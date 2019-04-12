@@ -6,6 +6,13 @@
 #include "Octree.h"
 #include "Mesh.h"
 
+
+enum Direction {
+	xplus, xminus,
+	yplus, yminus,
+	zplus, zminus
+};
+
 class OctreeMesh : public Mesh
 {
 public:
@@ -14,8 +21,11 @@ public:
 	~OctreeMesh();
 	void Load();
 
+	void EnlargePlus(Direction);
+	void EnlargeMinus(Direction);
+
 private:
 	Octree* m_tree;
 	glm::vec3 m_position;
-	const int m_size;
+	int m_size;
 };
