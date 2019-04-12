@@ -15,6 +15,52 @@ void OctreeMesh::Load()
 	SetupGlBuffers();
 }
 
+int edgeIndexLookup[6][2][4][4] = {
+	// x plus 
+	{
+		// new
+		{{0, 0, 0, 2}, {0, 1, 0, 2}, {0, 0, 1, 2}, {0, 1, 1, 2}},
+		// old
+		{{0, 0, 0, 2}, {0, 1, 0, 2}, {0, 0, 1, 2}, {0, 1, 1, 2}},
+	},
+
+	// NYI
+	// x minus 
+	{
+		// new
+		{{0, 0, 0, 2}, {0, 1, 0, 2}, {0, 0, 1, 2}, {0, 1, 1, 2}},
+		// old
+		{{0, 0, 0, 2}, {0, 1, 0, 2}, {0, 0, 1, 2}, {0, 1, 1, 2}},
+	},
+	// y plus 
+	{
+		// new
+		{{0, 0, 0, 2}, {0, 1, 0, 2}, {0, 0, 1, 2}, {0, 1, 1, 2}},
+		// old
+		{{0, 0, 0, 2}, {0, 1, 0, 2}, {0, 0, 1, 2}, {0, 1, 1, 2}},
+	},
+	// y minus 
+	{
+		// new
+		{{0, 0, 0, 2}, {0, 1, 0, 2}, {0, 0, 1, 2}, {0, 1, 1, 2}},
+		// old
+		{{0, 0, 0, 2}, {0, 1, 0, 2}, {0, 0, 1, 2}, {0, 1, 1, 2}},
+	},
+	// y plus 
+	{
+		// new
+		{{0, 0, 0, 2}, {0, 1, 0, 2}, {0, 0, 1, 2}, {0, 1, 1, 2}},
+		// old
+		{{0, 0, 0, 2}, {0, 1, 0, 2}, {0, 0, 1, 2}, {0, 1, 1, 2}},
+	},
+	// y minus 
+	{
+		// new
+		{{0, 0, 0, 2}, {0, 1, 0, 2}, {0, 0, 1, 2}, {0, 1, 1, 2}},
+		// old
+		{{0, 0, 0, 2}, {0, 1, 0, 2}, {0, 0, 1, 2}, {0, 1, 1, 2}},
+	},
+};
 
 void OctreeMesh::EnlargePlus(Direction dir)
 {
@@ -24,7 +70,7 @@ void OctreeMesh::EnlargePlus(Direction dir)
 	glm::vec3 newPosition;
 
 	std::array<Octree*, 8> edgeChildren;
-	int edgeIndices[8];
+
 
 	switch (dir)
 	{
@@ -43,40 +89,50 @@ void OctreeMesh::EnlargePlus(Direction dir)
 	}
 	// same new min for bigger octree
 
-	std::array<Octree*, 8> children = {};
-	for (auto& child : children)
+	std::array<Octree*, 8> rootChildren = {};
+	for (auto& child : rootChildren)
 	{
 		child = nullptr;
 	}
-	children[oldCornerIdx] = m_tree;
-	children[newCornerIdx] = new Octree(1, m_size, newPosition);
-	children[newCornerIdx]->ConstructBottomUp();
-	children[newCornerIdx]->MeshFromOctree(m_indices, m_vertices);
+	rootChildren[oldCornerIdx] = m_tree;
+	rootChildren[newCornerIdx] = new Octree(1, m_size, newPosition);
+	rootChildren[newCornerIdx]->ConstructBottomUp();
+	rootChildren[newCornerIdx]->MeshFromOctree(m_indices, m_vertices);
 	SetupGlBuffers();
 
-	// Todo move somewhere else, parameterize
-	int x_indices[8] = {
-		// 'left' side
-		index(0, 0, 0, 2),
-		index(0, 1, 0, 2),
-		index(0, 0, 1, 2),
-		index(0, 1, 1, 2),
+	//auto edgeIndicesNew = edgeIndexLookup[dir][0];
+	//auto edgeIndicesOld = edgeIndexLookup[dir][1];
+	//int idxs[2][2] = {{0, newCornerIdx}, {1, oldCornerIdx}};
 
-		// 'right' side
-		index(1, 0, 0, 2),
-		index(1, 1, 0, 2),
-		index(1, 0, 1, 2),
-		index(1, 1, 1, 2),
-	};
+	std::vector<std::tuple<int, int>> idxs = {{0, newCornerIdx}, {1, oldCornerIdx}};
+	std::array<Octree*, 8> borderChildren;
+	for(auto [j, childIdx] : idxs)
+	{
+		std::array<Octree*,8> children = rootChildren[childIdx]->GetChildren()->children;
+		for (int i = 0; i < 4; i++)
+		{
+			auto[x, y, z, dim] = edgeIndexLookup[dir][j][i];
+			int idx = index(x, y, z, dim);
+			int edgeIdx = i + 4 * j;
+			auto child = children[idx];
+			borderChildren[edgeIdx] = child;
+			Octree::GenerateVertexIndices(child, m_vertices);
+		}
+		j++;
+	}
 
-	std::unique_ptr<OctreeChildren> newChildren(new OctreeChildren
+	std::cout << "-------------------------------- Processing edges --------------------------------" << std::endl;
+	Octree::CellChildProc(borderChildren, m_indices);
+	std::cout << "edges processed" << std::endl;
+
+	std::unique_ptr<OctreeChildren> newRootChildren(new OctreeChildren
 	{
 		(uint8_t)((1 << oldCornerIdx) | (1 << newCornerIdx)),
-		children
+		rootChildren
 	});
 
 	m_size *= 2;
-	m_tree = new Octree(std::move(newChildren), m_size, m_position, 1);
+	m_tree = new Octree(std::move(newRootChildren), m_size, m_position, 1);
 }
 
 void OctreeMesh::EnlargeMinus(Direction dir)

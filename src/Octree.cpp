@@ -271,8 +271,7 @@ void Octree::MeshFromOctree(IndexBuffer& indexBuffer, VertexBuffer& vertexBuffer
 
 void Octree::GenerateVertexIndices(Octree* node, VertexBuffer& vertexBuffer)
 {
-	if (node->m_leaf)
-
+	if (node && node->m_leaf)
 	{
 		node->m_index = vertexBuffer.size();
 		glm::vec3 color = { 255.0, 0.0, 100.0};
@@ -284,7 +283,7 @@ void Octree::GenerateVertexIndices(Octree* node, VertexBuffer& vertexBuffer)
 		};
 		vertexBuffer.push_back(v);
 	}
-	else
+	else if (node)
 	{
 		for (int i = 0; i < 8; i++)
 		{
@@ -322,7 +321,7 @@ void Octree::GenerateVertexIndices(Octree* node, VertexBuffer& vertexBuffer)
 
 Octree* LeafOrChild(Octree* node, size_t idx)
 {
-	if (node->IsLeaf())
+	if (node && node->IsLeaf())
 		return node;
 
 	return node->GetChildren()->children[idx];
@@ -389,15 +388,7 @@ void Octree::CellChildProc(const std::array<Octree*, 8>& children, IndexBuffer& 
 		for (const auto[a, b, c, d] : yzPairs) {
 			EdgeProcYZ(children[a], children[b], children[c], children[d], indexBuffer);
 		}
-}
 
-void Octree::CellProc(IndexBuffer& indexBuffer)
-{
-	if (!m_leaf)
-	{
-		const auto& children = m_children->children;
-
-		// Cells
 		for (int i = 0; i < 8; i++)
 		{
 			if (children[i])
@@ -406,7 +397,14 @@ void Octree::CellProc(IndexBuffer& indexBuffer)
 			}
 		}
 
-		CellChildProc(children, indexBuffer);
+}
+
+void Octree::CellProc(IndexBuffer& indexBuffer)
+{
+	printf("cellproc %i %i %i %i \n", m_min.x, m_min.y, m_min.z, m_size);
+	if (!m_leaf)
+	{
+		CellChildProc(m_children->children, indexBuffer);
 	}
 }
 

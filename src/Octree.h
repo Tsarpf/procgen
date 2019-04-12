@@ -42,6 +42,7 @@ public:
 	int m_corners;
 
 	static void CellChildProc(const std::array<Octree*, 8>& children, IndexBuffer& indexBuffer);
+	static void GenerateVertexIndices(Octree* node, VertexBuffer& vertexBuffer);
 private:
 	static Octree* ConstructLeafParent(const int resolution, const glm::vec3 min);
 	static bool Sample(const glm::vec3 pos);
@@ -55,7 +56,6 @@ private:
 	static void EdgeProcYZ(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
 	static void ProcessEdge(const Octree* node[4] , int dir, IndexBuffer& indexBuffer);
 
-	static void GenerateVertexIndices(Octree* node, VertexBuffer& vertexBuffer);
 
 	std::unique_ptr<OctreeChildren> m_children;
 
