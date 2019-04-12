@@ -23,6 +23,9 @@ void OctreeMesh::EnlargePlus(Direction dir)
 
 	glm::vec3 newPosition;
 
+	std::array<Octree*, 8> edgeChildren;
+	int edgeIndices[8];
+
 	switch (dir)
 	{
 	case xplus:
@@ -50,6 +53,21 @@ void OctreeMesh::EnlargePlus(Direction dir)
 	children[newCornerIdx]->ConstructBottomUp();
 	children[newCornerIdx]->MeshFromOctree(m_indices, m_vertices);
 	SetupGlBuffers();
+
+	// Todo move somewhere else, parameterize
+	int x_indices[8] = {
+		// 'left' side
+		index(0, 0, 0, 2),
+		index(0, 1, 0, 2),
+		index(0, 0, 1, 2),
+		index(0, 1, 1, 2),
+
+		// 'right' side
+		index(1, 0, 0, 2),
+		index(1, 1, 0, 2),
+		index(1, 0, 1, 2),
+		index(1, 1, 1, 2),
+	};
 
 	std::unique_ptr<OctreeChildren> newChildren(new OctreeChildren
 	{

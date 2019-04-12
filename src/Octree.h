@@ -41,18 +41,19 @@ public:
 	glm::vec3 m_averageNormal;
 	int m_corners;
 
+	static void CellChildProc(const std::array<Octree*, 8>& children, IndexBuffer& indexBuffer);
 private:
 	static Octree* ConstructLeafParent(const int resolution, const glm::vec3 min);
 	static bool Sample(const glm::vec3 pos);
 
 	void CellProc(IndexBuffer& indexBuffer);
-	void FaceProcX(Octree*, Octree*, IndexBuffer& indexBuffer);
-	void FaceProcY(Octree*, Octree*, IndexBuffer& indexBuffer);
-	void FaceProcZ(Octree*, Octree*, IndexBuffer& indexBuffer);
-	void EdgeProcXY(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
-	void EdgeProcXZ(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
-	void EdgeProcYZ(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
-	void ProcessEdge(const Octree* node[4] , int dir, IndexBuffer& indexBuffer);
+	static void FaceProcX(Octree*, Octree*, IndexBuffer& indexBuffer);
+	static void FaceProcY(Octree*, Octree*, IndexBuffer& indexBuffer);
+	static void FaceProcZ(Octree*, Octree*, IndexBuffer& indexBuffer);
+	static void EdgeProcXY(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
+	static void EdgeProcXZ(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
+	static void EdgeProcYZ(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
+	static void ProcessEdge(const Octree* node[4] , int dir, IndexBuffer& indexBuffer);
 
 	void GenerateVertexIndices(VertexBuffer& vertexBuffer);
 

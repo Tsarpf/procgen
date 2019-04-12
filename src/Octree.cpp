@@ -332,22 +332,8 @@ bool Octree::IsLeaf() const
 	return m_leaf;
 }
 
-void Octree::CellProc(IndexBuffer& indexBuffer)
+void Octree::CellChildProc(const std::array<Octree*, 8>& children, IndexBuffer& indexBuffer)
 {
-	if (!m_leaf)
-	{
-		const auto& children = m_children->children;
-
-		// Cells
-		for (int i = 0; i < 8; i++)
-		{
-			if (children[i])
-			{
-				children[i]->CellProc(indexBuffer);
-			}
-		}
-
-		// Faces
 		// X is dir 2 in example
 		const std::tuple<int, int> xPairs[] = {
 			{ 0, 1 },
@@ -402,9 +388,25 @@ void Octree::CellProc(IndexBuffer& indexBuffer)
 		for (const auto[a, b, c, d] : yzPairs) {
 			EdgeProcYZ(children[a], children[b], children[c], children[d], indexBuffer);
 		}
+}
+
+void Octree::CellProc(IndexBuffer& indexBuffer)
+{
+	if (!m_leaf)
+	{
+		const auto& children = m_children->children;
+
+		// Cells
+		for (int i = 0; i < 8; i++)
+		{
+			if (children[i])
+			{
+				children[i]->CellProc(indexBuffer);
+			}
+		}
+
+		CellChildProc(children, indexBuffer);
 	}
-	
-	// TODO else do nothing?
 }
 
 void Octree::EdgeProcXY(Octree* n0, Octree* n1, Octree* n2, Octree* n3, IndexBuffer& indexBuffer)
