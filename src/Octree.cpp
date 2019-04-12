@@ -89,7 +89,7 @@ float DensityFunction(const glm::vec3 pos)
 {
 	//return Noise(pos);
 	//return Sphere(pos, glm::vec3(20, 20, 20), 16.0);
-	return Box(pos - glm::vec3(74,8,74), glm::vec3(64, 8, 64));
+	return Box(pos - glm::vec3(16,8,16), glm::vec3(8, 64, 8));
 }
 
 bool Sample(const glm::vec3 pos)
@@ -274,7 +274,7 @@ void Octree::GenerateVertexIndices(Octree* node, VertexBuffer& vertexBuffer)
 	if (node && node->m_leaf)
 	{
 		node->m_index = vertexBuffer.size();
-		glm::vec3 color = { 255.0, 0.0, 100.0};
+		glm::vec3 color = { 1.0, 0.0, 0.5};
 		Vertex v = {
 			node->m_drawPos,
 			color,
@@ -401,7 +401,6 @@ void Octree::CellChildProc(const std::array<Octree*, 8>& children, IndexBuffer& 
 
 void Octree::CellProc(IndexBuffer& indexBuffer)
 {
-	printf("cellproc %i %i %i %i \n", m_min.x, m_min.y, m_min.z, m_size);
 	if (!m_leaf)
 	{
 		CellChildProc(m_children->children, indexBuffer);

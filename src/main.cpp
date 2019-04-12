@@ -23,34 +23,48 @@ using namespace glm;
 
 #define GLSL(src) #src
 
-void render(GLuint vao, int pointCount)
+
+//TODO refactor to some scene manager thing mebbe
+OctreeMesh* g_the_mesh_todo_refactor_to_somewhere;
+std::vector<VizData> g_visualizationData;
+
+static void space_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+	{
+		printf("space pressed\n");
+		//g_the_mesh_todo_refactor_to_somewhere->EnlargePlus(xplus);
+		g_the_mesh_todo_refactor_to_somewhere->EnlargePlus(yplus);
+		g_visualizationData = visualizeOctree(g_the_mesh_todo_refactor_to_somewhere->GetOctree());
+	}
+}
+
+
+void drawVisualization(const int stride, const float time, const GLuint program, const GLuint vao, const GLuint vbo, const int elementCount, const std::vector<VizData>& nodes)
 {
 	glBindVertexArray(vao);
-	glDrawArrays(GL_TRIANGLES, 0, pointCount);
-	glBindVertexArray(0);
-}
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	GLint posAttrib = glGetAttribLocation(program, "position");
+	glEnableVertexAttribArray(posAttrib);
+	glVertexAttribPointer(
+		posAttrib, // attribute
+		3,                 // number of elements per vertex, here (x,y,z)
+		GL_FLOAT,          
+		GL_FALSE,         
+		stride * sizeof(float),          
+		0               
+	);
 
-std::vector<VizData> drawOctree(Octree* tree)
-{
-	printf("-------- visualizing octree --------\n");
-	std::vector<VizData> viz = visualizeOctree(tree);
-	return viz;
-}
+	GLint colorAttrib = glGetAttribLocation(program, "inColor");
+	glEnableVertexAttribArray(colorAttrib);
+	glVertexAttribPointer(
+		colorAttrib, // attribute
+		3,                 // number of elements per vertex, here (R,G,B)
+		GL_FLOAT,          // the type of each element
+		GL_FALSE,          // take our values as-is
+		stride * sizeof(float),                 // no extra data between each position
+		(void*)(3 * sizeof(float))                  // offset of first element
+	);
 
-void initializeOpenGL(GLuint program)
-{
-	setupProjection(program);
-
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	glEnable(GL_BACK);
-
-	// Draw wireframed
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-}
-
-void drawVisualization(const float time, const GLuint program, const GLuint vao, const int elementCount, const std::vector<VizData>& nodes)
-{
 	printf("draw visualization thing\n");
 	GLint modelUniform = glGetUniformLocation(program, "Model");
 	for (const auto& viz : nodes)
@@ -64,7 +78,7 @@ void drawVisualization(const float time, const GLuint program, const GLuint vao,
 		glm::mat4 rotate = glm::mat4(1.0f);
 		rotate = glm::rotate(
 			rotate,
-			time * glm::radians(30.0f),
+			time * glm::radians(60.0f),
 			glm::vec3(0.0f, 1.0f, 0.0f));
 
 		glm::mat4 scale = glm::mat4(1.0f);
@@ -72,22 +86,14 @@ void drawVisualization(const float time, const GLuint program, const GLuint vao,
 		scale[1] = glm::vec4(0, viz.size, 0, 0);
 		scale[2] = glm::vec4(0, 0, viz.size, 0);
 
-		glm::mat4 model = glm::mat4(1.0f);
 		//this should be correct but isn't?
 		//glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model * translate * rotate * scale));
 
-		glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model * rotate * translate * scale));
-		render(vao, elementCount);
+		glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(rotate * translate * scale));
+		glBindVertexArray(vao);
+		glDrawArrays(GL_TRIANGLES, 0, elementCount);
 	}
-}
-
-OctreeMesh* the_mesh_todo_refactor_to_somewhere;
-static void space_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-	{
-		printf("space pressed\n");
-		the_mesh_todo_refactor_to_somewhere->EnlargePlus(xplus);
-	}
+	glBindVertexArray(0);
 }
 
 int main(void)
@@ -115,8 +121,8 @@ int main(void)
 	OctreeMesh* mesh = new OctreeMesh(triangleProgram, octreeSize, vec3(0, 0, 0));
 	mesh->Load();
 
-	the_mesh_todo_refactor_to_somewhere = mesh;
-	//std::vector<VizData> visualizationData = drawOctree(tree);
+	g_the_mesh_todo_refactor_to_somewhere = mesh;
+
 	// for running just a prebuilt cube without any DC
 	//auto [vertexBuffer, indexBuffer] = indexedCubeTest(triangleProgram); 
 
@@ -124,11 +130,16 @@ int main(void)
 
 	// OpenGL flags, could be somewhere nicer.
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE); // sets cullingments
+	// glEnable(GL_CULL_FACE); // sets cullingments
+
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ); // set to use wireframe
 	glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
 
+	//TODO: refactor to some sort of octree visualizer class
+	g_visualizationData = visualizeOctree(mesh->GetOctree());
+	std::vector<float> genericCubePoints = cubePoints();
+	auto [vao, vbo] = createCubeVAO(genericCubePoints);
 	while (!glfwWindowShouldClose(window))
 	{
 		glUseProgram(triangleProgram);
@@ -139,12 +150,18 @@ int main(void)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// visualize the octree
-		//drawVisualization(time, triangleProgram, triangleVAO, genericCubePoints.size(), visualizationData);
+		glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ); // set to use wireframe
+		drawVisualization(6, time, triangleProgram, vao, vbo, genericCubePoints.size(), g_visualizationData);
 		
 		//for (auto mesh : meshes)
 		//{
 		//	mesh->Draw(time);
 		//}
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // set to disable wireframe
+
+		glEnable(GL_CULL_FACE);
+
 		mesh->Draw(time);
 
 		glfwPollEvents();

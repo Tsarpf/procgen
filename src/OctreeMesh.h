@@ -24,6 +24,8 @@ public:
 	void EnlargePlus(Direction);
 	void EnlargeMinus(Direction);
 
+	Octree* GetOctree();
+
 private:
 	Octree* m_tree;
 	glm::vec3 m_position;

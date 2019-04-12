@@ -19,8 +19,6 @@ void Mesh::SetupGlBuffers()
 	glGenBuffers(1, &m_gl_indices);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_gl_indices);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * m_indices.size(), m_indices.data(), GL_STATIC_DRAW);
-
-	//glBindVertexArray(m_gl_vao);
 }
 
 void Mesh::Draw(const float time)
@@ -32,12 +30,8 @@ void Mesh::Draw(const float time)
 	}
 
 	glm::mat4 model = glm::mat4(1.0f);
-	model[0] = glm::vec4(1, 0, 0, 0);
-	model[1] = glm::vec4(0, 1, 0, 0);
-	model[2] = glm::vec4(0, 0, 1, 0);
-	model[3] = glm::vec4(0, 0, 0, 1);
 
-	model = glm::translate(model, glm::vec3(-5, -5, -5));
+	//model = glm::translate(model, glm::vec3(-5, -5, -5));
 
 	GLint modelUniform = glGetUniformLocation(m_gl_program, "Model");
 	glm::mat4 rotate = glm::rotate(
@@ -68,16 +62,16 @@ void Mesh::BindBuffers()
 		0                  // offset of first element
 	);
 
-	//GLint colAttrib = glGetAttribLocation(m_gl_program, "inColor");
-	//glEnableVertexAttribArray(colAttrib);
-	//glVertexAttribPointer(
-	//	colAttrib, // attribute
-	//	3,                 // number of elements per vertex, here (R,G,B)
-	//	GL_FLOAT,          // the type of each element
-	//	GL_FALSE,          // take our values as-is
-	//	m_stride,                 // no extra data between each position
-	//	(void*)(3 * sizeof(float))                  // offset of first element
-	//);
+	GLint colAttrib = glGetAttribLocation(m_gl_program, "inColor");
+	glEnableVertexAttribArray(colAttrib);
+	glVertexAttribPointer(
+		colAttrib, // attribute
+		3,                 // number of elements per vertex, here (R,G,B)
+		GL_FLOAT,          // the type of each element
+		GL_FALSE,          // take our values as-is
+		m_stride,                 // no extra data between each position
+		(void*)(3 * sizeof(float))                  // offset of first element
+	);
 
 	GLint normAttrib = glGetAttribLocation(m_gl_program, "normal");
 	glEnableVertexAttribArray(normAttrib);

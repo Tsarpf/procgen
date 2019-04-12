@@ -244,7 +244,7 @@ GLuint createTriangleProgram()
 	return program;
 }
 
-GLuint createVAO(float* pointArray, int length)
+std::tuple<GLuint, GLuint> createVAO(float* pointArray, int length)
 {
 	GLuint vbo = 0;
 	glGenBuffers(1, &vbo);
@@ -254,11 +254,14 @@ GLuint createVAO(float* pointArray, int length)
 	GLuint vao = 0;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
+
+	// Make sure vbo is bound to vao
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-	return vao;
+	return std::tuple<GLuint, GLuint>(vao, vbo);
 }
 
+/*
 GLuint createTriangleVAO() {
 	float points[] = {
 			0.0f,  0.5f,  0.0f,
@@ -268,8 +271,9 @@ GLuint createTriangleVAO() {
 
 	return createVAO(points, 3 * 3);
 }
+*/
 
-GLuint createCubeVAO(std::vector<float>& points) {
+std::tuple<GLuint, GLuint>  createCubeVAO(std::vector<float>& points) {
 	// (three floats per point) * (three points per triangle) * (two triangles per face) * (six faces per cube)
 	// 6 * 3 * 2 * 6
 	return createVAO(&points[0], points.size());
@@ -339,60 +343,60 @@ std::vector<float> cubePoints() {
 	std::vector<float> points =
 	{
 		// front face
-		// pos      // color    // normal, here just placeholding not used
-		1, 0, 0,    1, 0, 0,    1, 0, 0,
-		0, 1, 0,    0, 1, 0,    0, 1, 0,
-		1, 1, 0,    0, 0, 1,    0, 0, 1,
+		// pos      // color
+		1, 0, 0,    1, 0, 0,
+		0, 1, 0,    0, 1, 0,
+		1, 1, 0,    0, 0, 1,
 
-		1, 0, 0,    1, 0, 0,    1, 0, 0,
-		0, 0, 0,    0, 1, 0,    0, 1, 0,
-		0, 1, 0,    0, 0, 1,    0, 0, 1,
+		1, 0, 0,    1, 0, 0,
+		0, 0, 0,    0, 1, 0,
+		0, 1, 0,    0, 0, 1,
 
-		// back                 
-		1, 0, 1,    1, 0, 0,    1, 0, 0,
-		1, 1, 1,    0, 1, 0,    0, 1, 0,
-		0, 1, 1,    0, 0, 1,    0, 0, 1,
+		// back             
+		1, 0, 1,    1, 0, 0,
+		1, 1, 1,    0, 1, 0,
+		0, 1, 1,    0, 0, 1,
 
-		1, 0, 1,    1, 0, 0,    1, 0, 0,
-		0, 1, 1,    0, 1, 0,    0, 1, 0,
-		0, 0, 1,    0, 0, 1,    0, 0, 1,
+		1, 0, 1,    1, 0, 0,
+		0, 1, 1,    0, 1, 0,
+		0, 0, 1,    0, 0, 1,
 
-		// left                 
-		0, 0, 0,    1, 0, 0,    1, 0, 0,
-		0, 0, 1,    0, 1, 0,    0, 1, 0,
-		0, 1, 1,    0, 0, 1,    0, 0, 1,
+		// left             
+		0, 0, 0,    1, 0, 0,
+		0, 0, 1,    0, 1, 0,
+		0, 1, 1,    0, 0, 1,
 
 
-		0, 0, 0,    1, 0, 0,    1, 0, 0,
-		0, 1, 1,    0, 0, 1,    0, 0, 1,
-		0, 1, 0,    0, 1, 0,    0, 1, 0,
+		0, 0, 0,    1, 0, 0,
+		0, 1, 1,    0, 0, 1,
+		0, 1, 0,    0, 1, 0,
 
-		// right                
-		1, 0, 0,    1, 0, 0,    1, 0, 0,
-		1, 1, 1,    0, 1, 0,    0, 1, 0,
-		1, 0, 1,    0, 0, 1,    0, 0, 1,
+		// right            
+		1, 0, 0,    1, 0, 0,
+		1, 1, 1,    0, 1, 0,
+		1, 0, 1,    0, 0, 1,
 
-		1, 0, 0,    1, 0, 0,    1, 0, 0,
-		1, 1, 0,    0, 0, 1,    0, 0, 1,
-		1, 1, 1,    0, 1, 0,    0, 1, 0,
+		1, 0, 0,    1, 0, 0,
+		1, 1, 0,    0, 0, 1,
+		1, 1, 1,    0, 1, 0,
 
-		// top                  
-		0, 1, 0,    1, 0, 0,    1, 0, 0,
-		1, 1, 1,    0, 0, 1,    0, 0, 1,
-		1, 1, 0,    0, 1, 0,    0, 1, 0,
+		// top              
+		0, 1, 0,    1, 0, 0,
+		1, 1, 1,    0, 0, 1,
+		1, 1, 0,    0, 1, 0,
 
-		0, 1, 0,    1, 0, 0,    1, 0, 0,
-		0, 1, 1,    0, 0, 1,    0, 0, 1,
-		1, 1, 1,    0, 1, 0,    0, 1, 0,
+		0, 1, 0,    1, 0, 0,
+		0, 1, 1,    0, 0, 1,
+		1, 1, 1,    0, 1, 0,
 
-		// bottom               
-		0, 0, 0,    1, 0, 0,    1, 0, 0,
-		1, 0, 0,    0, 1, 0,    0, 1, 0,
-		1, 0, 1,    0, 0, 0,    0, 0, 0,
+		// bottom           
+		0, 0, 0,    1, 0, 0,
+		1, 0, 0,    0, 1, 0,
+		1, 0, 1,    0, 0, 0,
 
-		0, 0, 0,    1, 0, 0,    1, 0, 0,
-		1, 0, 1,    0, 0, 1,    0, 0, 1,
-		0, 0, 1,    0, 1, 0,    0, 1, 0,
+		0, 0, 0,    1, 0, 0,
+		1, 0, 1,    0, 0, 1,
+		0, 0, 1,    0, 1, 0,
 	};
 	return points;
 }
