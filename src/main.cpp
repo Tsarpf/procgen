@@ -33,7 +33,8 @@ static void space_callback(GLFWwindow *window, int key, int scancode, int action
 	{
 		printf("space pressed\n");
 		//g_the_mesh_todo_refactor_to_somewhere->EnlargePlus(xplus);
-		g_the_mesh_todo_refactor_to_somewhere->EnlargePlus(yplus);
+		//g_the_mesh_todo_refactor_to_somewhere->EnlargePlus(yplus);
+		g_the_mesh_todo_refactor_to_somewhere->EnlargePlus(zplus);
 		g_visualizationData = visualizeOctree(g_the_mesh_todo_refactor_to_somewhere->GetOctree());
 	}
 }
