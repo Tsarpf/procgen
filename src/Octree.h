@@ -55,7 +55,7 @@ private:
 	static void EdgeProcYZ(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
 	static void ProcessEdge(const Octree* node[4] , int dir, IndexBuffer& indexBuffer);
 
-	void GenerateVertexIndices(VertexBuffer& vertexBuffer);
+	static void GenerateVertexIndices(Octree* node, VertexBuffer& vertexBuffer);
 
 	std::unique_ptr<OctreeChildren> m_children;
 

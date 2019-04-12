@@ -265,20 +265,21 @@ OctreeChildren* Octree::GetChildren() const
 
 void Octree::MeshFromOctree(IndexBuffer& indexBuffer, VertexBuffer& vertexBuffer)
 {
-	GenerateVertexIndices(vertexBuffer);
+	GenerateVertexIndices(this, vertexBuffer);
 	CellProc(indexBuffer);
 }
 
-void Octree::GenerateVertexIndices(VertexBuffer& vertexBuffer)
+void Octree::GenerateVertexIndices(Octree* node, VertexBuffer& vertexBuffer)
 {
-	if (m_leaf)
+	if (node->m_leaf)
+
 	{
-		m_index = vertexBuffer.size();
+		node->m_index = vertexBuffer.size();
 		glm::vec3 color = { 255.0, 0.0, 100.0};
 		Vertex v = {
-			m_drawPos,
+			node->m_drawPos,
 			color,
-			m_averageNormal
+			node->m_averageNormal
 			// plus there's a single float of padding so that it's 3*3*4 + 4 = 40 bytes and aligned
 		};
 		vertexBuffer.push_back(v);
@@ -287,8 +288,8 @@ void Octree::GenerateVertexIndices(VertexBuffer& vertexBuffer)
 	{
 		for (int i = 0; i < 8; i++)
 		{
-			if (m_children->children[i]) {
-				m_children->children[i]->GenerateVertexIndices(vertexBuffer);
+			if (node->m_children->children[i]) {
+				GenerateVertexIndices(node->m_children->children[i], vertexBuffer);
 			}
 		}
 	}
