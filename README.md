@@ -2,7 +2,7 @@ Working on comprehending and possibly in the future extending various (dual) con
 
 It now actually works (on my machine)! 
 
-![debug](https://cldup.com/5IHvDNQ6TI.gif)
+![debug](https://cldup.com/SXcjAPRqY4.gif)
 ![cube](https://cldup.com/LABApkDK26.gif)
 ![sphere](https://cldup.com/yEe4nxdPHS.gif)
 
