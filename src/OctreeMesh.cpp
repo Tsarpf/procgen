@@ -18,6 +18,7 @@ void OctreeMesh::Load()
 	m_tree->ConstructBottomUp();
 	m_tree->MeshFromOctree(m_indices, m_vertices);
 	SetupGlBuffers();
+	UploadData();
 
 	m_visualization.Build(m_tree);
 }
@@ -77,7 +78,56 @@ int edgeIndexLookup[6][2][4][4] = {
 	},
 };
 
-void OctreeMesh::Enlarge(Direction dir)
+void BuildSeam(const Octree& n1, const Octree& n2, Direction dir, VertexBuffer& vertices, IndexBuffer& indices)
+{
+	std::vector<std::tuple<int, const Octree&>> idxs = {{0, n1}, {1, n2}};
+	std::array<Octree*, 8> borderChildren;
+	for (auto& child : borderChildren)
+	{
+		child = nullptr;
+	}
+	std::vector<OctreeVisualizationData> viz;
+	for(auto [j, node] : idxs)
+	{
+		if (!node.GetChildren())
+		{
+			continue;
+		}
+		std::array<Octree*, 8> children = node.GetChildren()->children;
+		for (int i = 0; i < 4; i++)
+		{
+			auto[x, y, z, edgeIdx] = edgeIndexLookup[dir][j][i];
+			int idx = index(x, y, z, 2);
+			auto child = children[idx];
+			borderChildren[edgeIdx] = child;
+			Octree::GenerateVertexIndices(child, vertices);
+
+			// if (child)
+			// {
+			// 	std::vector<OctreeVisualizationData> childData = VisualizeOctree(child);
+			// 	viz.insert(viz.end(), childData.begin(), childData.end());
+			// }
+		}
+		j++;
+	}
+	std::cout << "-------------------------------- Processing edges --------------------------------" << std::endl;
+	Octree::CellChildProc(borderChildren, indices);
+	std::cout << "edges processed" << std::endl;
+}
+
+void CreateNewMesh(const Octree& neighbour, Octree* newOctree, const int size, Direction dir, const glm::vec3 position)
+{
+	VertexBuffer vertices;
+	IndexBuffer indices;
+
+	//Octree* newOctree = new Octree(1, size, position);
+	newOctree->ConstructBottomUp();
+	newOctree->MeshFromOctree(indices, vertices);
+
+	BuildSeam(neighbour, *newOctree, dir, vertices, indices);
+}
+
+void OctreeMesh::EnlargeAsync(Direction dir)
 {
 	int newCornerIdx; 
 	int oldCornerIdx;
@@ -85,6 +135,87 @@ void OctreeMesh::Enlarge(Direction dir)
 	glm::vec3 offset;
 	glm::vec3 newPosition;
 
+
+	std::array<Octree*, 8> rootChildren = {};
+	for (auto& child : rootChildren)
+	{
+		child = nullptr;
+	}
+
+	rootChildren[oldCornerIdx] = m_tree;
+	rootChildren[newCornerIdx] = new Octree(1, m_size, newPosition);
+
+	// launch threads etc. here ...
+
+	std::unique_ptr<OctreeChildren> newRootChildren(new OctreeChildren
+	{
+		(uint8_t)((1 << oldCornerIdx) | (1 << newCornerIdx)),
+		rootChildren
+	});
+
+	m_size *= 2;
+	m_tree = new Octree(std::move(newRootChildren), m_size, m_position, 1);
+
+	m_visualization.Build(m_tree);
+}
+
+void OctreeMesh::Enlarge(Direction dir)
+{
+	// this line doesn't work for some reason? these sorta tuples work elsewhere in the 
+	// codebase. "'_This &&' differs in levels of indirection from 'int' ..."
+	//auto [newCornerIdx, oldCornerIdx, newPosition] = EnlargeCorners(dir);
+	std::tuple<int, int, glm::vec3> asdf = EnlargeCorners(dir);
+	int newCornerIdx = std::get<0>(asdf);
+	int oldCornerIdx = std::get<1>(asdf);
+	glm::vec3 newPosition = std::get<2>(asdf);
+
+	std::array<Octree*, 8> rootChildren = {};
+	for (auto& child : rootChildren)
+	{
+		child = nullptr;
+	}
+
+	rootChildren[oldCornerIdx] = m_tree;
+	rootChildren[newCornerIdx] = new Octree(1, m_size, newPosition);
+	rootChildren[newCornerIdx]->ConstructBottomUp();
+	rootChildren[newCornerIdx]->MeshFromOctree(m_indices, m_vertices);
+
+	// uncomment to see what seam generation is doing
+	// m_indices.clear();
+	// m_vertices.clear();
+
+	BuildSeam(*rootChildren[oldCornerIdx], *rootChildren[newCornerIdx], dir, m_vertices, m_indices);
+
+	UploadData();
+
+	std::unique_ptr<OctreeChildren> newRootChildren(new OctreeChildren
+	{
+		(uint8_t)((1 << oldCornerIdx) | (1 << newCornerIdx)),
+		rootChildren
+	});
+
+	m_size *= 2;
+	m_tree = new Octree(std::move(newRootChildren), m_size, m_position, 1);
+
+	m_visualization.Build(m_tree);
+}
+
+void OctreeMesh::Draw(const float time)
+{
+	m_visualization.DrawVisualization(time);
+	Mesh::Draw(time);
+
+	for (auto& mesh : m_childMeshes)
+	{
+		mesh->Draw(time);
+	}
+}
+
+// TODO lookup table
+std::tuple<int, int, glm::vec3> OctreeMesh::EnlargeCorners(Direction dir)
+{
+	int newCornerIdx, oldCornerIdx;
+	glm::vec3 offset, newPosition;
 	switch (dir)
 	{
 	case xplus:
@@ -127,76 +258,5 @@ void OctreeMesh::Enlarge(Direction dir)
 		m_position += offset;
 		break;
 	}
-
-	std::array<Octree*, 8> rootChildren = {};
-	for (auto& child : rootChildren)
-	{
-		child = nullptr;
-	}
-
-	rootChildren[oldCornerIdx] = m_tree;
-	rootChildren[newCornerIdx] = new Octree(1, m_size, newPosition);
-	rootChildren[newCornerIdx]->ConstructBottomUp();
-	rootChildren[newCornerIdx]->MeshFromOctree(m_indices, m_vertices);
-
-	// uncomment to see what seam generation is doing
-	m_indices.clear();
-	m_vertices.clear();
-
-
-	std::vector<std::tuple<int, int>> idxs = {{0, oldCornerIdx}, {1, newCornerIdx}};
-	std::array<Octree*, 8> borderChildren;
-	for (auto& child : borderChildren)
-	{
-		child = nullptr;
-	}
-	std::vector<OctreeVisualizationData> viz;
-	for(auto [j, childIdx] : idxs)
-	{
-		if (!rootChildren[childIdx]->GetChildren())
-		{
-			continue;
-		}
-		std::array<Octree*, 8> children = rootChildren[childIdx]->GetChildren()->children;
-		for (int i = 0; i < 4; i++)
-		{
-			auto[x, y, z, edgeIdx] = edgeIndexLookup[dir][j][i];
-			int idx = index(x, y, z, 2);
-			auto child = children[idx];
-			borderChildren[edgeIdx] = child;
-			Octree::GenerateVertexIndices(child, m_vertices);
-
-			// if (child)
-			// {
-			// 	std::vector<OctreeVisualizationData> childData = VisualizeOctree(child);
-			// 	viz.insert(viz.end(), childData.begin(), childData.end());
-			// }
-		}
-		j++;
-	}
-	// auto res = std::remove_if(viz.begin(), viz.end(), [](OctreeVisualizationData v) { return v.size != 1; });
-	// viz.erase(res, viz.end());
-	// g_visualizationData = viz;
-
-	std::cout << "-------------------------------- Processing edges --------------------------------" << std::endl;
-	Octree::CellChildProc(borderChildren, m_indices);
-	std::cout << "edges processed" << std::endl;
-	SetupGlBuffers();
-
-	std::unique_ptr<OctreeChildren> newRootChildren(new OctreeChildren
-	{
-		(uint8_t)((1 << oldCornerIdx) | (1 << newCornerIdx)),
-		rootChildren
-	});
-
-	m_size *= 2;
-	m_tree = new Octree(std::move(newRootChildren), m_size, m_position, 1);
-
-	m_visualization.Build(m_tree);
-}
-
-void OctreeMesh::Draw(const float time)
-{
-	m_visualization.DrawVisualization(time);
-	Mesh::Draw(time);
+	return std::tuple<int, int, glm::vec3>(newCornerIdx, oldCornerIdx, newPosition);
 }

@@ -35,6 +35,7 @@ private:
 	const int m_stride = sizeof(Vertex);
 
 protected:
+	void UploadData();
 	void SetupGlBuffers();
 	VertexBuffer m_vertices;
 	IndexBuffer m_indices;

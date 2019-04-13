@@ -273,7 +273,7 @@ GLuint createTriangleVAO() {
 }
 */
 
-std::tuple<GLuint, GLuint>  createCubeVAO(std::vector<float>& points) {
+std::tuple<GLuint, GLuint> createCubeVAO(std::vector<float>& points) {
 	// (three floats per point) * (three points per triangle) * (two triangles per face) * (six faces per cube)
 	// 6 * 3 * 2 * 6
 	return createVAO(&points[0], points.size());

@@ -14,9 +14,23 @@ void Mesh::SetupGlBuffers()
 
 	glGenBuffers(1, &m_gl_vertex);
 	glBindBuffer(GL_ARRAY_BUFFER, m_gl_vertex);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * m_vertices.size(), m_vertices.data(), GL_STATIC_DRAW);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * m_vertices.size(), m_vertices.data(), GL_STATIC_DRAW);
 
 	glGenBuffers(1, &m_gl_indices);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_gl_indices);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * m_indices.size(), m_indices.data(), GL_STATIC_DRAW);
+
+	glBindVertexArray(0);
+}
+
+void Mesh::UploadData()
+{
+	// probably not necessary
+	//glBindVertexArray(m_gl_vao);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_gl_vertex);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * m_vertices.size(), m_vertices.data(), GL_STATIC_DRAW);
+
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_gl_indices);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * m_indices.size(), m_indices.data(), GL_STATIC_DRAW);
 }

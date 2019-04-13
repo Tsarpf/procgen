@@ -69,7 +69,7 @@ void OctreeVisualization::DrawVisualization(const float time)
 	GLint modelUniform = glGetUniformLocation(m_program, "Model");
 	for (const auto& viz : m_visualizationData)
 	{
-		if (viz.size == 1 || viz.size == 2) { continue; }
+		if (viz.size < 4) { continue; }
 		glm::mat4 translate = glm::translate
 		(
 			glm::mat4(1.0f),

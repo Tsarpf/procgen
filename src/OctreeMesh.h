@@ -25,13 +25,16 @@ public:
 	void Draw(const float time) override;
 
 	void Enlarge(Direction);
+	void EnlargeAsync(Direction dir);
 
 	Octree* GetOctree();
 
 private:
+	std::tuple<int, int, glm::vec3> EnlargeCorners(Direction dir);
+
 	Octree* m_tree;
 	glm::vec3 m_position;
 	int m_size;
 	OctreeVisualization m_visualization;
-
+	std::vector<OctreeMesh*> m_childMeshes;
 };

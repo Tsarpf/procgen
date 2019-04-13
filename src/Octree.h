@@ -33,7 +33,6 @@ public:
 	const int m_size;
 	bool IsLeaf() const;
 
-
 	// Draw info. Moving these behind a pointer might save space.
 	int m_index;
 	svd::QefData m_qef;
@@ -56,9 +55,9 @@ private:
 	static void EdgeProcYZ(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
 	static void ProcessEdge(const Octree* node[4] , int dir, IndexBuffer& indexBuffer);
 
-
 	std::unique_ptr<OctreeChildren> m_children;
 
+	// Disallow constructors
 	Octree(const Octree&);
 	Octree& operator=(const Octree&);
 
