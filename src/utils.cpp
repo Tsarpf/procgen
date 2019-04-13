@@ -279,12 +279,11 @@ std::tuple<GLuint, GLuint>  createCubeVAO(std::vector<float>& points) {
 	return createVAO(&points[0], points.size());
 }
 
-void setupProjection(GLuint program)
+void setupProjection(GLuint program, glm::vec3 eye, glm::vec3 center)
 {
-	glm::vec3 eye(80, 40, 80);
 	glm::mat4 view = glm::lookAt(
 		eye,
-		glm::vec3(0.0f, 4.0f, 0.0f),
+		center,
 		glm::vec3(0.0f, 1.f, 0.f)
 	);
 

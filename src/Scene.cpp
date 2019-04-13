@@ -1,19 +1,41 @@
 #include "Scene.h"
 #include <GLFW/glfw3.h>
 
+
 //void Scene::SpaceCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
 void Scene::KeyCallback(int key, int action) {
-	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+	if (action == GLFW_PRESS || action == GLFW_REPEAT)
 	{
-		printf("space pressed\n");
-
-		m_mesh->Enlarge(xminus);
+		switch (key)
+		{
+		case GLFW_KEY_SPACE:
+			printf("space pressed\n");
+			m_mesh->Enlarge(xminus);
+			break;
+		case GLFW_KEY_LEFT:
+			m_orientation += 0.1;
+			break;
+		case GLFW_KEY_RIGHT:
+			m_orientation -= 0.1;
+			break;
+		case GLFW_KEY_DOWN:
+			m_eye += ((-m_center) + m_eye) * 0.05f;
+			setupProjection(m_program, m_eye, m_center);
+			break;
+		case GLFW_KEY_UP:
+			m_eye -= ((-m_center) + m_eye) * 0.05f;
+			setupProjection(m_program, m_eye, m_center);
+			break;
+		}
+		return;
 	}
 }
 
-Scene::Scene(GLFWwindow* window) : m_window(window)
+Scene::Scene(GLFWwindow* window) 
+	: m_window(window), m_orientation(0)
 {
-	
+	m_eye = glm::vec3(80, 40, 80);
+	m_center = glm::vec3(0, 4, 8);
 }
 
 void Scene::Initialize()
@@ -34,7 +56,7 @@ void Scene::Initialize()
 	m_mesh = new OctreeMesh(m_program, octreeSize, glm::vec3(0, 0, 0));
 	m_mesh->Load();
 
-	setupProjection(m_program);
+	setupProjection(m_program, m_eye, m_center);
 
 	// glEnable(GL_CULL_FACE); // sets cullingments
 	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -56,7 +78,8 @@ void Scene::Render()
 
 	glEnable(GL_CULL_FACE);
 
-	m_mesh->Draw(time);
+	//m_mesh->Draw(time);
+	m_mesh->Draw(m_orientation);
 }
 
 Scene::~Scene()

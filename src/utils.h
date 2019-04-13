@@ -21,7 +21,7 @@ GLuint createTriangleProgram();
 GLuint createTriangleVAO();
 std::tuple<GLuint, GLuint>  createCubeVAO(std::vector<float>& points);
 GLuint createIndexVAO(const VertexBuffer& vb, const IndexBuffer& ib);
-void setupProjection(GLuint program);
+void setupProjection(GLuint program, glm::vec3 eye, glm::vec3 center);
 std::tuple<GLuint, GLuint> indexedCubeTest(GLuint program);
 std::tuple<GLuint, GLuint, GLuint> indexedBufferSetup(const VertexBuffer& verts, const IndexBuffer& inds);
 void bindBuffers(GLuint program, GLuint vertex, GLuint indices, GLuint vao, int stride);

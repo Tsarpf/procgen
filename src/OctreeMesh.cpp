@@ -3,7 +3,6 @@
 
 #include <memory>
 
-
 OctreeMesh::OctreeMesh(GLuint program, const int size, const glm::vec3 position) 
 	: m_size(size), m_position(position), Mesh(program), m_visualization(program)
 {
@@ -135,13 +134,15 @@ void OctreeMesh::Enlarge(Direction dir)
 		child = nullptr;
 	}
 
-	//m_indices.clear();
-	//m_vertices.clear();
-
 	rootChildren[oldCornerIdx] = m_tree;
 	rootChildren[newCornerIdx] = new Octree(1, m_size, newPosition);
 	rootChildren[newCornerIdx]->ConstructBottomUp();
 	rootChildren[newCornerIdx]->MeshFromOctree(m_indices, m_vertices);
+
+	// uncomment to see what seam generation is doing
+	m_indices.clear();
+	m_vertices.clear();
+
 
 	std::vector<std::tuple<int, int>> idxs = {{0, oldCornerIdx}, {1, newCornerIdx}};
 	std::array<Octree*, 8> borderChildren;
