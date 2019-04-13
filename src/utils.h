@@ -25,7 +25,6 @@ void setupProjection(GLuint program);
 std::tuple<GLuint, GLuint> indexedCubeTest(GLuint program);
 std::tuple<GLuint, GLuint, GLuint> indexedBufferSetup(const VertexBuffer& verts, const IndexBuffer& inds);
 void bindBuffers(GLuint program, GLuint vertex, GLuint indices, GLuint vao, int stride);
-std::vector<float> cubePoints();
 
 void printBinary(uint8_t field);
 

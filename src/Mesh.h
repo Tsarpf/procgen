@@ -24,7 +24,7 @@ public:
 	Mesh(GLuint program);
 	~Mesh();
 
-	void Draw(const float time);
+	virtual void Draw(const float time);
 private:
 	void BindBuffers();
 
