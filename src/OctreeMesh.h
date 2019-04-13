@@ -24,8 +24,7 @@ public:
 
 	void Draw(const float time) override;
 
-	void EnlargePlus(Direction);
-	void EnlargeMinus(Direction);
+	void Enlarge(Direction);
 
 	Octree* GetOctree();
 

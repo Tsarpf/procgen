@@ -89,7 +89,7 @@ float DensityFunction(const glm::vec3 pos)
 {
 	//return Noise(pos);
 	//return Sphere(pos, glm::vec3(20, 20, 20), 16.0);
-	return Box(pos - glm::vec3(16,8,16), glm::vec3(8, 8, 256));
+	return Box(pos - glm::vec3(16,8,16), glm::vec3(256, 8, 256));
 }
 
 bool Sample(const glm::vec3 pos)

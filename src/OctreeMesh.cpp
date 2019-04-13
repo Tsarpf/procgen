@@ -78,118 +78,56 @@ int edgeIndexLookup[6][2][4][4] = {
 	},
 };
 
-void OctreeMesh::EnlargePlus(Direction dir)
+void OctreeMesh::Enlarge(Direction dir)
 {
-	int oldCornerIdx = index(0, 0, 0, 2);
-	int newCornerIdx;
+	int newCornerIdx; 
+	int oldCornerIdx;
 
+	glm::vec3 offset;
 	glm::vec3 newPosition;
 
 	switch (dir)
 	{
 	case xplus:
 		newCornerIdx = index(1, 0, 0, 2); 
-		newPosition = m_position + glm::vec3(m_size, 0, 0);
+		oldCornerIdx = index(0, 0, 0, 2); 
+		offset = glm::vec3(m_size, 0, 0);
+		newPosition = m_position + offset;
 		break;
 	case yplus:
 		newCornerIdx = index(0, 1, 0, 2); 
-		newPosition = m_position + glm::vec3(0, m_size, 0);
+		oldCornerIdx = index(0, 0, 0, 2); 
+		offset = glm::vec3(0, m_size, 0);
+		newPosition = m_position + offset;
 		break;
 	case zplus:
 		newCornerIdx = index(0, 0, 1, 2); 
-		newPosition = m_position + glm::vec3(0, 0, m_size);
+		oldCornerIdx = index(0, 0, 0, 2); 
+		offset = glm::vec3(0, 0, m_size);
+		newPosition = m_position + offset;
 		break;
-	}
-	// same new min for bigger octree
-
-	std::array<Octree*, 8> rootChildren = {};
-	for (auto& child : rootChildren)
-	{
-		child = nullptr;
-	}
-
-	//m_indices.clear();
-	//m_vertices.clear();
-
-	rootChildren[oldCornerIdx] = m_tree;
-	rootChildren[newCornerIdx] = new Octree(1, m_size, newPosition);
-	rootChildren[newCornerIdx]->ConstructBottomUp();
-	rootChildren[newCornerIdx]->MeshFromOctree(m_indices, m_vertices);
-
-	std::vector<std::tuple<int, int>> idxs = {{0, oldCornerIdx}, {1, newCornerIdx}};
-	std::array<Octree*, 8> borderChildren;
-	for (auto& child : borderChildren)
-	{
-		child = nullptr;
-	}
-	std::vector<OctreeVisualizationData> viz;
-	for(auto [j, childIdx] : idxs)
-	{
-		if (!rootChildren[childIdx]->GetChildren())
-		{
-			continue;
-		}
-		std::array<Octree*, 8> children = rootChildren[childIdx]->GetChildren()->children;
-		for (int i = 0; i < 4; i++)
-		{
-			auto[x, y, z, edgeIdx] = edgeIndexLookup[dir][j][i];
-			int idx = index(x, y, z, 2);
-			auto child = children[idx];
-			borderChildren[edgeIdx] = child;
-			Octree::GenerateVertexIndices(child, m_vertices);
-
-			//if (child)
-			//{
-			//	std::vector<OctreeVisualizationData> childData = VisualizeOctree(child);
-			//	viz.insert(viz.end(), childData.begin(), childData.end());
-			//}
-		}
-		j++;
-	}
-	// auto res = std::remove_if(viz.begin(), viz.end(), [](OctreeVisualizationData v) { return v.size != 1; });
-	// viz.erase(res, viz.end());
-	// g_visualizationData = viz;
-
-	std::cout << "-------------------------------- Processing edges --------------------------------" << std::endl;
-	Octree::CellChildProc(borderChildren, m_indices);
-	std::cout << "edges processed" << std::endl;
-	SetupGlBuffers();
-
-	std::unique_ptr<OctreeChildren> newRootChildren(new OctreeChildren
-	{
-		(uint8_t)((1 << oldCornerIdx) | (1 << newCornerIdx)),
-		rootChildren
-	});
-
-	m_size *= 2;
-	m_tree = new Octree(std::move(newRootChildren), m_size, m_position, 1);
-	m_visualization.Build(m_tree);
-}
-// TODO merge with EnlargePlus
-void OctreeMesh::EnlargeMinus(Direction dir)
-{
-
-	int newCornerIdx = index(0, 0, 0, 2); 
-	int oldCornerIdx;
-
-	glm::vec3 offset;
-
-	switch (dir)
-	{
 	case xminus:
+		newCornerIdx = index(0, 0, 0, 2);
 		oldCornerIdx = index(1, 0, 0, 2);
-		offset = glm::vec3(m_size, 0, 0);
+		offset = glm::vec3(-m_size, 0, 0);
+		newPosition = m_position + offset;
+		m_position += offset;
 		break;
 	case yminus:
+		newCornerIdx = index(0, 0, 0, 2);
 		oldCornerIdx = index(0, 1, 0, 2); 
-		offset = glm::vec3(0, m_size, 0);
+		offset = glm::vec3(0, -m_size, 0);
+		newPosition = m_position + offset;
+		m_position += offset;
 		break;
 	case zminus:
+		newCornerIdx = index(0, 0, 0, 2);
 		oldCornerIdx = index(0, 0, 1, 2); 
-		offset = glm::vec3(0, 0, m_size);
+		offset = glm::vec3(0, 0, -m_size);
+		newPosition = m_position + offset;
+		m_position += offset;
 		break;
 	}
-	glm::vec3 newPosition = m_position - offset;
 
 	std::array<Octree*, 8> rootChildren = {};
 	for (auto& child : rootChildren)
@@ -251,7 +189,6 @@ void OctreeMesh::EnlargeMinus(Direction dir)
 	});
 
 	m_size *= 2;
-	m_position -= offset;
 	m_tree = new Octree(std::move(newRootChildren), m_size, m_position, 1);
 
 	m_visualization.Build(m_tree);

@@ -2,13 +2,12 @@
 #include <GLFW/glfw3.h>
 
 //void Scene::SpaceCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-void Scene::SpaceCallback(int key, int action) {
+void Scene::KeyCallback(int key, int action) {
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 	{
 		printf("space pressed\n");
 
-		//m_mesh->EnlargePlus(xplus);
-		m_mesh->EnlargeMinus(zminus);
+		m_mesh->Enlarge(xminus);
 	}
 }
 
@@ -22,7 +21,7 @@ void Scene::Initialize()
 	glfwSetKeyCallback(m_window, [](GLFWwindow* window, int key, int, int action, int)
 	{
 		auto scene = reinterpret_cast<Scene*>(glfwGetWindowUserPointer(window));
-		scene->SpaceCallback(key, action);
+		scene->KeyCallback(key, action);
 	});
 	glfwSetWindowUserPointer(m_window, this);
 
@@ -42,8 +41,6 @@ void Scene::Initialize()
 	// glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ); // set to use wireframe
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
-
-	//TODO: refactor to some sort of octree visualizer class
 }
 
 void Scene::Render()
@@ -54,9 +51,6 @@ void Scene::Render()
 
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// visualize the octree
-	//drawVisualization(6, time, m_program, vao, vbo, genericCubePoints.size(), g_visualizationData);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // set to disable wireframe
 

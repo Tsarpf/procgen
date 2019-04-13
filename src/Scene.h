@@ -17,7 +17,7 @@ public:
 	~Scene();
 	void Initialize();
 	void Render();
-	void SpaceCallback(int key, int action);
+	void KeyCallback(int key, int action);
 
 private:
 	GLuint m_program;
