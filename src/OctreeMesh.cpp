@@ -7,6 +7,9 @@
 OctreeMesh::OctreeMesh(GLuint program, const int size, const glm::vec3 position) : m_size(size), m_position(position), Mesh(program)
 {
 }
+OctreeMesh::~OctreeMesh()
+{
+}
 
 void OctreeMesh::Load()
 {
@@ -71,7 +74,6 @@ int edgeIndexLookup[6][2][4][4] = {
 	},
 };
 
-extern std::vector<VizData> g_visualizationData;
 void OctreeMesh::EnlargePlus(Direction dir)
 {
 	int oldCornerIdx = index(0, 0, 0, 2);
@@ -116,7 +118,7 @@ void OctreeMesh::EnlargePlus(Direction dir)
 	{
 		child = nullptr;
 	}
-	std::vector<VizData> viz;
+	std::vector<OctreeVisualizationData> viz;
 	for(auto [j, childIdx] : idxs)
 	{
 		if (!rootChildren[childIdx]->GetChildren())
@@ -134,15 +136,15 @@ void OctreeMesh::EnlargePlus(Direction dir)
 
 			if (child)
 			{
-				std::vector<VizData> childData = visualizeOctree(child);
+				std::vector<OctreeVisualizationData> childData = VisualizeOctree(child);
 				viz.insert(viz.end(), childData.begin(), childData.end());
 			}
 		}
 		j++;
 	}
-	auto res = std::remove_if(viz.begin(), viz.end(), [](VizData v) { return v.size != 1; });
+	auto res = std::remove_if(viz.begin(), viz.end(), [](OctreeVisualizationData v) { return v.size != 1; });
 	viz.erase(res, viz.end());
-	g_visualizationData = viz;
+	//g_visualizationData = viz;
 
 	std::cout << "-------------------------------- Processing edges --------------------------------" << std::endl;
 	Octree::CellChildProc(borderChildren, m_indices);
@@ -158,7 +160,6 @@ void OctreeMesh::EnlargePlus(Direction dir)
 	m_size *= 2;
 	m_tree = new Octree(std::move(newRootChildren), m_size, m_position, 1);
 }
-
 // TODO merge with EnlargePlus
 void OctreeMesh::EnlargeMinus(Direction dir)
 {
@@ -205,7 +206,7 @@ void OctreeMesh::EnlargeMinus(Direction dir)
 	{
 		child = nullptr;
 	}
-	std::vector<VizData> viz;
+	std::vector<OctreeVisualizationData> viz;
 	for(auto [j, childIdx] : idxs)
 	{
 		if (!rootChildren[childIdx]->GetChildren())
@@ -223,15 +224,15 @@ void OctreeMesh::EnlargeMinus(Direction dir)
 
 			if (child)
 			{
-				std::vector<VizData> childData = visualizeOctree(child);
+				std::vector<OctreeVisualizationData> childData = VisualizeOctree(child);
 				viz.insert(viz.end(), childData.begin(), childData.end());
 			}
 		}
 		j++;
 	}
-	auto res = std::remove_if(viz.begin(), viz.end(), [](VizData v) { return v.size != 1; });
+	auto res = std::remove_if(viz.begin(), viz.end(), [](OctreeVisualizationData v) { return v.size != 1; });
 	viz.erase(res, viz.end());
-	g_visualizationData = viz;
+	//g_visualizationData = viz;
 
 	std::cout << "-------------------------------- Processing edges --------------------------------" << std::endl;
 	Octree::CellChildProc(borderChildren, m_indices);
@@ -249,6 +250,87 @@ void OctreeMesh::EnlargeMinus(Direction dir)
 	m_tree = new Octree(std::move(newRootChildren), m_size, m_position, 1);
 }
 
-OctreeMesh::~OctreeMesh()
+void OctreeMesh::DrawVisualization(const int stride, const float time, const GLuint program,
+	const GLuint vao, const GLuint vbo, const int elementCount, const std::vector<OctreeVisualizationData>& nodes)
 {
+	glBindVertexArray(vao);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	GLint posAttrib = glGetAttribLocation(program, "position");
+	glEnableVertexAttribArray(posAttrib);
+	glVertexAttribPointer(
+		posAttrib, // attribute
+		3,                 // number of elements per vertex, here (x,y,z)
+		GL_FLOAT,          
+		GL_FALSE,         
+		stride * sizeof(float),          
+		0               
+	);
+
+	GLint colorAttrib = glGetAttribLocation(program, "inColor");
+	glEnableVertexAttribArray(colorAttrib);
+	glVertexAttribPointer(
+		colorAttrib, // attribute
+		3,                 // number of elements per vertex, here (R,G,B)
+		GL_FLOAT,          // the type of each element
+		GL_FALSE,          // take our values as-is
+		stride * sizeof(float),                 // no extra data between each position
+		(void*)(3 * sizeof(float))                  // offset of first element
+	);
+
+	printf("draw visualization thing\n");
+	GLint modelUniform = glGetUniformLocation(program, "Model");
+	for (const auto& viz : nodes)
+	{
+		glm::mat4 translate = glm::translate
+		(
+			glm::mat4(1.0f),
+			viz.min
+		);
+
+		glm::mat4 rotate = glm::mat4(1.0f);
+		rotate = glm::rotate(
+			rotate,
+			time * glm::radians(60.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f));
+
+		glm::mat4 scale = glm::mat4(1.0f);
+		scale[0] = glm::vec4(viz.size, 0, 0, 0);
+		scale[1] = glm::vec4(0, viz.size, 0, 0);
+		scale[2] = glm::vec4(0, 0, viz.size, 0);
+
+		//this should be correct but isn't?
+		//glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model * translate * rotate * scale));
+
+		glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(rotate * translate * scale));
+		glBindVertexArray(vao);
+		glDrawArrays(GL_TRIANGLES, 0, elementCount);
+	}
+	glBindVertexArray(0);
 }
+
+std::vector<OctreeVisualizationData> OctreeMesh::VisualizeOctree(const Octree* node)
+{
+	std::vector<OctreeVisualizationData> nums;
+
+	OctreeVisualizationData stuff = { node->m_size, node->m_min };
+	nums.push_back(stuff);
+
+	const auto octreeChildren = node->GetChildren();
+	if (!octreeChildren)
+	{
+		return nums;
+	}
+
+	auto children = octreeChildren->children;
+	for (const Octree* child : children)
+	{
+		if (child)
+		{
+			std::vector<OctreeVisualizationData> childData = VisualizeOctree(child);
+			nums.insert(nums.end(), childData.begin(), childData.end());
+		}
+	}
+
+	return nums;
+}
+

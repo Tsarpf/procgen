@@ -27,12 +27,6 @@ std::tuple<GLuint, GLuint, GLuint> indexedBufferSetup(const VertexBuffer& verts,
 void bindBuffers(GLuint program, GLuint vertex, GLuint indices, GLuint vao, int stride);
 std::vector<float> cubePoints();
 
-struct VizData {
-    int size;
-    glm::vec3 min;
-};
-
-std::vector<VizData> visualizeOctree(const Octree*);
 void printBinary(uint8_t field);
 
 

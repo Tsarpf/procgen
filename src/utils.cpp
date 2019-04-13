@@ -313,32 +313,6 @@ void setupProjection(GLuint program)
 	printf("%i proj\n", projUniform);
 }
 
-std::vector<VizData> visualizeOctree(const Octree* node)
-{
-	std::vector<VizData> nums;
-
-	VizData stuff = { node->m_size, node->m_min };
-	nums.push_back(stuff);
-
-	const auto octreeChildren = node->GetChildren();
-	if (!octreeChildren)
-	{
-		return nums;
-	}
-
-	auto children = octreeChildren->children;
-	for (const Octree* child : children)
-	{
-		if (child)
-		{
-			std::vector<VizData> childData = visualizeOctree(child);
-			nums.insert(nums.end(), childData.begin(), childData.end());
-		}
-	}
-
-	return nums;
-}
-
 std::vector<float> cubePoints() {
 	std::vector<float> points =
 	{
