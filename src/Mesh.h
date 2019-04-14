@@ -22,13 +22,13 @@ class Mesh
 {
 public:
 	Mesh(GLuint program);
+	Mesh(GLuint program, VertexBuffer vertices, IndexBuffer indices);
 	~Mesh();
 
 	virtual void Draw(const float time);
 private:
 	void BindBuffers();
 
-	GLuint m_gl_program;
 	GLuint m_gl_vertex;
 	GLuint m_gl_indices;
 	GLuint m_gl_vao;
@@ -37,6 +37,7 @@ private:
 protected:
 	void UploadData();
 	void SetupGlBuffers();
+	GLuint m_gl_program;
 	VertexBuffer m_vertices;
 	IndexBuffer m_indices;
 };

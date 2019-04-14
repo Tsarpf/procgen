@@ -7,9 +7,6 @@
 
 OctreeVisualization::OctreeVisualization(GLuint program) : m_program(program)
 {
-	auto [vao, vbo] = createCubeVAO(m_cubePoints);
-	m_vao = vao;
-	m_vbo = vbo;
 }
 
 
@@ -19,6 +16,11 @@ OctreeVisualization::~OctreeVisualization()
 
 void OctreeVisualization::Build(const Octree* node)
 {
+	// TODO don't create new ones every time
+	auto [vao, vbo] = createCubeVAO(m_cubePoints);
+	m_vao = vao;
+	m_vbo = vbo;
+
 	OctreeVisualizationData stuff = { node->m_size, node->m_min };
 	m_visualizationData.push_back(stuff);
 

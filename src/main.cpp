@@ -10,7 +10,6 @@
 
 int main(void)
 {
-
 	GLFWwindow *window = initialize();
 
 	Scene scene(window);

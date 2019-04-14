@@ -8,19 +8,27 @@ OctreeMesh::OctreeMesh(GLuint program, const int size, const glm::vec3 position)
 {
 }
 
-OctreeMesh::~OctreeMesh()
+OctreeMesh::OctreeMesh(GLuint program, const int size, const glm::vec3 position, Octree* tree, VertexBuffer vertices, IndexBuffer indices) 
+	: m_size(size), m_position(position), Mesh(program, vertices, indices), m_visualization(program), m_tree(tree)
 {
 }
 
-void OctreeMesh::Load()
+OctreeMesh::~OctreeMesh()
+{
+}
+void OctreeMesh::BuildOctree()
 {
 	m_tree = new Octree(1, m_size, m_position);
 	m_tree->ConstructBottomUp();
 	m_tree->MeshFromOctree(m_indices, m_vertices);
-	SetupGlBuffers();
-	UploadData();
 
 	m_visualization.Build(m_tree);
+}
+
+void OctreeMesh::LoadMesh()
+{
+	SetupGlBuffers();
+	UploadData();
 }
 
 Octree* OctreeMesh::GetOctree()
@@ -78,7 +86,8 @@ int edgeIndexLookup[6][2][4][4] = {
 	},
 };
 
-void BuildSeam(const Octree& n1, const Octree& n2, Direction dir, VertexBuffer& vertices, IndexBuffer& indices)
+void BuildSeam(const Octree& n1, const Octree& n2, Direction dir,
+	VertexBuffer& vertices, IndexBuffer& indices)
 {
 	std::vector<std::tuple<int, const Octree&>> idxs = {{0, n1}, {1, n2}};
 	std::array<Octree*, 8> borderChildren;
@@ -115,7 +124,8 @@ void BuildSeam(const Octree& n1, const Octree& n2, Direction dir, VertexBuffer& 
 	std::cout << "edges processed" << std::endl;
 }
 
-void CreateNewMesh(const Octree& neighbour, Octree* newOctree, const int size, Direction dir, const glm::vec3 position)
+OctreeMesh* CreateNewMeshTask(Octree* neighbour, Octree* newOctree,
+	const int size, Direction dir, const glm::vec3 position, GLuint program)
 {
 	VertexBuffer vertices;
 	IndexBuffer indices;
@@ -124,17 +134,39 @@ void CreateNewMesh(const Octree& neighbour, Octree* newOctree, const int size, D
 	newOctree->ConstructBottomUp();
 	newOctree->MeshFromOctree(indices, vertices);
 
-	BuildSeam(neighbour, *newOctree, dir, vertices, indices);
+
+	BuildSeam(*neighbour, *newOctree, dir, vertices, indices);
+
+	OctreeMesh* mesh = new OctreeMesh(program, size, position, newOctree, std::move(vertices), std::move(indices));
+
+	return mesh;
 }
 
+void OctreeMesh::CheckResults()
+{
+	std::vector<int> readies;
+	for (int i = 0; i < m_futureMeshes.size(); i++)
+	{
+		auto& future = m_futureMeshes[i];
+		if (future._Is_ready())
+		{
+			readies.push_back(i);
+			OctreeMesh* mesh = future.get();
+			mesh->LoadMesh();
+			std::lock_guard<std::mutex> guard(m_childMeshMutex);
+			m_childMeshes.push_back(mesh);
+		}
+	}
+}
 void OctreeMesh::EnlargeAsync(Direction dir)
 {
-	int newCornerIdx; 
-	int oldCornerIdx;
-
-	glm::vec3 offset;
-	glm::vec3 newPosition;
-
+	// this line doesn't work for some reason? these sorta tuples work elsewhere in the 
+	// codebase. "'_This &&' differs in levels of indirection from 'int' ..."
+	//auto [newCornerIdx, oldCornerIdx, newPosition] = EnlargeCorners(dir);
+	std::tuple<int, int, glm::vec3> asdf = EnlargeCorners(dir);
+	int newCornerIdx = std::get<0>(asdf);
+	int oldCornerIdx = std::get<1>(asdf);
+	glm::vec3 newPosition = std::get<2>(asdf);
 
 	std::array<Octree*, 8> rootChildren = {};
 	for (auto& child : rootChildren)
@@ -144,8 +176,6 @@ void OctreeMesh::EnlargeAsync(Direction dir)
 
 	rootChildren[oldCornerIdx] = m_tree;
 	rootChildren[newCornerIdx] = new Octree(1, m_size, newPosition);
-
-	// launch threads etc. here ...
 
 	std::unique_ptr<OctreeChildren> newRootChildren(new OctreeChildren
 	{
@@ -157,6 +187,17 @@ void OctreeMesh::EnlargeAsync(Direction dir)
 	m_tree = new Octree(std::move(newRootChildren), m_size, m_position, 1);
 
 	m_visualization.Build(m_tree);
+
+	m_futureMeshes.push_back(
+	std::future<OctreeMesh*>(std::async(std::launch::async,
+		CreateNewMeshTask,
+		rootChildren[oldCornerIdx],
+		rootChildren[newCornerIdx],
+		m_size / 2, // <- hnngh
+		dir,
+		m_position,
+		m_gl_program))
+	);
 }
 
 void OctreeMesh::Enlarge(Direction dir)
@@ -205,6 +246,7 @@ void OctreeMesh::Draw(const float time)
 	m_visualization.DrawVisualization(time);
 	Mesh::Draw(time);
 
+	std::lock_guard<std::mutex> guard(m_childMeshMutex);
 	for (auto& mesh : m_childMeshes)
 	{
 		mesh->Draw(time);

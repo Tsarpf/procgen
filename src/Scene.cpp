@@ -10,7 +10,8 @@ void Scene::KeyCallback(int key, int action) {
 		{
 		case GLFW_KEY_SPACE:
 			printf("space pressed\n");
-			m_mesh->Enlarge(xminus);
+			//m_mesh->Enlarge(xminus);
+			m_mesh->EnlargeAsync(xminus);
 			break;
 		case GLFW_KEY_LEFT:
 			m_orientation += 0.1;
@@ -54,7 +55,8 @@ void Scene::Initialize()
 	const int axisCount = 3;
 
 	m_mesh = new OctreeMesh(m_program, octreeSize, glm::vec3(0, 0, 0));
-	m_mesh->Load();
+	m_mesh->BuildOctree();
+	m_mesh->LoadMesh();
 
 	setupProjection(m_program, m_eye, m_center);
 
@@ -79,6 +81,7 @@ void Scene::Render()
 	glEnable(GL_CULL_FACE);
 
 	//m_mesh->Draw(time);
+	m_mesh->CheckResults(); // tad ugly, mebbe do something
 	m_mesh->Draw(m_orientation);
 }
 
