@@ -14,13 +14,15 @@ OctreeVisualization::~OctreeVisualization()
 {
 }
 
-void OctreeVisualization::Build(const Octree* node)
+void OctreeVisualization::Initialize()
 {
-	// TODO don't create new ones every time
 	auto [vao, vbo] = createCubeVAO(m_cubePoints);
 	m_vao = vao;
 	m_vbo = vbo;
 
+}
+void OctreeVisualization::Build(const Octree* node)
+{
 	OctreeVisualizationData stuff = { node->m_size, node->m_min };
 	m_visualizationData.push_back(stuff);
 
@@ -67,7 +69,7 @@ void OctreeVisualization::DrawVisualization(const float time)
 		(void*)(3 * sizeof(float))                  // offset of first element
 	);
 
-	printf("draw visualization thing\n");
+	//printf("draw visualization thing\n");
 	GLint modelUniform = glGetUniformLocation(m_program, "Model");
 	for (const auto& viz : m_visualizationData)
 	{

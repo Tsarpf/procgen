@@ -11,6 +11,7 @@ OctreeMesh::OctreeMesh(GLuint program, const int size, const glm::vec3 position)
 OctreeMesh::OctreeMesh(GLuint program, const int size, const glm::vec3 position, Octree* tree, VertexBuffer vertices, IndexBuffer indices) 
 	: m_size(size), m_position(position), Mesh(program, vertices, indices), m_visualization(program), m_tree(tree)
 {
+	m_visualization.Build(m_tree);
 }
 
 OctreeMesh::~OctreeMesh()
@@ -27,6 +28,7 @@ void OctreeMesh::BuildOctree()
 
 void OctreeMesh::LoadMesh()
 {
+	m_visualization.Initialize();
 	SetupGlBuffers();
 	UploadData();
 }
@@ -134,7 +136,6 @@ OctreeMesh* CreateNewMeshTask(Octree* neighbour, Octree* newOctree,
 	newOctree->ConstructBottomUp();
 	newOctree->MeshFromOctree(indices, vertices);
 
-
 	BuildSeam(*neighbour, *newOctree, dir, vertices, indices);
 
 	OctreeMesh* mesh = new OctreeMesh(program, size, position, newOctree, std::move(vertices), std::move(indices));
@@ -185,8 +186,6 @@ void OctreeMesh::EnlargeAsync(Direction dir)
 
 	m_size *= 2;
 	m_tree = new Octree(std::move(newRootChildren), m_size, m_position, 1);
-
-	m_visualization.Build(m_tree);
 
 	m_futureMeshes.push_back(
 	std::future<OctreeMesh*>(std::async(std::launch::async,
@@ -243,7 +242,7 @@ void OctreeMesh::Enlarge(Direction dir)
 
 void OctreeMesh::Draw(const float time)
 {
-	m_visualization.DrawVisualization(time);
+	//m_visualization.DrawVisualization(time);
 	Mesh::Draw(time);
 
 	std::lock_guard<std::mutex> guard(m_childMeshMutex);

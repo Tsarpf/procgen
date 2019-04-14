@@ -80,16 +80,16 @@ float Noise(const glm::vec3& p)
 {
 	double epsilon = 0.01;
 	static module::Perlin myModule;
-	float divider = 25;
+	float divider = 50;
 	double value = myModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
 	return value;
 }
 
 float DensityFunction(const glm::vec3 pos)
 {
-	//return Noise(pos);
+	return Noise(pos);
 	//return Sphere(pos, glm::vec3(20, 20, 20), 16.0);
-	return Box(pos - glm::vec3(16,8,16), glm::vec3(256, 8, 256));
+	//return Box(pos - glm::vec3(16,8,16), glm::vec3(256, 8, 256));
 }
 
 bool Sample(const glm::vec3 pos)

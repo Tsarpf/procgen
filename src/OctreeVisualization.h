@@ -17,6 +17,7 @@ public:
 
 	void DrawVisualization(const float time);
 	void Build(const Octree*);
+	void Initialize();
 private:
 	const int m_stride = 6;
 	GLuint m_program;
