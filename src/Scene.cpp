@@ -52,7 +52,6 @@ void Scene::Initialize()
 	m_program = createTriangleProgram();
 
 	const int octreeSize = 32;
-	const int axisCount = 3;
 
 	m_mesh = new OctreeMesh(m_program, octreeSize, glm::vec3(0, 0, 0));
 	m_mesh->BuildOctree();
@@ -76,9 +75,9 @@ void Scene::Render()
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // set to disable wireframe
-
-	glEnable(GL_CULL_FACE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // set to GL_LINE to disable wireframe
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // set to GL_LINE to disable wireframe
+	//glEnable(GL_CULL_FACE); // enable/disable culling
 
 	//m_mesh->Draw(time);
 	m_mesh->CheckResults(); // tad ugly, mebbe do something

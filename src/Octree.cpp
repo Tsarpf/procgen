@@ -60,9 +60,17 @@ int index(int x, int y, int z, int dimensionLength)
 	return x + dimensionLength * (y + dimensionLength * z);
 }
 
+float mod(float x, float y)
+{
+	return x - y * floor(x / y);
+}
+float repeatAxis(float p, float c)
+{
+	return mod(p, c) - 0.5 * c;
+}
 float Sphere(const glm::vec3& worldPosition, const glm::vec3& origin, float radius)
 {
-	return glm::length(worldPosition - origin) - radius;
+	return glm::length(worldPosition - origin) - radius; // non repeating
 }
 
 float Box(const glm::vec3& p, const glm::vec3& size)
@@ -78,18 +86,35 @@ float Box(const glm::vec3& p, const glm::vec3& size)
 
 float Noise(const glm::vec3& p)
 {
-	double epsilon = 0.01;
+	double epsilon = 0.500;
 	static module::Perlin myModule;
 	float divider = 50;
 	double value = myModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
 	return value;
 }
 
+float Waves(const glm::vec3& p)
+{
+	return sin(p.x) + cos(p.y) + p.z - 5;
+	//return sin(p.x) + cos(p.z) + p.y;
+}
+
 float DensityFunction(const glm::vec3 pos)
 {
-	return Noise(pos);
-	//return Sphere(pos, glm::vec3(20, 20, 20), 16.0);
-	//return Box(pos - glm::vec3(16,16,16), glm::vec3(8, 64, 8));
+	glm::vec3 repeat(15, 15, 15);
+	glm::vec3 repeatPos(
+		repeatAxis(pos.x, repeat.x),
+		repeatAxis(pos.y, repeat.y),
+		repeatAxis(pos.z, repeat.z)
+	);
+	//return glm::length(pos - origin) - radius; // repeating
+	//return Noise(pos);
+	//return Sphere(repeatPos, glm::vec3(0, 0, 0), 5.0);
+
+	//return Box(pos - glm::vec3(16,16,16), glm::vec3(128, 8, 8));
+	//return Box(repeatPos - glm::vec3(0,0,0), glm::vec3(5, 5, 5));
+
+	return Waves(pos);
 }
 
 bool Sample(const glm::vec3 pos)

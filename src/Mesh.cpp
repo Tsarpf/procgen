@@ -42,7 +42,6 @@ void Mesh::UploadData()
 
 void Mesh::Draw(const float time)
 {
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // set to use wireframe
 	if (m_indices.size() == 0)
 	{
 		// nothing to draw
