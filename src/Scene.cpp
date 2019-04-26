@@ -11,7 +11,7 @@ void Scene::KeyCallback(int key, int action) {
 		case GLFW_KEY_SPACE:
 			printf("space pressed\n");
 			//m_mesh->Enlarge(xminus);
-			m_mesh->EnlargeAsync(xminus);
+			m_mesh->EnlargeAsync(xplus);
 			break;
 		case GLFW_KEY_LEFT:
 			m_orientation += 0.1;

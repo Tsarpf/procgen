@@ -88,7 +88,7 @@ int edgeIndexLookup[6][2][4][4] = {
 	},
 };
 
-void BuildSeam(const Octree& n1, const Octree& n2, Direction dir,
+void BuildSeam(Octree& n1, Octree& n2, Direction dir,
 	VertexBuffer& vertices, IndexBuffer& indices)
 {
 	std::vector<std::tuple<int, const Octree&>> idxs = {{0, n1}, {1, n2}};
@@ -112,7 +112,6 @@ void BuildSeam(const Octree& n1, const Octree& n2, Direction dir,
 			auto child = children[idx];
 			borderChildren[edgeIdx] = child;
 			Octree::GenerateVertexIndices(child, vertices);
-
 			// if (child)
 			// {
 			// 	std::vector<OctreeVisualizationData> childData = VisualizeOctree(child);
@@ -122,7 +121,30 @@ void BuildSeam(const Octree& n1, const Octree& n2, Direction dir,
 		j++;
 	}
 	std::cout << "-------------------------------- Processing edges --------------------------------" << std::endl;
-	Octree::CellChildProc(borderChildren, indices);
+	//Octree::CellChildProc(borderChildren, indices);
+	switch (dir)
+	{
+	case xplus:
+		Octree::FaceProcX(&n1, &n2, indices);
+		break;
+	case xminus:
+		Octree::FaceProcX(&n2, &n1, indices);
+		break;
+
+	case yplus:
+		Octree::FaceProcY(&n1, &n2, indices);
+		break;
+	case yminus:
+		Octree::FaceProcY(&n2, &n1, indices);
+		break;
+
+	case zplus:
+		Octree::FaceProcZ(&n1, &n2, indices);
+		break;
+	case zminus:
+		Octree::FaceProcZ(&n2, &n1, indices);
+		break;
+	}
 	std::cout << "edges processed" << std::endl;
 }
 
@@ -132,7 +154,6 @@ OctreeMesh* CreateNewMeshTask(Octree* neighbour, Octree* newOctree,
 	VertexBuffer vertices;
 	IndexBuffer indices;
 
-	//Octree* newOctree = new Octree(1, size, position);
 	newOctree->ConstructBottomUp();
 	newOctree->MeshFromOctree(indices, vertices);
 
@@ -151,6 +172,8 @@ void OctreeMesh::CheckResults()
 		auto& future = m_futureMeshes[i];
 		if (future._Is_ready())
 		{
+			//m_indices.clear();
+			//m_vertices.clear();
 			readies.push_back(i);
 			OctreeMesh* mesh = future.get();
 			mesh->LoadMesh();
@@ -164,6 +187,7 @@ void OctreeMesh::EnlargeAsync(Direction dir)
 	// this line doesn't work for some reason? these sorta tuples work elsewhere in the 
 	// codebase. "'_This &&' differs in levels of indirection from 'int' ..."
 	//auto [newCornerIdx, oldCornerIdx, newPosition] = EnlargeCorners(dir);
+
 	std::tuple<int, int, glm::vec3> asdf = EnlargeCorners(dir);
 	int newCornerIdx = std::get<0>(asdf);
 	int oldCornerIdx = std::get<1>(asdf);
@@ -221,8 +245,8 @@ void OctreeMesh::Enlarge(Direction dir)
 	rootChildren[newCornerIdx]->MeshFromOctree(m_indices, m_vertices);
 
 	// uncomment to see what seam generation is doing
-	// m_indices.clear();
-	// m_vertices.clear();
+	 // m_indices.clear();
+	 // m_vertices.clear();
 
 	BuildSeam(*rootChildren[oldCornerIdx], *rootChildren[newCornerIdx], dir, m_vertices, m_indices);
 

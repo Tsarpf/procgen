@@ -33,7 +33,7 @@ public:
 	const int m_size;
 	bool IsLeaf() const;
 
-	// Draw info. Moving these behind a pointer might save space.
+	// Draw info. TODO: Moving these behind a pointer should save space.
 	int m_index;
 	svd::QefData m_qef;
 	glm::vec3 m_drawPos;
@@ -42,14 +42,14 @@ public:
 
 	static void CellChildProc(const std::array<Octree*, 8>& children, IndexBuffer& indexBuffer);
 	static void GenerateVertexIndices(Octree* node, VertexBuffer& vertexBuffer);
+	static void FaceProcX(Octree*, Octree*, IndexBuffer& indexBuffer);
+	static void FaceProcY(Octree*, Octree*, IndexBuffer& indexBuffer);
+	static void FaceProcZ(Octree*, Octree*, IndexBuffer& indexBuffer);
 private:
 	static Octree* ConstructLeafParent(const int resolution, const glm::vec3 min);
 	static bool Sample(const glm::vec3 pos);
 
 	void CellProc(IndexBuffer& indexBuffer);
-	static void FaceProcX(Octree*, Octree*, IndexBuffer& indexBuffer);
-	static void FaceProcY(Octree*, Octree*, IndexBuffer& indexBuffer);
-	static void FaceProcZ(Octree*, Octree*, IndexBuffer& indexBuffer);
 	static void EdgeProcXY(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
 	static void EdgeProcXZ(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
 	static void EdgeProcYZ(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
