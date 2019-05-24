@@ -11,7 +11,8 @@ void Scene::KeyCallback(int key, int action) {
 		case GLFW_KEY_SPACE:
 			printf("space pressed\n");
 			//m_mesh->Enlarge(xminus);
-			m_mesh->EnlargeAsync(xplus);
+			//m_mesh->EnlargeAsync(xplus);
+			m_mesh->EnlargeAsync(xminus);
 			break;
 		case GLFW_KEY_LEFT:
 			m_orientation += 0.1;
@@ -35,7 +36,7 @@ void Scene::KeyCallback(int key, int action) {
 Scene::Scene(GLFWwindow* window) 
 	: m_window(window), m_orientation(0)
 {
-	m_eye = glm::vec3(80, 40, 80);
+	m_eye = glm::vec3(40, 80, 40);
 	m_center = glm::vec3(0, 4, 8);
 }
 
@@ -51,13 +52,14 @@ void Scene::Initialize()
 	m_t_start = std::chrono::high_resolution_clock::now();
 	m_program = createTriangleProgram();
 
-	const int octreeSize = 32;
+	const int octreeSize = 8;
 
 	m_mesh = new OctreeMesh(m_program, octreeSize, glm::vec3(0, 0, 0));
 	m_mesh->BuildOctree();
 	m_mesh->LoadMesh();
 
 	setupProjection(m_program, m_eye, m_center);
+
 
 	// glEnable(GL_CULL_FACE); // sets cullingments
 	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -75,8 +77,8 @@ void Scene::Render()
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // set to GL_LINE to disable wireframe
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // set to GL_LINE to disable wireframe
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // set to GL_LINE to disable wireframe
 	//glEnable(GL_CULL_FACE); // enable/disable culling
 
 	//m_mesh->Draw(time);

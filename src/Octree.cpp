@@ -95,8 +95,20 @@ float Noise(const glm::vec3& p)
 
 float Waves(const glm::vec3& p)
 {
-	return sin(p.x) + cos(p.y) + p.z - 5;
-	//return sin(p.x) + cos(p.z) + p.y;
+	//return 2*sin(p.x/2) + 2*cos(p.z/2) + p.y - 5;
+	//return 2*sin(p.x/2) + 2*cos(p.z/2) + p.y - 5;
+	return 2*sin(p.x/2) + 2*cos(p.z/2) + p.y;
+}
+
+//float sdTorus(glm::vec3 p, glm::vec2 t)
+//{
+//	vec2 q = vec2(length(p.xz) - t.x, p.y);
+//	return length(q) - t.y;
+//}
+
+float sdCylinder(vec3 p, vec3 c)
+{
+	return length(p.xz - c.xy) - c.z;
 }
 
 float DensityFunction(const glm::vec3 pos)
@@ -107,14 +119,21 @@ float DensityFunction(const glm::vec3 pos)
 		repeatAxis(pos.y, repeat.y),
 		repeatAxis(pos.z, repeat.z)
 	);
+	static glm::mat4 model = glm::mat4(1.0f);
+	static glm::mat4 rotate = glm::rotate(
+		model,
+		//glm::radians(37.5f),
+		glm::radians(25.0f),
+		glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::vec3 rotPos = rotate * glm::vec4(pos, 1.0);
 	//return glm::length(pos - origin) - radius; // repeating
 	//return Noise(pos);
-	//return Sphere(repeatPos, glm::vec3(0, 0, 0), 5.0);
+	//return Sphere(rotPos, glm::vec3(12, 12, 12), 8.0);
 
-	//return Box(pos - glm::vec3(16,16,16), glm::vec3(128, 8, 8));
+	//return Box(rotPos - glm::vec3(16,16,16), glm::vec3(128, 8, 8));
 	//return Box(repeatPos - glm::vec3(0,0,0), glm::vec3(5, 5, 5));
 
-	return Waves(pos);
+	return Waves(rotPos);
 }
 
 bool Sample(const glm::vec3 pos)
