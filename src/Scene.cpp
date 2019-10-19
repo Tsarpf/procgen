@@ -59,9 +59,8 @@ void Scene::Initialize()
 
 	setupProjection(m_program, m_eye, m_center);
 
-	// glEnable(GL_CULL_FACE); // sets cullingments
+	//glEnable(GL_CULL_FACE); // sets cullingments
 	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	// glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ); // set to use wireframe
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 }

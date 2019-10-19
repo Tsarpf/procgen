@@ -44,7 +44,6 @@ void OctreeVisualization::Build(const Octree* node)
 
 void OctreeVisualization::DrawVisualization(const float time)
 {
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // set to use wireframe
 	glBindVertexArray(m_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
 	GLint posAttrib = glGetAttribLocation(m_program, "position");
@@ -73,7 +72,7 @@ void OctreeVisualization::DrawVisualization(const float time)
 	GLint modelUniform = glGetUniformLocation(m_program, "Model");
 	for (const auto& viz : m_visualizationData)
 	{
-		if (viz.size < 4) { continue; }
+		if (viz.size > 1) { continue; }
 		glm::mat4 translate = glm::translate
 		(
 			glm::mat4(1.0f),

@@ -1,0 +1,3 @@
+a) the amount of indices drawn changes if the same shape ( or it should be I think) is moved around
+b) the octree nodes are not even added at some of the positions where they should
+	--> I guess the edge checking doesn't work? and it shouldn't be a problem in the drawing code!

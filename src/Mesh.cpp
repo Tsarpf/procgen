@@ -33,6 +33,18 @@ void Mesh::UploadData()
 	// probably not necessary
 	//glBindVertexArray(m_gl_vao);
 
+	printf("upload data\n");
+
+	for (int i = 0; i < m_vertices.size(); i++)
+	{
+		glm::vec3 p = m_vertices[i].position;
+		printf("vert %i pos (%f %f %f)\n", i, p.x, p.y, p.z);
+	}
+
+	printf("index count %i\n", m_indices.size());
+
+
+
 	glBindBuffer(GL_ARRAY_BUFFER, m_gl_vertex);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * m_vertices.size(), m_vertices.data(), GL_STATIC_DRAW);
 
