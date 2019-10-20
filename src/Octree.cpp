@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <memory>
 #include <noise/noise.h>
+#include <chrono>
 
 #include "Octree.h"
 #include "utils.h"
@@ -95,11 +96,13 @@ float Noise(const glm::vec3& p)
 
 float Waves(const glm::vec3& p)
 {
+	//printf("density at (%f, %f, %f) is = %f\n", p.x, p.y, p.z, value);
 	//std::cout << "position: " << p.x << std::endl;
 	//printf("position %f %f %f\n", p.x, p.y, p.z);
 	//return sin(p.x * 1.0) + cos(p.y * 1.0) + p.z - 2;
-	float value = sin(p.x * 1.0f) / 1.f + cos(p.y * 1.0f) / 1.f + p.z - 5.50f;
-	//printf("density at (%f, %f, %f) is = %f\n", p.x, p.y, p.z, value);
+
+	//float value = sin(p.x * 1.0f) / 1.f + cos(p.y * 1.0f) / 1.f + p.z - 5.50f;
+	float value = sin(p.x * 0.5f) / 0.3f + p.y - 5.50f;
 
 	//return sin(p.x) + cos(p.z) + p.y;
 	return value;
@@ -119,7 +122,7 @@ float DensityFunction(const glm::vec3 pos)
 		repeatAxis(pos.z, repeat.z)
 	);
 	//return glm::length(pos - origin) - radius; // repeating
-	return Noise(pos);
+	//return Noise(pos);
 	//return Sphere(repeatPos, glm::vec3(0, 0, 0), 6.0);
 
 	//return Box(pos - glm::vec3(16,16,16), glm::vec3(128, 8, 8));
@@ -149,6 +152,8 @@ glm::vec3 CalculateSurfaceNormal(const glm::vec3& p)
 
 void Octree::ConstructBottomUp()
 {
+	auto t1 = std::chrono::high_resolution_clock::now();
+
 	const int resolution = m_resolution;
 	const int size = m_size;
 	const glm::vec3 min = m_min;
@@ -290,6 +295,10 @@ void Octree::ConstructBottomUp()
 	}
     // currentSizeNodes length should be 1 now.
     m_children = std::move(currentSizeNodes[0]);
+
+	auto t2 = std::chrono::high_resolution_clock::now();
+	auto duration1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+	std::cout << "Construct bottom up took " << duration1 << std::endl;
 }
 
 OctreeChildren* Octree::GetChildren() const
@@ -304,8 +313,15 @@ OctreeChildren* Octree::GetChildren() const
 
 void Octree::MeshFromOctree(IndexBuffer& indexBuffer, VertexBuffer& vertexBuffer)
 {
+	auto t1 = std::chrono::high_resolution_clock::now();
+
 	GenerateVertexIndices(this, vertexBuffer);
 	CellProc(indexBuffer);
+
+	auto t2 = std::chrono::high_resolution_clock::now();
+
+	auto duration1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+	std::cout << "Mesh from octree took " << duration1 << std::endl;
 }
 
 
