@@ -267,7 +267,7 @@ void OctreeMesh::Enlarge(Direction dir)
 void OctreeMesh::Draw(const float time)
 {
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // set to use wireframe
-	m_visualization.DrawVisualization(time);
+	//m_visualization.DrawVisualization(time);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // set to GL_LINE to disable wireframe
 	Mesh::Draw(time);
 

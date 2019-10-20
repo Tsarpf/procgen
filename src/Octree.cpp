@@ -98,11 +98,8 @@ float Waves(const glm::vec3& p)
 	//std::cout << "position: " << p.x << std::endl;
 	//printf("position %f %f %f\n", p.x, p.y, p.z);
 	//return sin(p.x * 1.0) + cos(p.y * 1.0) + p.z - 2;
-	float value = sin(p.x * 1.0f) / 1.f + cos(p.y * 1.0f) / 1.f + p.z - 28.00f;
+	float value = sin(p.x * 1.0f) / 1.f + cos(p.y * 1.0f) / 1.f + p.z - 5.50f;
 	//printf("density at (%f, %f, %f) is = %f\n", p.x, p.y, p.z, value);
-	//return sin(p.x) + cos(p.y) + p.z - 5;  // is borked
-	//return sin(p.x) + cos(p.z) + p.y - 2; // is borked
-	//return sin(p.y) + cos(p.z) + p.x - 2; // is borked
 
 	//return sin(p.x) + cos(p.z) + p.y;
 	return value;
@@ -122,7 +119,7 @@ float DensityFunction(const glm::vec3 pos)
 		repeatAxis(pos.z, repeat.z)
 	);
 	//return glm::length(pos - origin) - radius; // repeating
-	//return Noise(pos);
+	return Noise(pos);
 	//return Sphere(repeatPos, glm::vec3(0, 0, 0), 6.0);
 
 	//return Box(pos - glm::vec3(16,16,16), glm::vec3(128, 8, 8));
@@ -136,7 +133,8 @@ float DensityFunction(const glm::vec3 pos)
 bool Sample(const glm::vec3 pos)
 {
 	float value = DensityFunction(pos);
-	return value >= 0;
+	//printf("position (%f %f %f) value = %f \n", pos.x, pos.y, pos.z, value);
+	return value >= 0.0f;
 }
 
 glm::vec3 CalculateSurfaceNormal(const glm::vec3& p)
@@ -218,7 +216,6 @@ void Octree::ConstructBottomUp()
                         }
                         else // n8ode is null
                         {
-                            //std::cout << "no stuff in node" << std::endl;
                             // TODO: really do nothing?
                         }
                     }
