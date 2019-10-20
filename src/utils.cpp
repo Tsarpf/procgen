@@ -296,7 +296,7 @@ void setupProjection(GLuint program, glm::vec3 eye, glm::vec3 center)
 	glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(model));
 
 	GLint viewUniform = glGetUniformLocation(program, "View");
-	printf("%i view\n", viewUniform);
+	//printf("%i view\n", viewUniform);
 	glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
 
 	const float farClip = 600;
@@ -309,5 +309,5 @@ void setupProjection(GLuint program, glm::vec3 eye, glm::vec3 center)
 	);
 	GLint projUniform = glGetUniformLocation(program, "Projection");
 	glUniformMatrix4fv(projUniform, 1, GL_FALSE, glm::value_ptr(proj));
-	printf("%i proj\n", projUniform);
+	//printf("%i proj\n", projUniform);
 }

@@ -16,14 +16,14 @@ using namespace noise;
 
 const glm::ivec3 CHILD_MIN_OFFSETS[] =
 {
-        glm::vec3(0,0,0),
-        glm::vec3(0,0,1),
-        glm::vec3(0,1,0),
-        glm::vec3(0,1,1),
-        glm::vec3(1,0,0),
-        glm::vec3(1,0,1),
-        glm::vec3(1,1,0),
-        glm::vec3(1,1,1),
+        glm::ivec3(0,0,0),
+        glm::ivec3(0,0,1),
+        glm::ivec3(0,1,0),
+        glm::ivec3(0,1,1),
+        glm::ivec3(1,0,0),
+        glm::ivec3(1,0,1),
+        glm::ivec3(1,1,0),
+        glm::ivec3(1,1,1),
 };
 
 Octree::~Octree()
@@ -66,7 +66,7 @@ float mod(float x, float y)
 }
 float repeatAxis(float p, float c)
 {
-	return mod(p, c) - 0.5 * c;
+	return mod(p, c) - 0.5f * c;
 }
 float Sphere(const glm::vec3& worldPosition, const glm::vec3& origin, float radius)
 {
@@ -86,17 +86,28 @@ float Box(const glm::vec3& p, const glm::vec3& size)
 
 float Noise(const glm::vec3& p)
 {
-	double epsilon = 0.500;
+	double epsilon = 0.500f;
 	static module::Perlin myModule;
-	float divider = 50;
-	double value = myModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
+	float divider = 50.f;
+	float value = (float)myModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
 	return value;
 }
 
 float Waves(const glm::vec3& p)
 {
-	return sin(p.x) + cos(p.y) + p.z - 5;
+	//std::cout << "position: " << p.x << std::endl;
+	//printf("position %f %f %f\n", p.x, p.y, p.z);
+	//return sin(p.x * 1.0) + cos(p.y * 1.0) + p.z - 2;
+	float value = sin(p.x * 1.0f) / 1.f + cos(p.y * 1.0f) / 1.f + p.z - 5.50f;
+	//printf("density at (%f, %f, %f) is = %f\n", p.x, p.y, p.z, value);
+
 	//return sin(p.x) + cos(p.z) + p.y;
+	return value;
+}
+
+float Plane(const glm::vec3& p)
+{
+	return p.x - 0.00001f *p.y;
 }
 
 float DensityFunction(const glm::vec3 pos)
@@ -108,23 +119,27 @@ float DensityFunction(const glm::vec3 pos)
 		repeatAxis(pos.z, repeat.z)
 	);
 	//return glm::length(pos - origin) - radius; // repeating
-	//return Noise(pos);
-	//return Sphere(repeatPos, glm::vec3(0, 0, 0), 5.0);
+	return Noise(pos);
+	//return Sphere(repeatPos, glm::vec3(0, 0, 0), 6.0);
 
 	//return Box(pos - glm::vec3(16,16,16), glm::vec3(128, 8, 8));
 	//return Box(repeatPos - glm::vec3(0,0,0), glm::vec3(5, 5, 5));
 
+	//return Plane(pos);
+	//printf("density %f \n", Waves(pos));
 	return Waves(pos);
 }
 
 bool Sample(const glm::vec3 pos)
 {
-	return DensityFunction(pos) > 0;
+	float value = DensityFunction(pos);
+	//printf("position (%f %f %f) value = %f \n", pos.x, pos.y, pos.z, value);
+	return value >= 0.0f;
 }
 
 glm::vec3 CalculateSurfaceNormal(const glm::vec3& p)
 {
-	const float epsilon = 0.001f;
+	const float epsilon = 0.0001f;
 	const float dx = DensityFunction(p + glm::vec3(epsilon, 0.f, 0.f)) - DensityFunction(p - glm::vec3(epsilon, 0.f, 0.f));
 	const float dy = DensityFunction(p + glm::vec3(0.f, epsilon, 0.f)) - DensityFunction(p - glm::vec3(0.f, epsilon, 0.f));
 	const float dz = DensityFunction(p + glm::vec3(0.f, 0.f, epsilon)) - DensityFunction(p - glm::vec3(0.f, 0.f, epsilon));
@@ -143,7 +158,7 @@ void Octree::ConstructBottomUp()
     int cubeSize = resolution * 2;
     int childCountPerAxis = size / cubeSize;
     int parentCountPerAxis = childCountPerAxis / 2;
-    int childCount = pow(childCountPerAxis, 3);
+    int childCount = (int)pow(childCountPerAxis, 3);
     int parentCount = childCount / 8;
     std::vector<std::unique_ptr<OctreeChildren>> currentSizeNodes(childCount);
     std::vector<std::unique_ptr<OctreeChildren>> parentSizeNodes(parentCount);
@@ -199,9 +214,8 @@ void Octree::ConstructBottomUp()
                                 parentSizeNodes[parentIdx]->children[cornerIdx] = node;
                             }
                         }
-                        else // node is null
+                        else // n8ode is null
                         {
-                            //std::cout << "no stuff in node" << std::endl;
                             // TODO: really do nothing?
                         }
                     }
@@ -255,7 +269,7 @@ void Octree::ConstructBottomUp()
         cubeSize *= 2;
         childCountPerAxis = size / cubeSize;
         parentCountPerAxis = childCountPerAxis / 2;
-        childCount = pow(childCountPerAxis, 3);
+        childCount = (int)pow(childCountPerAxis, 3);
         parentCount = childCount / 8;
 
         currentSizeNodes = std::vector<std::unique_ptr<OctreeChildren>>();
@@ -294,12 +308,37 @@ void Octree::MeshFromOctree(IndexBuffer& indexBuffer, VertexBuffer& vertexBuffer
 	CellProc(indexBuffer);
 }
 
+
 void Octree::GenerateVertexIndices(Octree* node, VertexBuffer& vertexBuffer)
 {
 	if (node && node->m_leaf)
 	{
+		glm::vec3 color;
+
+		{ // debug stuff
+			static float count = 0;
+			static float totalCount = 7976;
+			static float firstStep = totalCount / 3;
+			static float secondStep = (totalCount / 3) * 2;
+			count++;
+			if (count < firstStep)
+			{
+				//color = { count / 160.0, 0.0, 0.0 };
+				color = { 1.0, 0.0, 0.0 };
+			}
+			else if (count >= firstStep && count < secondStep)
+			{
+				//color = { 0.0, (count - 166) / 160.0, 0.0 };
+				color = { 0.0, 1.0, 0.0 };
+			}
+			else
+			{
+				//color = { 0.0, 0.0, (count - 333) / 160.0 };
+				color = { 0.0, 0.0, 1.0 };
+			}
+		}
+
 		node->m_index = vertexBuffer.size();
-		glm::vec3 color = { 1.0, 0.0, 0.0};
 		Vertex v = {
 			node->m_drawPos,
 			color,
@@ -591,9 +630,9 @@ void Octree::FaceProcZ(Octree* n0, Octree* n1, IndexBuffer& indexBuffer)
 
 const int edgevmap[12][2] =
 {
-	{0,4},{1,5},{2,6},{3,7},	// x-axis 
+	{0,4},{1,5},{2,6},{3,7},	// z-axis 
 	{0,2},{1,3},{4,6},{5,7},	// y-axis
-	{0,1},{2,3},{4,5},{6,7}		// z-axis
+	{0,1},{2,3},{4,5},{6,7},	// x-axis
 };
 void Octree::ProcessEdge(const Octree* node[4], int dir, IndexBuffer& indexBuffer)
  {
@@ -616,6 +655,7 @@ void Octree::ProcessEdge(const Octree* node[4], int dir, IndexBuffer& indexBuffe
 	const int MATERIAL_AIR = 0;
 	const int MATERIAL_SOLID = 1;
 
+	//const int processEdgeMask[3][4] = { {0,1,2,3},{4,5,6,7},{8,9,10,11} };
 	const int processEdgeMask[3][4] = { {3,2,1,0},{7,5,6,4},{11,10,9,8} };
 	int minSize = 1000000;		// arbitrary big number
 	int minIndex = 0;
@@ -696,6 +736,7 @@ glm::vec3 ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm::vec3& 
 	const float increment = 1.f / (float)steps;
 	while (currentT <= 1.f)
 	{
+		//std::cout << "pos " << currentT << std::endl;
 		const glm::vec3 p = p0 + ((p1 - p0) * currentT);
 		const float density = glm::abs(DensityFunction(p));
 		if (density < minValue)
@@ -707,9 +748,12 @@ glm::vec3 ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm::vec3& 
 		currentT += increment;
 	}
 
-	return p0 + ((p1 - p0) * t);
+	glm::vec3 resultPos = p0 + ((p1 - p0) * t);
+	//printf("(%f, %f, %f) minvalue = %f, t= %f \n", resultPos.x, resultPos.y, resultPos.z, minValue, t);
+
+	return resultPos;
 }
-Octree* ConstructLeaf(const int resolution, glm::ivec3 min)
+Octree* ConstructLeaf(const int resolution, glm::vec3 min)
 {
 	/*
 	This function (mostly) copied from https://github.com/nickgildea/DualContouringSample/blob/master/DualContouringSample/octree.cpp, ConstructLeaf
@@ -740,7 +784,7 @@ Octree* ConstructLeaf(const int resolution, glm::ivec3 min)
 	for (int i = 0; i < 8; i++)
 	{
 		const ivec3 cornerPos = leaf->m_min + CHILD_MIN_OFFSETS[i];
-		const bool inside = !Sample(vec3(cornerPos));
+		const bool inside = !Sample((vec3)cornerPos);
 		if (inside)
 		{
 			corners |= (1 << i);
@@ -775,8 +819,8 @@ Octree* ConstructLeaf(const int resolution, glm::ivec3 min)
 			continue;
 		}
 
-		const vec3 p1 = vec3(min + CHILD_MIN_OFFSETS[c1]);
-		const vec3 p2 = vec3(min + CHILD_MIN_OFFSETS[c2]);
+		const vec3 p1 = vec3(min + (vec3)CHILD_MIN_OFFSETS[c1]);
+		const vec3 p2 = vec3(min + (vec3)CHILD_MIN_OFFSETS[c2]);
 		const vec3 p = ApproximateZeroCrossingPosition(p1, p2);
 		const vec3 n = CalculateSurfaceNormal(p);
 		qef.add(p.x, p.y, p.z, n.x, n.y, n.z);
@@ -792,7 +836,7 @@ Octree* ConstructLeaf(const int resolution, glm::ivec3 min)
 	leaf->m_drawPos = vec3(qefPosition.x, qefPosition.y, qefPosition.z);
 	leaf->m_qef = qef.getData();
 
-	const vec3 max = vec3(leaf->m_min + ivec3(leaf->m_size)); // why do we have to add this one's specific size? Shouldn't it always be 1?
+	const vec3 max = vec3((vec3)leaf->m_min + (float)(leaf->m_size)); // why do we have to add this one's specific size? Shouldn't it always be 1?
 
 	if (leaf->m_drawPos.x < min.x || leaf->m_drawPos.x > max.x ||
 		leaf->m_drawPos.y < min.y || leaf->m_drawPos.y > max.y ||
@@ -801,6 +845,20 @@ Octree* ConstructLeaf(const int resolution, glm::ivec3 min)
 		const auto& mp = qef.getMassPoint();
 		leaf->m_drawPos = vec3(mp.x, mp.y, mp.z);
 	}
+	if (leaf->m_drawPos.x < min.x || leaf->m_drawPos.x > max.x ||
+		leaf->m_drawPos.y < min.y || leaf->m_drawPos.y > max.y ||
+		leaf->m_drawPos.z < min.z || leaf->m_drawPos.z > max.z)
+	{
+		const auto& mp = qef.getMassPoint();
+		leaf->m_drawPos = vec3(mp.x, mp.y, mp.z);
+		printf("min (%f, %f, %f), max (%f, %f, %f) \n", min.x, min.y, min.z, max.x, max.y, max.z);
+		printf("drawpos (%f, %f, %f)\n", leaf->m_drawPos.x, leaf->m_drawPos.y, leaf->m_drawPos.z);
+	}
+
+	// std::cout << qef.getData() << std::endl;
+	// std::cout << "position: " << qefPosition << std::endl;
+	// printf("min (%f, %f, %f), max (%f, %f, %f) \n", min.x, min.y, min.z, max.x, max.y, max.z);
+	// printf("drawpos (%f, %f, %f)\n", leaf->m_drawPos.x, leaf->m_drawPos.y, leaf->m_drawPos.z);
 
 	leaf->m_averageNormal = glm::normalize(averageNormal / (float)edgeCount);
 	leaf->m_corners = corners;
@@ -834,8 +892,8 @@ Octree* Octree::ConstructLeafParent(const int resolution, const glm::vec3 min)
         }
     }
 
-    if (field != 0 && field != 255)  // todo check if this is actually a good idea
-    {
+	if (field != 0)
+	{
 		// TODO: maybe check here field = 0xFF aka all children exist so we can possibly
 		// approximate all children with a single vertex. Check QEFs. Set m_leaf'ness.
 		// ^ wot?
