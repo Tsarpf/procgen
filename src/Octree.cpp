@@ -787,7 +787,7 @@ Octree* ConstructLeaf(const int resolution, glm::vec3 min)
 	for (int i = 0; i < 8; i++)
 	{
 		const ivec3 cornerPos = leaf->m_min + CHILD_MIN_OFFSETS[i];
-		const bool inside = !Sample(vec3(cornerPos));
+		const bool inside = !Sample((vec3)cornerPos);
 		if (inside)
 		{
 			corners |= (1 << i);
@@ -895,8 +895,8 @@ Octree* Octree::ConstructLeafParent(const int resolution, const glm::vec3 min)
         }
     }
 
-    if (field != 0 && field != 255)  // todo check if this is actually a good idea
-    {
+	if (field != 0)
+	{
 		// TODO: maybe check here field = 0xFF aka all children exist so we can possibly
 		// approximate all children with a single vertex. Check QEFs. Set m_leaf'ness.
 		// ^ wot?
