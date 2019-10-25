@@ -165,8 +165,12 @@ OctreeMesh* CreateNewMeshTask(Octree* neighbour, Octree* newOctree,
 }
 
 template<typename R>
-  bool is_ready(std::future<R> const& f)
+bool is_ready(std::future<R> const& f)
+	#ifdef _MSC_VER
+	{ return f._Is_ready(); }
+	#else
     { return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready; }
+	#endif
 
 void OctreeMesh::CheckResults()
 {
