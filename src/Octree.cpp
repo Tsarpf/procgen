@@ -6,14 +6,13 @@
 #include <iostream>
 #include <cstdint>
 #include <memory>
-#include <noise/noise.h>
 #include <chrono>
 
 #include "Octree.h"
 #include "utils.h"
 #include "Mesh.h"
+#include "Sampler.h"
 
-using namespace noise;
 
 const glm::ivec3 CHILD_MIN_OFFSETS[] =
 {
@@ -61,91 +60,20 @@ int index(int x, int y, int z, int dimensionLength)
 	return x + dimensionLength * (y + dimensionLength * z);
 }
 
-float mod(float x, float y)
+float Sample(const glm::vec3 pos)
 {
-	return x - y * floor(x / y);
-}
-float repeatAxis(float p, float c)
-{
-	return mod(p, c) - 0.5f * c;
-}
-float Sphere(const glm::vec3& worldPosition, const glm::vec3& origin, float radius)
-{
-	return glm::length(worldPosition - origin) - radius; // non repeating
-}
-
-float Box(const glm::vec3& p, const glm::vec3& size)
-{
-	glm::vec3 d = abs(p) - size;
-	glm::vec3 maxed(0);
-	for (int i = 0; i < 3; i++)
-	{
-		maxed[i] = std::max(d[i], 0.f);
-	}
-	return glm::length(maxed) + std::min(std::max(d.x, std::max(d.y, d.z)), 0.f);
-}
-
-float Noise(const glm::vec3& p)
-{
-	double epsilon = 0.500f;
-	static module::Perlin myModule;
-	float divider = 50.f;
-	float value = (float)myModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
-	return value;
-}
-
-float Waves(const glm::vec3& p)
-{
-	//printf("density at (%f, %f, %f) is = %f\n", p.x, p.y, p.z, value);
-	//std::cout << "position: " << p.x << std::endl;
-	//printf("position %f %f %f\n", p.x, p.y, p.z);
-	//return sin(p.x * 1.0) + cos(p.y * 1.0) + p.z - 2;
-
-	//float value = sin(p.x * 1.0f) / 1.f + cos(p.y * 1.0f) / 1.f + p.z - 5.50f;
-	float value = sin(p.x * 0.5f) / 0.3f + p.y - 5.50f;
-
-	//return sin(p.x) + cos(p.z) + p.y;
-	return value;
-}
-
-float Plane(const glm::vec3& p)
-{
-	return p.x - 0.00001f *p.y;
-}
-
-float DensityFunction(const glm::vec3 pos)
-{
-	glm::vec3 repeat(15, 15, 15);
-	glm::vec3 repeatPos(
-		repeatAxis(pos.x, repeat.x),
-		repeatAxis(pos.y, repeat.y),
-		repeatAxis(pos.z, repeat.z)
-	);
-	//return glm::length(pos - origin) - radius; // repeating
-	return Noise(pos);
-	//return Sphere(repeatPos, glm::vec3(0, 0, 0), 6.0);
-
-	//return Box(pos - glm::vec3(16,16,16), glm::vec3(128, 8, 8));
-	//return Box(repeatPos - glm::vec3(0,0,0), glm::vec3(5, 5, 5));
-
-	//return Plane(pos);
-	//printf("density %f \n", Waves(pos));
-	return Waves(pos);
-}
-
-bool Sample(const glm::vec3 pos)
-{
-	float value = DensityFunction(pos);
+	float value = Sampler::DensityFunction(pos);
 	//printf("position (%f %f %f) value = %f \n", pos.x, pos.y, pos.z, value);
-	return value >= 0.0f;
+	//return value >= 0.0f;
+	return value;
 }
 
 glm::vec3 CalculateSurfaceNormal(const glm::vec3& p)
 {
 	const float epsilon = 0.0001f;
-	const float dx = DensityFunction(p + glm::vec3(epsilon, 0.f, 0.f)) - DensityFunction(p - glm::vec3(epsilon, 0.f, 0.f));
-	const float dy = DensityFunction(p + glm::vec3(0.f, epsilon, 0.f)) - DensityFunction(p - glm::vec3(0.f, epsilon, 0.f));
-	const float dz = DensityFunction(p + glm::vec3(0.f, 0.f, epsilon)) - DensityFunction(p - glm::vec3(0.f, 0.f, epsilon));
+	const float dx = Sample(p + glm::vec3(epsilon, 0.f, 0.f)) - Sample(p - glm::vec3(epsilon, 0.f, 0.f));
+	const float dy = Sample(p + glm::vec3(0.f, epsilon, 0.f)) - Sample(p - glm::vec3(0.f, epsilon, 0.f));
+	const float dz = Sample(p + glm::vec3(0.f, 0.f, epsilon)) - Sample(p - glm::vec3(0.f, 0.f, epsilon));
 
 	return glm::normalize(glm::vec3(dx, dy, dz));
 }
@@ -754,7 +682,7 @@ glm::vec3 ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm::vec3& 
 	{
 		//std::cout << "pos " << currentT << std::endl;
 		const glm::vec3 p = p0 + ((p1 - p0) * currentT);
-		const float density = glm::abs(DensityFunction(p));
+		const float density = glm::abs(Sample(p));
 		if (density < minValue)
 		{
 			minValue = density;
@@ -799,8 +727,8 @@ Octree* ConstructLeaf(const int resolution, glm::vec3 min)
 	int corners = 0;
 	for (int i = 0; i < 8; i++)
 	{
-		const ivec3 cornerPos = leaf->m_min + CHILD_MIN_OFFSETS[i];
-		const bool inside = !Sample((vec3)cornerPos);
+		const vec3 cornerPos = leaf->m_min + CHILD_MIN_OFFSETS[i];
+		const bool inside = Sample(cornerPos) > 0;
 		if (inside)
 		{
 			corners |= (1 << i);
