@@ -122,7 +122,7 @@ float DensityFunction(const glm::vec3 pos)
 		repeatAxis(pos.z, repeat.z)
 	);
 	//return glm::length(pos - origin) - radius; // repeating
-	//return Noise(pos);
+	return Noise(pos);
 	//return Sphere(repeatPos, glm::vec3(0, 0, 0), 6.0);
 
 	//return Box(pos - glm::vec3(16,16,16), glm::vec3(128, 8, 8));
