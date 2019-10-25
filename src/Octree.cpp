@@ -226,7 +226,7 @@ void Octree::ConstructBottomUp()
 
 	auto t2 = std::chrono::high_resolution_clock::now();
 	auto duration1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-	std::cout << "Construct bottom up took " << duration1 << std::endl;
+	std::cout << "Construct bottom up took " << duration1 / 1000.f << "ms" << std::endl;
 }
 
 OctreeChildren* Octree::GetChildren() const
@@ -249,9 +249,8 @@ void Octree::MeshFromOctree(IndexBuffer& indexBuffer, VertexBuffer& vertexBuffer
 	auto t2 = std::chrono::high_resolution_clock::now();
 
 	auto duration1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-	std::cout << "Mesh from octree took " << duration1 << std::endl;
+	std::cout << "Mesh from octree took " << duration1 / 1000.f << "ms" << std::endl;
 }
-
 
 void Octree::GenerateVertexIndices(Octree* node, VertexBuffer& vertexBuffer)
 {
