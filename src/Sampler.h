@@ -13,6 +13,6 @@ float Waves(const glm::vec3 & p);
 
 float Plane(const glm::vec3 & p);
 
-float DensityFunction(const glm::vec3 pos);
+float Density(const glm::vec3 pos);
 
 }

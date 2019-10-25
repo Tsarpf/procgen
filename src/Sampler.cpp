@@ -69,7 +69,7 @@ float Plane(const glm::vec3& p)
 	return p.x - 0.00001f *p.y;
 }
 
-float DensityFunction(const glm::vec3 pos)
+float Density(const glm::vec3 pos)
 {
 	//glm::vec3 repeat(15, 15, 15);
 	//glm::vec3 repeatPos(

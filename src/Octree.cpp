@@ -62,7 +62,7 @@ int index(int x, int y, int z, int dimensionLength)
 
 float Sample(const glm::vec3 pos)
 {
-	float value = Sampler::DensityFunction(pos);
+	float value = Sampler::Density(pos);
 	//printf("position (%f %f %f) value = %f \n", pos.x, pos.y, pos.z, value);
 	//return value >= 0.0f;
 	return value;
