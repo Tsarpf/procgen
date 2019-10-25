@@ -53,7 +53,7 @@ void Mesh::UploadData()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * m_vertices.size(), m_vertices.data(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_gl_indices);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * m_indices.size(), m_indices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * m_indices.size(), m_indices.data(), GL_STATIC_DRAW);
 }
 
 void Mesh::Draw(const float time)
@@ -77,7 +77,7 @@ void Mesh::Draw(const float time)
 
 	// draw it
 	BindBuffers();
-	glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_SHORT, 0);
+	glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
 }
 
 // TODO: figure out which parts are unnecessary to do on each frame

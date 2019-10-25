@@ -15,7 +15,7 @@ struct Vertex
 	float padding;
 };
 
-typedef std::vector<unsigned short> IndexBuffer;
+typedef std::vector<unsigned int> IndexBuffer;
 typedef std::vector<Vertex> VertexBuffer;
 
 class Mesh
