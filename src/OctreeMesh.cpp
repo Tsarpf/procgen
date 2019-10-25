@@ -164,13 +164,17 @@ OctreeMesh* CreateNewMeshTask(Octree* neighbour, Octree* newOctree,
 	return mesh;
 }
 
+template<typename R>
+  bool is_ready(std::future<R> const& f)
+    { return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready; }
+
 void OctreeMesh::CheckResults()
 {
 	std::vector<int> readies;
 	for (int i = 0; i < m_futureMeshes.size(); i++)
 	{
 		auto& future = m_futureMeshes[i];
-		if (future._Is_ready())
+		if (is_ready(future))
 		{
 			//m_indices.clear();
 			//m_vertices.clear();

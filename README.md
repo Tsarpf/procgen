@@ -15,6 +15,10 @@ cmake ..
 
 Uses structured bindings so you need C++17.
 
+On my Ubuntu, installing `freeglut3 freeglut3-dev xorg-dev libglu1-mesa-dev` packages provided the necessary OpenGL headers.
+On Windows it works straight away.
+OSX might work with a little work
+
 ## Licensing
 Assume everything written by me so far is WTFPL or whatever. 
 

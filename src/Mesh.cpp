@@ -1,3 +1,5 @@
+#include <cstdio>
+
 #include "Mesh.h"
 
 Mesh::Mesh(GLuint program) : m_vertices(), m_indices(), m_gl_program(program), m_gl_vertex(0), m_gl_vao(0), m_gl_indices(0)
