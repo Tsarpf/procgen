@@ -22,7 +22,8 @@ include_directories(${GLFW_SOURCE_DIR}/include
                     ${GLFW_SOURCE_DIR}/deps
                     ${GLM_SOURCE_DIR}
                     ${GLEW_SOURCE_DIR}/include
-					${LIBNOISE_SOURCE_DIR}/src)
+		    ${LIBNOISE_SOURCE_DIR}/src
+                    src/)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -45,6 +46,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 FILE(GLOB SRCFILES src/*.cpp)
+FILE(GLOB HEADERFILES src/*.h)
 set(APP_NAME "dual-contouring")
 if (APPLE)
     if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/icon.icns)
@@ -63,7 +65,7 @@ if (APPLE)
     set_target_properties(${APP_NAME} PROPERTIES MACOSX_BUNDLE_LONG_VERSION_STRING "1.0")
     set_target_properties(${APP_NAME} PROPERTIES MACOSX_BUNDLE_INFO_STRING "Dual contouring OpenGL stuff")
 else()
-    add_executable(${APP_NAME} ${SRCFILES})
+    add_executable(${APP_NAME} ${SRCFILES} ${HEADERFILES})
 endif()
 
 set_property(TARGET ${APP_NAME} PROPERTY CXX_STANDARD 17)
