@@ -78,6 +78,11 @@ glm::vec3 CalculateSurfaceNormal(const glm::vec3& p)
 	return glm::normalize(glm::vec3(dx, dy, dz));
 }
 
+
+void Octree::Construct()
+{
+	ConstructBottomUp();
+}
 void Octree::ConstructBottomUp()
 {
 	auto t1 = std::chrono::high_resolution_clock::now();

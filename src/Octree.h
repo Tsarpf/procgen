@@ -25,6 +25,8 @@ public:
 	Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min, int resolution);
 	~Octree();
 
+	void Construct();
+
 	void ConstructBottomUp();
 	void MeshFromOctree(IndexBuffer& indexBuffer, VertexBuffer& vertexBuffer);
 	OctreeChildren* GetChildren() const;

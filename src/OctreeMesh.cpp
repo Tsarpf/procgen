@@ -20,7 +20,7 @@ OctreeMesh::~OctreeMesh()
 void OctreeMesh::BuildOctree()
 {
 	m_tree = new Octree(1, m_size, m_position);
-	m_tree->ConstructBottomUp();
+	m_tree->Construct();
 	m_tree->MeshFromOctree(m_indices, m_vertices);
 
 	m_visualization.Build(m_tree);
@@ -154,7 +154,7 @@ OctreeMesh* CreateNewMeshTask(Octree* neighbour, Octree* newOctree,
 	VertexBuffer vertices;
 	IndexBuffer indices;
 
-	newOctree->ConstructBottomUp();
+	newOctree->Construct();
 	newOctree->MeshFromOctree(indices, vertices);
 
 	BuildSeam(*neighbour, *newOctree, dir, vertices, indices);
@@ -213,14 +213,14 @@ void OctreeMesh::EnlargeAsync(Direction dir)
 	m_tree = new Octree(std::move(newRootChildren), m_size, m_position, 1);
 
 	m_futureMeshes.push_back(
-	std::future<OctreeMesh*>(std::async(std::launch::async,
-		CreateNewMeshTask,
-		rootChildren[oldCornerIdx],
-		rootChildren[newCornerIdx],
-		m_size / 2, // <- hnngh
-		dir,
-		m_position,
-		m_gl_program))
+		std::future<OctreeMesh*>(std::async(std::launch::async,
+			CreateNewMeshTask,
+			rootChildren[oldCornerIdx],
+			rootChildren[newCornerIdx],
+			m_size / 2, // <- hnngh
+			dir,
+			m_position,
+			m_gl_program))
 	);
 }
 
@@ -242,7 +242,7 @@ void OctreeMesh::Enlarge(Direction dir)
 
 	rootChildren[oldCornerIdx] = m_tree;
 	rootChildren[newCornerIdx] = new Octree(1, m_size, newPosition);
-	rootChildren[newCornerIdx]->ConstructBottomUp();
+	rootChildren[newCornerIdx]->Construct();
 	rootChildren[newCornerIdx]->MeshFromOctree(m_indices, m_vertices);
 
 	// uncomment to see what seam generation is doing
