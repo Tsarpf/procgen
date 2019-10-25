@@ -9,6 +9,7 @@ set(GLM_SOURCE_DIR "external/glm")
 set(GLEW_SOURCE_DIR "external/glew")
 set(LIBNOISE_SOURCE_DIR "external/libnoise")
 
+
 # Building only the GLFW lib
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "")
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "")
@@ -65,6 +66,7 @@ else()
     add_executable(${APP_NAME} ${SRCFILES})
 endif()
 
+set_property(TARGET ${APP_NAME} PROPERTY CXX_STANDARD 17)
 target_link_libraries(${APP_NAME} glfw ${GLFW_LIBRARIES} glew noise-static)
 
 

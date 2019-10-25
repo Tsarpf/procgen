@@ -13,7 +13,7 @@ cd build
 cmake ..
 ```
 
-And enable C++17 features in your compiler. They're only used for structured bindings right now so easy to remove as well.
+Uses structured bindings so you need C++17.
 
 ## Licensing
 Assume everything written by me so far is WTFPL or whatever. 
