@@ -48,9 +48,6 @@ public:
 	static void FaceProcY(Octree*, Octree*, IndexBuffer& indexBuffer);
 	static void FaceProcZ(Octree*, Octree*, IndexBuffer& indexBuffer);
 private:
-	static Octree* ConstructLeafParent(const int resolution, const glm::vec3 min);
-	static bool Sample(const glm::vec3 pos);
-
 	void CellProc(IndexBuffer& indexBuffer);
 	static void EdgeProcXY(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
 	static void EdgeProcXZ(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
@@ -58,6 +55,11 @@ private:
 	static void ProcessEdge(const Octree* node[4] , int dir, IndexBuffer& indexBuffer);
 
 	std::unique_ptr<OctreeChildren> m_children;
+
+	std::vector<std::vector<float>> m_sampleCache;
+
+	Octree* ConstructLeafParent(const int resolution, const glm::vec3 min);
+	Octree* Octree::ConstructLeaf(const int resolution, glm::vec3 min);
 
 	// Disallow constructors
 	Octree(const Octree&);
@@ -73,5 +75,6 @@ struct OctreeChildren {
 };
 
 int index(int x, int y, int z, int dimensionLength);
+
 
 #endif //PROJECT_OCTREE_H

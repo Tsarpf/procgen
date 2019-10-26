@@ -60,20 +60,12 @@ int index(int x, int y, int z, int dimensionLength)
 	return x + dimensionLength * (y + dimensionLength * z);
 }
 
-float Sample(const glm::vec3 pos)
-{
-	float value = Sampler::Density(pos);
-	//printf("position (%f %f %f) value = %f \n", pos.x, pos.y, pos.z, value);
-	//return value >= 0.0f;
-	return value;
-}
-
 glm::vec3 CalculateSurfaceNormal(const glm::vec3& p)
 {
 	const float epsilon = 0.0001f;
-	const float dx = Sample(p + glm::vec3(epsilon, 0.f, 0.f)) - Sample(p - glm::vec3(epsilon, 0.f, 0.f));
-	const float dy = Sample(p + glm::vec3(0.f, epsilon, 0.f)) - Sample(p - glm::vec3(0.f, epsilon, 0.f));
-	const float dz = Sample(p + glm::vec3(0.f, 0.f, epsilon)) - Sample(p - glm::vec3(0.f, 0.f, epsilon));
+	const float dx = Sampler::Sample(p + glm::vec3(epsilon, 0.f, 0.f)) - Sampler::Sample(p - glm::vec3(epsilon, 0.f, 0.f));
+	const float dy = Sampler::Sample(p + glm::vec3(0.f, epsilon, 0.f)) - Sampler::Sample(p - glm::vec3(0.f, epsilon, 0.f));
+	const float dz = Sampler::Sample(p + glm::vec3(0.f, 0.f, epsilon)) - Sampler::Sample(p - glm::vec3(0.f, 0.f, epsilon));
 
 	return glm::normalize(glm::vec3(dx, dy, dz));
 }
@@ -81,12 +73,22 @@ glm::vec3 CalculateSurfaceNormal(const glm::vec3& p)
 
 void Octree::Construct()
 {
+	auto t0 = std::chrono::high_resolution_clock::now();
+	m_sampleCache = Sampler::BuildCache(m_min, m_size+1);
+
+	auto t1 = std::chrono::high_resolution_clock::now();
 	ConstructBottomUp();
+	auto t2 = std::chrono::high_resolution_clock::now();
+
+	auto cacheBuildDuration = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
+	std::cout << "Sample cache build took " << cacheBuildDuration / 1000.f << "ms" << std::endl;
+
+	auto bottomUpDuration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+	std::cout << "Construct bottom up took " << bottomUpDuration / 1000.f << "ms" << std::endl;
 }
+
 void Octree::ConstructBottomUp()
 {
-	auto t1 = std::chrono::high_resolution_clock::now();
-
 	const int resolution = m_resolution;
 	const int size = m_size;
 	const glm::vec3 min = m_min;
@@ -129,7 +131,7 @@ void Octree::ConstructBottomUp()
                     Octree* node = nullptr;
                     if (cubeSize == resolution * 2)
                     {
-                        node = Octree::ConstructLeafParent(resolution, pos); // null if nothing to draw
+                        node = ConstructLeafParent(resolution, pos); // null if nothing to draw
                         if (node)
                         {
                             if (!parentSizeNodes[parentIdx])
@@ -229,9 +231,6 @@ void Octree::ConstructBottomUp()
     // currentSizeNodes length should be 1 now.
     m_children = std::move(currentSizeNodes[0]);
 
-	auto t2 = std::chrono::high_resolution_clock::now();
-	auto duration1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-	std::cout << "Construct bottom up took " << duration1 / 1000.f << "ms" << std::endl;
 }
 
 OctreeChildren* Octree::GetChildren() const
@@ -309,26 +308,20 @@ void Octree::GenerateVertexIndices(Octree* node, VertexBuffer& vertexBuffer)
 // indices 
 // 0 = 0,0,0 = 0 + 2 * (0 + 2 * 0)
 // 1 = 1,0,0 = 1 + 2 * (0 + 2 * 0)
-
 // 2 = 0,1,0 = 0 + 2 * (1 + 2 * 0)
 // 3 = 1,1,0 = 1 + 2 * (1 + 2 * 0)
-
 // 4 = 0,0,1 = 0 + 2 * (0 + 2 * 1)
 // 5 = 1,0,1 = 1 + 2 * (0 + 2 * 1)
-
 // 6 = 0,1,1 = 0 + 2 * (1 + 2 * 1)
 // 7 = 1,1,1 = 1 + 2 * (1 + 2 * 1)
-
 // Faces:
 // X: [0, 1], [4, 5], [2, 3], [6, 7]
 // Y: [0, 2], [1, 3], [4, 6], [5, 7]
 // Z: [0, 4], [1, 5], [2, 6], [3, 7]
-
 // Edges:
 // XY: [0, 1, 2, 3], [4, 5, 6, 7]
 // XZ: [0, 1, 4, 5], [2, 3, 6, 7]
 // YZ: [0, 2, 4, 6], [1, 3, 5, 7]
-
 // XY/XZ/YZ means eg for XZ the cubes are on the bottom (0 1 4 5) and top four (2 3 6 7)
 
 Octree* LeafOrChild(Octree* node, size_t idx)
@@ -686,7 +679,7 @@ glm::vec3 ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm::vec3& 
 	{
 		//std::cout << "pos " << currentT << std::endl;
 		const glm::vec3 p = p0 + ((p1 - p0) * currentT);
-		const float density = glm::abs(Sample(p));
+		const float density = glm::abs(Sampler::Sample(p));
 		if (density < minValue)
 		{
 			minValue = density;
@@ -701,7 +694,7 @@ glm::vec3 ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm::vec3& 
 
 	return resultPos;
 }
-Octree* ConstructLeaf(const int resolution, glm::vec3 min)
+Octree* Octree::ConstructLeaf(const int resolution, glm::vec3 min)
 {
 	/*
 	This function (mostly) copied from https://github.com/nickgildea/DualContouringSample/blob/master/DualContouringSample/octree.cpp, ConstructLeaf
@@ -732,7 +725,9 @@ Octree* ConstructLeaf(const int resolution, glm::vec3 min)
 	for (int i = 0; i < 8; i++)
 	{
 		const vec3 cornerPos = leaf->m_min + CHILD_MIN_OFFSETS[i];
-		const bool inside = Sample(cornerPos) > 0;
+		//const bool inside = Sampler::Sample(cornerPos) > 0; // non cached
+		//printf("cornerPosition (%f %f %f) \n", cornerPos.x, cornerPos.y, cornerPos.z);
+		const bool inside = Sampler::SampleCache(m_sampleCache, m_min, m_size+1, cornerPos) > 0; // cached
 		if (inside)
 		{
 			corners |= (1 << i);
