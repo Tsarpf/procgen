@@ -1,5 +1,8 @@
+project(PROCGEN LANGUAGES CUDA CXX C)
+
 cmake_minimum_required(VERSION 2.8)
 
+set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
 
 set(CMAKE_BUILD_TYPE Debug)
@@ -8,6 +11,7 @@ set(GLFW_SOURCE_DIR "external/glfw")
 set(GLM_SOURCE_DIR "external/glm")
 set(GLEW_SOURCE_DIR "external/glew")
 set(LIBNOISE_SOURCE_DIR "external/libnoise")
+set(CUDA_NOISE_SOURCE_DIR "external/cuda-noise")
 
 
 # Building only the GLFW lib
@@ -22,7 +26,8 @@ include_directories(${GLFW_SOURCE_DIR}/include
                     ${GLFW_SOURCE_DIR}/deps
                     ${GLM_SOURCE_DIR}
                     ${GLEW_SOURCE_DIR}/include
-		    ${LIBNOISE_SOURCE_DIR}/src
+                    ${LIBNOISE_SOURCE_DIR}/src
+                    ${CUDA_NOISE_SOURCE_DIR}/include
                     src/)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -45,8 +50,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-FILE(GLOB SRCFILES src/*.cpp)
-FILE(GLOB HEADERFILES src/*.h)
+FILE(GLOB SRCFILES src/*.cpp src/*.cu)
+FILE(GLOB HEADERFILES src/*.h src/*.cuh)
 set(APP_NAME "dual-contouring")
 if (APPLE)
     if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/icon.icns)

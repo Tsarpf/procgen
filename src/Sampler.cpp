@@ -7,6 +7,8 @@
 
 #include "Sampler.h"
 
+#include "NoiseSampler.cuh"
+
 namespace Sampler
 {
 
@@ -92,19 +94,6 @@ std::vector<float> AsyncCache(glm::ivec3 min, int segmentStart, int sampleCount,
 {
 	noise::module::Perlin noiseModule;
 	std::vector<float> samples(sampleCount);
-	/*
-	for (int x = min.x; x < min.x + range; x++)
-	{
-		for (int y = min.y; y < min.y + range; y++)
-		{
-			for (int z = min.z; z < min.z + range; z++)
-			{
-				int index = index3D(x - min.x, y - min.y, z - min.z, range);
-				samples[index] = Noise(glm::vec3(x, y, z), noiseModule);
-			}
-		}
-	}
-	*/
 
 	for (int i = 0; i < sampleCount; i++)
 	{
@@ -118,6 +107,9 @@ std::vector<float> AsyncCache(glm::ivec3 min, int segmentStart, int sampleCount,
 }
 std::vector<std::vector<float>> BuildCache(const glm::ivec3 min, const unsigned size)
 {
+  // Testink
+  CudaNoise::Sample();
+
 	unsigned idxCount = size * size * size;
 	unsigned concurrentThreadsSupported = std::thread::hardware_concurrency();
 

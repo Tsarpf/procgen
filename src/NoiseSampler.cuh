@@ -1,0 +1,4 @@
+
+namespace CudaNoise {
+  void Sample();
+}
