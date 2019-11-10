@@ -59,7 +59,7 @@ private:
 	std::vector<std::vector<float>> m_sampleCache;
 
 	Octree* ConstructLeafParent(const int resolution, const glm::vec3 min);
-	Octree* Octree::ConstructLeaf(const int resolution, glm::vec3 min);
+	Octree* ConstructLeaf(const int resolution, glm::vec3 min);
 
 	// Disallow constructors
 	Octree(const Octree&);
