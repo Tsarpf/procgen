@@ -4,19 +4,61 @@
 
 #include "NoiseSampler.cuh"
 
+__device__
+float SampleNoise(float3 pos)
+{
+  int seed = 42;
+  float scale = 0.5f;
+  return cudaNoise::perlinNoise(pos, scale, seed);  // float3 pos, float scale, int seed
+}
+
 __global__ 
 void test_kernel(float* result) {
   float3 pos = make_float3(0.1, 0.1, 0.1);
-  *result = cudaNoise::perlinNoise(pos, 0.1, 42);  // float3 pos, float scale, int seed
+  *result = SampleNoise(pos);
+}
+
+__global__ 
+void NoiseDensity(float* result, float3 position) {
+  //float3 pos = make_float3(0.1, 0.1, 0.1);
+  *result = SampleNoise(position);
+}
+
+__global__ 
+void NoiseGradient(float3* result, float3 position) {
+  //float3 pos = make_float3(0.1, 0.1, 0.1);
+  //*result = sample_noise(pos);
+
+	const float epsilon = 0.0001f;
+	const float dx = SampleNoise(position + make_float3(epsilon, 0.f, 0.f)) - SampleNoise(position - make_float3(epsilon, 0.f, 0.f));
+	const float dy = SampleNoise(position + make_float3(0.f, epsilon, 0.f)) - SampleNoise(position - make_float3(0.f, epsilon, 0.f));
+	const float dz = SampleNoise(position + make_float3(0.f, 0.f, epsilon)) - SampleNoise(position - make_float3(0.f, 0.f, epsilon));
+
+  *result = make_float3(dx, dy, dz);
+  //return glm::normalize(glm::vec3(dx, dy, dz));
 }
 
 namespace CudaNoise
 {
+  void CacheArea()
+  {
+  }
+
+  void CacheDensity(float* results, float3 min, int size)
+  {
+
+  }
+
+  void CacheGradient(float* results, float3 min, int size)
+  {
+  }
+
   void Sample(void)
   {
     //int N = 3;
     //float3* result;
     float* result;
+    //*result = 0.0f;
 
     printf("Malloc\n");
     cudaMallocManaged(&result, sizeof(float));
