@@ -30,9 +30,12 @@ void NoiseGradient(float3* result, float3 position) {
   //*result = sample_noise(pos);
 
 	const float epsilon = 0.0001f;
-	const float dx = SampleNoise(position + make_float3(epsilon, 0.f, 0.f)) - SampleNoise(position - make_float3(epsilon, 0.f, 0.f));
-	const float dy = SampleNoise(position + make_float3(0.f, epsilon, 0.f)) - SampleNoise(position - make_float3(0.f, epsilon, 0.f));
-	const float dz = SampleNoise(position + make_float3(0.f, 0.f, epsilon)) - SampleNoise(position - make_float3(0.f, 0.f, epsilon));
+	const float dx = SampleNoise(make_float3(position.x + epsilon, position.y, position.z)) - SampleNoise(make_float3(position.x - epsilon, position.y, position.z));
+	const float dy = SampleNoise(make_float3(position.x, position.y + epsilon, position.z)) - SampleNoise(make_float3(position.x, position.y - epsilon, position.z));
+	const float dz = SampleNoise(make_float3(position.x, position.y, position.z + epsilon)) - SampleNoise(make_float3(position.x, position.y, position.z - epsilon));
+
+	//const float dy = SampleNoise(position + make_float3(0.f, epsilon, 0.f)) - SampleNoise(position - make_float3(0.f, epsilon, 0.f));
+	//const float dz = SampleNoise(position + make_float3(0.f, 0.f, epsilon)) - SampleNoise(position - make_float3(0.f, 0.f, epsilon));
 
   *result = make_float3(dx, dy, dz);
   //return glm::normalize(glm::vec3(dx, dy, dz));
