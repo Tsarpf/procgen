@@ -4,6 +4,7 @@
 #include <future>
 #include <thread>
 #include <assert.h>
+#include <vector_types.h>
 
 #include "Sampler.h"
 
@@ -105,10 +106,17 @@ std::vector<float> AsyncCache(glm::ivec3 min, int segmentStart, int sampleCount,
 	}
 	return samples;
 }
+
+std::vector<float4> BuildCacheCuda(const glm::ivec3 min, const unsigned size)
+{
+	//// Testink
+	//CudaNoise::Sample();
+	float4* results = CudaNoise::CacheArea(min.x, min.y, min.z, size);
+
+}
+
 std::vector<std::vector<float>> BuildCache(const glm::ivec3 min, const unsigned size)
 {
-  // Testink
-  CudaNoise::Sample();
 
 	unsigned idxCount = size * size * size;
 	unsigned concurrentThreadsSupported = std::thread::hardware_concurrency();
@@ -143,16 +151,18 @@ std::vector<std::vector<float>> BuildCache(const glm::ivec3 min, const unsigned 
 	return results;
 }
 
+// Get sample from cache
 float SampleCache(const std::vector<std::vector<float>>& cache, const int coordinate)
 {
-	int cacheCount = cache.size();
-	int cacheLength = cache[0].size();
+	const int cacheCount = cache.size();
+	const int cacheLength = cache[0].size();
 	int cacheIdx = coordinate / cacheLength;
 	cacheIdx = cacheIdx >= cacheCount ? cacheCount - 1 : cacheIdx;
-	int idx = coordinate % cacheLength;
+	const int idx = coordinate % cacheLength;
 	return cache[cacheIdx][idx];
 }
 
+// Get sample from cache
 float SampleCache(const std::vector<std::vector<float>>& cache, const glm::ivec3 min, const int size, const glm::ivec3 coordinate)
 {
 	//printf("pos %i %i %i \n", coordinate.x, coordinate.y, coordinate.z);
@@ -188,6 +198,4 @@ float Sample(const glm::vec3 pos)
 	//return value >= 0.0f;
 	return value;
 }
-
-
 }
