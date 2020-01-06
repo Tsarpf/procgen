@@ -54,8 +54,8 @@ __device__
 void Sample(float4* sample, float3 position)
 {
 	float density;
-	//NoiseDensity(&density, position);
-	density = Waves(position);
+	NoiseDensity(&density, position);
+	//density = Waves(position);
 
 	float3 gradient;
 	NoiseGradient(&gradient, position);
@@ -116,7 +116,7 @@ namespace CudaNoise
 		int numBlocks = (samples + threadsPerBlock - 1) / threadsPerBlock; // round up
 
 		printf("Launching kernel\n");
-		CacheKernel << <numBlocks, threadsPerBlock >> > (results, min, size);
+		CacheKernel <<<numBlocks, threadsPerBlock >> > (results, min, size);
 
 		printf("Syncing \n");
 		cudaDeviceSynchronize();

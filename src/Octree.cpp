@@ -739,7 +739,9 @@ Octree* Octree::ConstructLeaf(const int resolution, glm::vec3 min)
 		//const bool inside = Sampler::SampleCache(m_sampleCache, m_min, m_size+1, cornerPos) > 0; // cached
 
 		//const bool inside = Sampler::DensityCuda(m_sampleCacheCuda, m_size+1, cornerPos, m_min) > 0; // cached
-		const bool inside = Sampler::DensityCuda(m_sampleCacheCuda, m_size, cornerPos, m_min) > 0; // cached
+
+		// TODO: Check that m_size+1 and m_min stuff makes sense. Are we using the containing octree (leaf+1) sizes here or what?
+		const bool inside = Sampler::DensityCuda(m_sampleCacheCuda, m_size+1, cornerPos, m_min) > 0; // cached
 		if (inside)
 		{
 			corners |= (1 << i);

@@ -30,7 +30,10 @@ int index3DCuda(glm::vec3 coord, int dimensionLength)
 	int expandedDimensionLength = dimensionLength * 8;
 	
 	// TODO: check that results are always exact integers
-	return (expandedCoord.x + expandedDimensionLength * (expandedCoord.y + expandedDimensionLength * expandedCoord.z));
+	float result = (expandedCoord.x + expandedDimensionLength * (expandedCoord.y + expandedDimensionLength * expandedCoord.z));
+	//printf("index at (%f, %f, %f) is = %f\n", coord.x, coord.y, coord.z, result);
+
+	return result;
 }
 
 float mod(float x, float y)
