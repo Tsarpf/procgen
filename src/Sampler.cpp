@@ -69,15 +69,16 @@ float Plane(const glm::vec3& p)
 	return p.x - 0.00001f *p.y;
 }
 
-std::vector<float4> BuildCacheCuda(const glm::ivec3 min, const unsigned size)
+std::vector<float4>* BuildCacheCuda(const glm::ivec3 min, const unsigned size)
 {
 	const int samplesPerUnit = 8;
 	const int samplesPerDirection = 8 * size;
 	const int numSamples = samplesPerDirection * samplesPerDirection * samplesPerDirection;
 
-	std::vector<float4> results;
-	float4* res = CudaNoise::CacheArea(min.x, min.y, min.z, size);
-	results.assign(res, res + numSamples);
+	std::vector<float4>* results = new std::vector<float4>();
+	results->resize(numSamples);
+	CudaNoise::CacheArea(min.x, min.y, min.z, size, results->data());
+	//results.assign(res, res + numSamples);
 	return results;
 }
 

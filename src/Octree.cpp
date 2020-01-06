@@ -645,7 +645,7 @@ void Octree::ProcessEdge(const Octree* node[4], int dir, IndexBuffer& indexBuffe
 
 glm::vec3 Octree::GetSurfaceNormal(const glm::vec3& p)
 {
-	float4 sample = Sampler::SampleCacheCuda(m_sampleCacheCuda, m_size + 1, p, m_min);
+	float4 sample = Sampler::SampleCacheCuda(*m_sampleCacheCuda, m_size + 1, p, m_min);
 	return glm::normalize(glm::vec3(sample.y, sample.z, sample.w));
 }
 
@@ -679,7 +679,7 @@ glm::vec3 Octree::ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm
 		//std::cout << "pos " << currentT << std::endl;
 		const glm::vec3 p = p0 + ((p1 - p0) * currentT);
 		//const float density = glm::abs(Sampler::Sample(p));
-		const float density = glm::abs(Sampler::DensityCuda(m_sampleCacheCuda, m_size + 1, p, m_min));
+		const float density = glm::abs(Sampler::DensityCuda(*m_sampleCacheCuda, m_size + 1, p, m_min));
 		if (density < minValue)
 		{
 			minValue = density;
@@ -733,7 +733,7 @@ Octree* Octree::ConstructLeaf(const int resolution, glm::vec3 min)
 
 		// TODO: Check that m_size+1 and m_min stuff makes sense. Are we using the containing octree (leaf+1) sizes here or what?
 		//const bool inside = Sampler::DensityCuda(m_sampleCacheCuda, m_size+1, cornerPos, m_min) > 0; // cached
-		const bool inside = Sampler::DensityCuda(m_sampleCacheCuda, m_size + 1, cornerPos, m_min) > 0; // cached
+		const bool inside = Sampler::DensityCuda(*m_sampleCacheCuda, m_size + 1, cornerPos, m_min) > 0; // cached
 		if (inside)
 		{
 			corners |= (1 << i);

@@ -1,8 +1,10 @@
 #include <iostream>
+#include <vector>
 
 #include "cuda_noise.cuh"
 
 #include "NoiseSampler.cuh"
+
 
 __device__
 float SampleNoise(float3 pos)
@@ -100,7 +102,7 @@ void CacheKernel(float4* results, float3 min, int size)
 
 namespace CudaNoise
 {
-	float4* CacheArea(int minX, int minY, int minZ, int size)
+	void CacheArea(int minX, int minY, int minZ, int size, float4* cpuResults)
 	{
 		float3 min = make_float3(minX, minY, minZ);
 		float4* results;
@@ -122,7 +124,12 @@ namespace CudaNoise
 		printf("Syncing \n");
 		cudaDeviceSynchronize();
 
-		printf("Done\n");
-		return results;
+		printf("Copying to vector \n");
+		cudaMemcpy(cpuResults, results, dataSize, cudaMemcpyDeviceToHost);
+
+		printf("Freeing memory \n");
+		cudaFree(results);
+
+		printf("Done \n");
 	}
 }
