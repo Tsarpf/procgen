@@ -8,7 +8,7 @@ __device__
 float SampleNoise(float3 pos)
 {
   int seed = 42;
-  float scale = 0.05f;
+  float scale = 0.03f;
   return cudaNoise::perlinNoise(pos, scale, seed);  // float3 pos, float scale, int seed
 }
 
@@ -54,8 +54,8 @@ __device__
 void Sample(float4* sample, float3 position)
 {
 	float density;
-	NoiseDensity(&density, position);
-	//density = Waves(position);
+	//NoiseDensity(&density, position);
+	density = Waves(position);
 
 	float3 gradient;
 	NoiseGradient(&gradient, position);

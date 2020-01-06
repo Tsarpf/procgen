@@ -112,11 +112,12 @@ void BuildSeam(Octree& n1, Octree& n2, Direction dir,
 			auto child = children[idx];
 			borderChildren[edgeIdx] = child;
 			Octree::GenerateVertexIndices(child, vertices);
-			// if (child)
-			// {
-			// 	std::vector<OctreeVisualizationData> childData = VisualizeOctree(child);
-			// 	viz.insert(viz.end(), childData.begin(), childData.end());
-			// }
+			//if (child)
+			//{
+			//	std::vector<OctreeVisualizationData> childData = VisualizeOctree(child);
+			//	m_visualization.DrawVisualization(time);
+			//	viz.insert(viz.end(), childData.begin(), childData.end());
+			//}
 		}
 		j++;
 	}
@@ -182,6 +183,7 @@ void OctreeMesh::CheckResults()
 		{
 			//m_indices.clear();
 			//m_vertices.clear();
+
 			readies.push_back(i);
 			OctreeMesh* mesh = future.get();
 			mesh->LoadMesh();
@@ -226,13 +228,7 @@ void OctreeMesh::EnlargeAsync(Direction dir)
 
 void OctreeMesh::Enlarge(Direction dir)
 {
-	// this line doesn't work for some reason? these sorta tuples work elsewhere in the 
-	// codebase. "'_This &&' differs in levels of indirection from 'int' ..."
-	//auto [newCornerIdx, oldCornerIdx, newPosition] = EnlargeCorners(dir);
-	std::tuple<int, int, glm::vec3> asdf = EnlargeCorners(dir);
-	int newCornerIdx = std::get<0>(asdf);
-	int oldCornerIdx = std::get<1>(asdf);
-	glm::vec3 newPosition = std::get<2>(asdf);
+	auto [newCornerIdx, oldCornerIdx, newPosition] = EnlargeCorners(dir);
 
 	std::array<Octree*, 8> rootChildren = {};
 	for (auto& child : rootChildren)

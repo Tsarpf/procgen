@@ -123,9 +123,6 @@ std::vector<float> AsyncCache(glm::ivec3 min, int segmentStart, int sampleCount,
 
 std::vector<float4> BuildCacheCuda(const glm::ivec3 min, const unsigned size)
 {
-	//// Testink
-	//CudaNoise::Sample();
-
 	const int samplesPerUnit = 8;
 	const int samplesPerDirection = 8 * size;
 	const int numSamples = samplesPerDirection * samplesPerDirection * samplesPerDirection;
