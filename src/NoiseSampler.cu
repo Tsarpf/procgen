@@ -8,14 +8,23 @@ __device__
 float SampleNoise(float3 pos)
 {
   int seed = 42;
-  float scale = 0.5f;
+  float scale = 0.05f;
   return cudaNoise::perlinNoise(pos, scale, seed);  // float3 pos, float scale, int seed
 }
 
-__global__
-void test_kernel(float* result) {
-  float3 pos = make_float3(0.1, 0.1, 0.1);
-  *result = SampleNoise(pos);
+__device__
+float Waves(float3 p)
+{
+	//printf("density at (%f, %f, %f) is = %f\n", p.x, p.y, p.z, value);
+	//std::cout << "position: " << p.x << std::endl;
+	//printf("position %f %f %f\n", p.x, p.y, p.z);
+	//return sin(p.x * 1.0) + cos(p.y * 1.0) + p.z - 2;
+
+	//float value = sin(p.x * 1.0f) / 1.f + cos(p.y * 1.0f) / 1.f + p.z - 5.50f;
+	float value = sin(p.x * 0.5f) / 0.3f + p.y - 5.50f;
+
+	//return sin(p.x) + cos(p.z) + p.y;
+	return value;
 }
 
 __device__
@@ -45,7 +54,8 @@ __device__
 void Sample(float4* sample, float3 position)
 {
 	float density;
-	NoiseDensity(&density, position);
+	//NoiseDensity(&density, position);
+	density = Waves(position);
 
 	float3 gradient;
 	NoiseGradient(&gradient, position);
@@ -53,15 +63,7 @@ void Sample(float4* sample, float3 position)
 	*sample = make_float4(density, gradient.x, gradient.y, gradient.z);
 }
 
-long index3D(int x, int y, int z, int dimensionLength)
-{
-	return x + dimensionLength * (y + dimensionLength * z);
-}
-int index3D(int3 coord, int dimensionLength)
-{
-	return index3D(coord.x, coord.y, coord.z, dimensionLength);
-}
-
+__device__
 float3 indexToPos(long idx, int size)
 {
 	//int idx = i + segmentStart;
@@ -82,7 +84,8 @@ void CacheKernel(float4* results, float3 min, int size)
 	unsigned long n = samplesPerDirection * samplesPerDirection * samplesPerDirection;
 	for (int i = index; i < n; i += stride)
 	{
-		float3 offset = indexToPos(i, size);
+		float3 offset = indexToPos(i, samplesPerDirection); // like this right?
+		//float3 offset = indexToPos(i, size);
 
 		// has to be float because sub-grid-point sampling for crossing points
 		float3 position = make_float3(min.x + offset.x / 8.0, min.y + offset.y / 8.0, min.z + offset.z / 8.0);
@@ -96,111 +99,29 @@ void CacheKernel(float4* results, float3 min, int size)
 
 namespace CudaNoise
 {
-  float4* CacheArea(int minX, int minY, int minZ, int size)
-  {
-	float3 min = make_float3(minX, minY, minZ);
-	float4* results;
+	float4* CacheArea(int minX, int minY, int minZ, int size)
+	{
+		float3 min = make_float3(minX, minY, minZ);
+		float4* results;
 
-	// 1 float for density, 3 floats for gradient, 
-	// size^3 points in grid
-	//8 samples per unit of grid (for figuring out zero crossing)
-	unsigned int samplesPerDirection = 8 * size;
-	unsigned long samples = samplesPerDirection * samplesPerDirection * samplesPerDirection;
-	unsigned long dataSize = sizeof(float) * 4 * samples;
-	cudaMallocManaged(&results, dataSize);
+		// 1 float for density, 3 floats for gradient, 
+		// size^3 points in grid
+		//8 samples per unit of grid (for figuring out zero crossing)
+		unsigned int samplesPerDirection = 8 * size;
+		unsigned long samples = samplesPerDirection * samplesPerDirection * samplesPerDirection;
+		unsigned long dataSize = sizeof(float) * 4 * samples;
+		cudaMallocManaged(&results, dataSize);
 
-	int threadsPerBlock = 256;
-	int numBlocks = (samples + threadsPerBlock - 1) / threadsPerBlock; // round up
+		int threadsPerBlock = 256;
+		int numBlocks = (samples + threadsPerBlock - 1) / threadsPerBlock; // round up
 
-    printf("Launching kernel\n");
-    CacheKernel<<<numBlocks, threadsPerBlock>>> (results, min, size);
+		printf("Launching kernel\n");
+		CacheKernel << <numBlocks, threadsPerBlock >> > (results, min, size);
 
-    printf("Syncing \n");
-    cudaDeviceSynchronize();
+		printf("Syncing \n");
+		cudaDeviceSynchronize();
 
-    printf("Done\n");
-	return results;
-  }
-
-//  void CacheDensity(float* results, float3 min, int size)
-//  {
-//	  // Figure out how much work per 'thread'
-//  }
-//
-//  void CacheGradient(float* results, float3 min, int size)
-//  {
-//  }
-
-  void Sample(void)
-  {
-    //int N = 3;
-    //float3* result;
-    float* result;
-    //*result = 0.0f;
-
-    printf("Malloc\n");
-    cudaMallocManaged(&result, sizeof(float));
-
-    printf("Launching kernel\n");
-
-    test_kernel <<<1, 1>>> (result);
-
-    printf("Syncing \n");
-    cudaDeviceSynchronize();
-
-    printf("Done\n");
-
-    printf("Result %f\n", *result);
-  }
-
-  //std::vector<float> AsyncCache(glm::ivec3 min, int segmentStart, int sampleCount, int size)
-  //{
-  //  noise::module::Perlin noiseModule;
-  //  std::vector<float> samples(sampleCount);
-
-  //  for (int i = 0; i < sampleCount; i++)
-  //  {
-  //    int idx = i + segmentStart;
-  //    int z = idx % size;
-  //    int y = (idx / size) % size;
-  //    int x = idx / (size * size);
-  //    samples[i] = Noise(min + glm::ivec3(x, y, z), noiseModule);
-  //  }
-  //  return samples;
-  //}
-
+		printf("Done\n");
+		return results;
+	}
 }
-//   std::vector<std::vector<float>> BuildCache(const glm::ivec3 min, const unsigned size)
-//   {
-//     unsigned idxCount = size * size * size;
-//     unsigned concurrentThreadsSupported = std::thread::hardware_concurrency();
-// 
-//     // perf-wise no sense in computing less than thousands of samples per thread, but for debugging it's nice
-//     unsigned threads = std::min(concurrentThreadsSupported, idxCount / 8); 
-// 
-//     unsigned samplesPerSegment = idxCount / threads;
-// 
-//     unsigned extras = size % threads;
-//     //assert(size % threads == 0);
-// 
-//     std::vector<std::future<std::vector<float>>> futureSamples;
-//     std::vector<std::vector<float>> results;
-//     for (unsigned i = 0; i < threads; i++)
-//     {
-//       int segmentStart = i * (idxCount / threads);
-//       futureSamples.push_back(std::async(
-//             std::launch::async,
-//             AsyncCache,
-//             min,
-//             segmentStart,
-//             i < threads-1 ? samplesPerSegment : samplesPerSegment + extras,
-//             size));
-//     }
-// 
-//     for (auto& future : futureSamples)
-//     {
-//       results.push_back(future.get());
-//     }
-// 
-//     return results;
-//   }

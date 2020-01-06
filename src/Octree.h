@@ -14,6 +14,8 @@
 
 #include <glm/glm.hpp>
 
+#include <vector_types.h> // cuda vector types
+
 #include "Mesh.h"
 
 struct OctreeChildren;
@@ -57,6 +59,10 @@ private:
 	std::unique_ptr<OctreeChildren> m_children;
 
 	std::vector<std::vector<float>> m_sampleCache;
+	std::vector<float4> m_sampleCacheCuda;
+
+	glm::vec3 GetSurfaceNormal(const glm::vec3& p);
+	glm::vec3 ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm::vec3& p1);
 
 	Octree* ConstructLeafParent(const int resolution, const glm::vec3 min);
 	Octree* ConstructLeaf(const int resolution, glm::vec3 min);

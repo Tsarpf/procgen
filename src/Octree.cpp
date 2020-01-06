@@ -70,11 +70,19 @@ glm::vec3 CalculateSurfaceNormal(const glm::vec3& p)
 	return glm::normalize(glm::vec3(dx, dy, dz));
 }
 
+glm::vec3 Octree::GetSurfaceNormal(const glm::vec3& p)
+{
+	float4 sample = Sampler::SampleCacheCuda(m_sampleCacheCuda, m_size, p, m_min);
+	return glm::normalize(glm::vec3(sample.y, sample.z, sample.w));
+}
+
 
 void Octree::Construct()
 {
 	auto t0 = std::chrono::high_resolution_clock::now();
-	m_sampleCache = Sampler::BuildCache(m_min, m_size+1);
+	//m_sampleCache = Sampler::BuildCache(m_min, m_size+1);
+	//m_sampleCacheCuda = Sampler::BuildCacheCuda(m_min, m_size+1);
+	m_sampleCacheCuda = Sampler::BuildCacheCuda(m_min, m_size+1);
 
 	auto t1 = std::chrono::high_resolution_clock::now();
 	ConstructBottomUp();
@@ -651,7 +659,7 @@ void Octree::ProcessEdge(const Octree* node[4], int dir, IndexBuffer& indexBuffe
 		}
 	}
 }
-glm::vec3 ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm::vec3& p1)
+glm::vec3 Octree::ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm::vec3& p1)
 {
 	/*
 	This function copied from https://github.com/nickgildea/DualContouringSample/blob/master/DualContouringSample/octree.cpp
@@ -679,7 +687,8 @@ glm::vec3 ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm::vec3& 
 	{
 		//std::cout << "pos " << currentT << std::endl;
 		const glm::vec3 p = p0 + ((p1 - p0) * currentT);
-		const float density = glm::abs(Sampler::Sample(p));
+		//const float density = glm::abs(Sampler::Sample(p));
+		const float density = glm::abs(Sampler::DensityCuda(m_sampleCacheCuda, m_size, p, m_min));
 		if (density < minValue)
 		{
 			minValue = density;
@@ -727,7 +736,10 @@ Octree* Octree::ConstructLeaf(const int resolution, glm::vec3 min)
 		const vec3 cornerPos = leaf->m_min + CHILD_MIN_OFFSETS[i];
 		//const bool inside = Sampler::Sample(cornerPos) > 0; // non cached
 		//printf("cornerPosition (%f %f %f) \n", cornerPos.x, cornerPos.y, cornerPos.z);
-		const bool inside = Sampler::SampleCache(m_sampleCache, m_min, m_size+1, cornerPos) > 0; // cached
+		//const bool inside = Sampler::SampleCache(m_sampleCache, m_min, m_size+1, cornerPos) > 0; // cached
+
+		//const bool inside = Sampler::DensityCuda(m_sampleCacheCuda, m_size+1, cornerPos, m_min) > 0; // cached
+		const bool inside = Sampler::DensityCuda(m_sampleCacheCuda, m_size, cornerPos, m_min) > 0; // cached
 		if (inside)
 		{
 			corners |= (1 << i);
@@ -765,7 +777,8 @@ Octree* Octree::ConstructLeaf(const int resolution, glm::vec3 min)
 		const vec3 p1 = vec3(min + (vec3)CHILD_MIN_OFFSETS[c1]);
 		const vec3 p2 = vec3(min + (vec3)CHILD_MIN_OFFSETS[c2]);
 		const vec3 p = ApproximateZeroCrossingPosition(p1, p2);
-		const vec3 n = CalculateSurfaceNormal(p);
+		//const vec3 n = CalculateSurfaceNormal(p);
+		const vec3 n = GetSurfaceNormal(p);
 		qef.add(p.x, p.y, p.z, n.x, n.y, n.z);
 
 		averageNormal += n;

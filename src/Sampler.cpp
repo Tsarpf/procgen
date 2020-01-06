@@ -22,6 +22,17 @@ int index3D(glm::ivec3 coord, int dimensionLength)
 	return index3D(coord.x, coord.y, coord.z, dimensionLength);
 }
 
+// integer as floats only exact up to 2^24 = 16,777,216
+// shouldn't be a problem?
+int index3DCuda(glm::vec3 coord, int dimensionLength)
+{
+	glm::vec3 expandedCoord(coord.x * 8.0, coord.y * 8.0, coord.z * 8.0);
+	int expandedDimensionLength = dimensionLength * 8;
+	
+	// TODO: check that results are always exact integers
+	return (expandedCoord.x + expandedDimensionLength * (expandedCoord.y + expandedDimensionLength * expandedCoord.z));
+}
+
 float mod(float x, float y)
 {
 	return x - y * floor(x / y);
@@ -111,13 +122,19 @@ std::vector<float4> BuildCacheCuda(const glm::ivec3 min, const unsigned size)
 {
 	//// Testink
 	//CudaNoise::Sample();
-	float4* results = CudaNoise::CacheArea(min.x, min.y, min.z, size);
 
+	const int samplesPerUnit = 8;
+	const int samplesPerDirection = 8 * size;
+	const int numSamples = samplesPerDirection * samplesPerDirection * samplesPerDirection;
+
+	std::vector<float4> results;
+	float4* res = CudaNoise::CacheArea(min.x, min.y, min.z, size);
+	results.assign(res, res + numSamples);
+	return results;
 }
 
 std::vector<std::vector<float>> BuildCache(const glm::ivec3 min, const unsigned size)
 {
-
 	unsigned idxCount = size * size * size;
 	unsigned concurrentThreadsSupported = std::thread::hardware_concurrency();
 
@@ -149,6 +166,14 @@ std::vector<std::vector<float>> BuildCache(const glm::ivec3 min, const unsigned 
 	}
 
 	return results;
+}
+
+float4 SampleCacheCuda(const std::vector<float4>& cache, const int size, const glm::vec3 coordinate, const glm::ivec3 min)
+{
+	// Take into account 8 per unit
+	const glm::vec3 innerCoordinate(coordinate.x - min.x, coordinate.y - min.y, coordinate.z - min.z);
+	const unsigned long idx = index3DCuda(innerCoordinate, size);
+	return cache[idx];
 }
 
 // Get sample from cache
@@ -189,6 +214,12 @@ float Density(const glm::vec3 pos)
 
 	//return Plane(pos);
 	//return Waves(pos);
+}
+
+float DensityCuda(const std::vector<float4>& cache, const int size, const glm::vec3 pos, const glm::vec3 min)
+{
+	float4 sample = SampleCacheCuda(cache, size, pos, min);
+	return sample.x;
 }
 
 float Sample(const glm::vec3 pos)
