@@ -19,6 +19,7 @@ void Scene::KeyCallback(int key, int action) {
 			//m_mesh->Enlarge(xminus);
 			//m_mesh->EnlargeAsync(zplus);
 			m_mesh->EnlargeAsync(xplus);
+			//m_mesh->EnlargeAsync(xminus);
 			break;
 		case GLFW_KEY_LEFT:
 			//m_orientation += 0.1;
@@ -48,7 +49,7 @@ void Scene::KeyCallback(int key, int action) {
 Scene::Scene(GLFWwindow* window) 
 	: m_window(window), m_orientation(0)
 {
-	m_eye = glm::vec3(0, 40, 80);
+	m_eye = glm::vec3(0, 20, 80);
 	m_center = glm::vec3(0, 4, 8);
 }
 
@@ -64,7 +65,7 @@ void Scene::Initialize()
 	m_t_start = std::chrono::high_resolution_clock::now();
 	m_program = createTriangleProgram();
 
-	const int octreeSize = 8;
+	const int octreeSize = 64;
 	m_center = glm::vec3(octreeSize/2.f, octreeSize/4.f, octreeSize/2.f);
 	//m_eye = glm::vec3(0, octreeSize/1.2f, 80);
 

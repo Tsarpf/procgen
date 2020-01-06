@@ -27,6 +27,10 @@ public:
 	Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min, int resolution);
 	~Octree();
 
+	// Disallow constructors
+	Octree(const Octree&) = delete;
+	Octree& operator=(const Octree&) = delete;
+
 	void Construct();
 
 	void ConstructBottomUp();
@@ -67,9 +71,6 @@ private:
 	Octree* ConstructLeafParent(const int resolution, const glm::vec3 min);
 	Octree* ConstructLeaf(const int resolution, glm::vec3 min);
 
-	// Disallow constructors
-	Octree(const Octree&);
-	Octree& operator=(const Octree&);
 
 	const int m_resolution;
 	bool m_leaf;

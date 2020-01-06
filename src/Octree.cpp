@@ -60,23 +60,6 @@ int index(int x, int y, int z, int dimensionLength)
 	return x + dimensionLength * (y + dimensionLength * z);
 }
 
-glm::vec3 CalculateSurfaceNormal(const glm::vec3& p)
-{
-	const float epsilon = 0.0001f;
-	const float dx = Sampler::Sample(p + glm::vec3(epsilon, 0.f, 0.f)) - Sampler::Sample(p - glm::vec3(epsilon, 0.f, 0.f));
-	const float dy = Sampler::Sample(p + glm::vec3(0.f, epsilon, 0.f)) - Sampler::Sample(p - glm::vec3(0.f, epsilon, 0.f));
-	const float dz = Sampler::Sample(p + glm::vec3(0.f, 0.f, epsilon)) - Sampler::Sample(p - glm::vec3(0.f, 0.f, epsilon));
-
-	return glm::normalize(glm::vec3(dx, dy, dz));
-}
-
-glm::vec3 Octree::GetSurfaceNormal(const glm::vec3& p)
-{
-	float4 sample = Sampler::SampleCacheCuda(m_sampleCacheCuda, m_size, p, m_min);
-	return glm::normalize(glm::vec3(sample.y, sample.z, sample.w));
-}
-
-
 void Octree::Construct()
 {
 	auto t0 = std::chrono::high_resolution_clock::now();
@@ -659,6 +642,14 @@ void Octree::ProcessEdge(const Octree* node[4], int dir, IndexBuffer& indexBuffe
 		}
 	}
 }
+
+glm::vec3 Octree::GetSurfaceNormal(const glm::vec3& p)
+{
+	float4 sample = Sampler::SampleCacheCuda(m_sampleCacheCuda, m_size + 1, p, m_min);
+	return glm::normalize(glm::vec3(sample.y, sample.z, sample.w));
+}
+
+
 glm::vec3 Octree::ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm::vec3& p1)
 {
 	/*

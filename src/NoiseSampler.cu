@@ -21,7 +21,8 @@ float Waves(float3 p)
 	//return sin(p.x * 1.0) + cos(p.y * 1.0) + p.z - 2;
 
 	//float value = sin(p.x * 1.0f) / 1.f + cos(p.y * 1.0f) / 1.f + p.z - 5.50f;
-	float value = sin(p.x * 0.5f) / 0.3f + p.y - 5.50f;
+	//float value = sin(p.x * 0.5f) / 0.3f + p.y - 5.50f;
+	float value = sin(p.x) + p.y - 6.0;
 
 	//return sin(p.x) + cos(p.z) + p.y;
 	return value;
@@ -54,8 +55,8 @@ __device__
 void Sample(float4* sample, float3 position)
 {
 	float density;
-	//NoiseDensity(&density, position);
-	density = Waves(position);
+	NoiseDensity(&density, position);
+	//density = Waves(position);
 
 	float3 gradient;
 	NoiseGradient(&gradient, position);
@@ -67,9 +68,9 @@ __device__
 float3 indexToPos(long idx, int size)
 {
 	//int idx = i + segmentStart;
-	int z = idx % size;
+	int x = idx % size;
 	int y = (idx / size) % size;
-	int x = idx / (size * size);
+	int z = idx / (size * size);
 	return make_float3(x, y, z);
 }
 //samples[i] = Noise(min + glm::ivec3(x, y, z), noiseModule);

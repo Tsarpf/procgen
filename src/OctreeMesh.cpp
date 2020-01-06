@@ -175,7 +175,6 @@ bool is_ready(std::future<R> const& f)
 
 void OctreeMesh::CheckResults()
 {
-	std::vector<int> readies;
 	for (int i = 0; i < m_futureMeshes.size(); i++)
 	{
 		auto& future = m_futureMeshes[i];
@@ -184,7 +183,6 @@ void OctreeMesh::CheckResults()
 			//m_indices.clear();
 			//m_vertices.clear();
 
-			readies.push_back(i);
 			OctreeMesh* mesh = future.get();
 			mesh->LoadMesh();
 			std::lock_guard<std::mutex> guard(m_childMeshMutex);
