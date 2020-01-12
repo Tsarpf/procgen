@@ -11,7 +11,7 @@ __device__
 float SampleNoise(float3 pos)
 {
 	int seed = 42;
-	float scale = 0.03f;
+	float scale = 0.01f;
 	float result = cudaNoise::perlinNoise(pos, scale, seed);  // float3 pos, float scale, int seed
 
 	scale = 0.06f;

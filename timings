@@ -59,6 +59,20 @@ total: 1458ms
 ------------------------------------------------------------------------------------------------------------
 CUDA
 
+init and malloc time 663.058ms
+compute time 0.154ms
+synchronize time 0ms
+memcpy time1617.97ms
+cudaFree time 134.631ms
+Constructing new octree from bottom up
+Sample cache build took 3247.41ms
+Construct bottom up took 177.119ms
+Mesh from octree took 14.777ms
+upload data
+index count 247422
+
+total: 3438
+
 cuda, 3x noise sample per:
 constructing new octree at min (0, 0, 0), size 64
 init and malloc time 600.076ms
