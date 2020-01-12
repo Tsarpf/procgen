@@ -46,14 +46,14 @@ float Box(const glm::vec3& p, const glm::vec3& size)
 float Noise(const glm::vec3& p, noise::module::Perlin& noiseModule)
 {
 	double epsilon = 0.500f;
-	float divider = 50.f;
+	float divider = 13.f;
 	float value = (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
 
-	//divider = 100.f;
-	//value += (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
+	divider = 100.f;
+	value += (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
 
-	//divider = 200.f;
-	//value += (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
+	divider = 400.f;
+	value += (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
 
 	//if (p.y > 20.f)
 	//{

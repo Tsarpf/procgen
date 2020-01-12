@@ -28,3 +28,25 @@ Mesh from octree took 2.906ms
 index count 82,668
 
 total: 532ms
+
+
+constructing new octree at min (0, 0, 0), size 64
+Constructing new octree from bottom up
+Sample cache build took 41.702ms
+Construct bottom up took 1083.31ms
+Mesh from octree took 9.967ms
+upload data
+index count 194466
+
+total: 1134
+
+
+constructing new octree at min (0, 0, 0), size 64
+Constructing new octree from bottom up
+Sample cache build took 54.645ms
+Construct bottom up took 1390.31ms
+Mesh from octree took 13.814ms
+upload data
+index count 245994
+
+total: 1458ms
