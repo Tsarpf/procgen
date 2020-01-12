@@ -47,13 +47,20 @@ float Noise(const glm::vec3& p, noise::module::Perlin& noiseModule)
 {
 	double epsilon = 0.500f;
 	float divider = 50.f;
-	float value = (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);;
-	if (p.y > 20.f)
-	{
-		divider = 200.f;
-		value -= (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
-		value -= 1.0f;
-	}
+	float value = (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
+
+	//divider = 100.f;
+	//value += (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
+
+	//divider = 200.f;
+	//value += (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
+
+	//if (p.y > 20.f)
+	//{
+	//	divider = 200.f;
+	//	value -= (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
+	//	value -= 1.0f;
+	//}
 	//if (p.y > 40.f)
 	//{
 	//	value += 1.5f;
@@ -102,9 +109,9 @@ std::vector<float> AsyncCache(glm::ivec3 min, int segmentStart, int sampleCount,
 	for (int i = 0; i < sampleCount; i++)
 	{
 		int idx = i + segmentStart;
-		int z = idx % size;
+		int x = idx % size;
 		int y = (idx / size) % size;
-		int x = idx / (size * size);
+		int z = idx / (size * size);
 		samples[i] = Noise(min + glm::ivec3(x, y, z), noiseModule);
 	}
 	return samples;

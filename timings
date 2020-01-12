@@ -1,0 +1,30 @@
+cpu, 8 thread desktop, 1x noise sample per:
+constructing new octree at min (0, 0, 0), size 64
+Constructing new octree from bottom up
+Sample cache build took 32.921ms
+Construct bottom up took 167.623ms
+Mesh from octree took 1.51ms
+probably index count 123,492 as well
+
+total: 202ms
+
+
+cpu, 8 thread desktop, 1x noise sample per:
+constructing new octree at min (0, 0, 0), size 64
+Constructing new octree from bottom up
+Sample cache build took 21.136ms
+Construct bottom up took 305.75ms
+Mesh from octree took 5.951ms
+upload data
+index count 123,492
+
+
+cpu, 8 thread desktop, 3x noise sample per:
+constructing new octree at min (0, 0, 0), size 64
+Constructing new octree from bottom up
+Sample cache build took 38.149ms
+Construct bottom up took 482.01ms
+Mesh from octree took 2.906ms
+index count 82,668
+
+total: 532ms
