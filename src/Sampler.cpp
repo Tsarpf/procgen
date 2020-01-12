@@ -87,24 +87,53 @@ float Plane(const glm::vec3& p)
 	return p.x - 0.00001f *p.y;
 }
 
+// Todo check if it works better with vec4 with xyz being gradient and w being the distance for example
+struct NoiseSample {
+	//// distance of zero crossing in every axis
+	//glm::vec3 zeroCrossingDistance; 
+	//
+	//// Gradient for each direction's zero crossing
+	//glm::vec3 gradientX;
+	//glm::vec3 gradientY;
+	//glm::vec3 gradientZ;
+
+	// xyz is gradient, w is zero crossing distance
+	glm::vec4 gradientX;
+	glm::vec4 gradientY;
+	glm::vec4 gradientZ;
+};
+
+class CacheData
+{
+	std::vector<NoiseSample> samples;
+	std::vector<long long> solidBitfield;
+
+	bool isSolid(int coordinate)
+	{
+		int wordIndex = coordinate / 64;
+		int bitIndex = wordIndex % 64;
+		return solidBitfield[wordIndex] & (1 << bitIndex) > 0;
+	}
+
+	glm::vec4 getXZeroCrossing(int index)
+	{
+		return samples[index].gradientX;
+	}
+	glm::vec4 getYZeroCrossing(int index)
+	{
+		return samples[index].gradientY;
+	}
+	glm::vec4 getZZeroCrossing(int index)
+	{
+		return samples[index].gradientZ;
+	}
+};
+
 // Size parameter instead of max coordinate to enforce same size in all coordinate axes for easier indexing
 std::vector<float> AsyncCache(glm::ivec3 min, int segmentStart, int sampleCount, int size)
 {
 	noise::module::Perlin noiseModule;
 	std::vector<float> samples(sampleCount);
-	/*
-	for (int x = min.x; x < min.x + range; x++)
-	{
-		for (int y = min.y; y < min.y + range; y++)
-		{
-			for (int z = min.z; z < min.z + range; z++)
-			{
-				int index = index3D(x - min.x, y - min.y, z - min.z, range);
-				samples[index] = Noise(glm::vec3(x, y, z), noiseModule);
-			}
-		}
-	}
-	*/
 
 	for (int i = 0; i < sampleCount; i++)
 	{

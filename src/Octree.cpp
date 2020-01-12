@@ -651,6 +651,8 @@ void Octree::ProcessEdge(const Octree* node[4], int dir, IndexBuffer& indexBuffe
 		}
 	}
 }
+
+//glm::vec3 GetZeroCrossing(const glm::vec3& position, )
 glm::vec3 ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm::vec3& p1)
 {
 	/*

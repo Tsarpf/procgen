@@ -6,3 +6,11 @@ Mem optimizations:
 
 3) Only save one point between grid points, the one where the value is closest to zero which is the only point we will use as the zero crossing anyway
 It only needs 1 float for distance between points and 3 floats for the gradient.
+
+
+
+Concretely:
+- Reimplement ConstructLeaf/ApproximateZeroCrossingPosition with finding zero crossings from cache
+	* probably doable to have x/y/z plus-directions directly adressable from cache, and with minus-directions by finding the ZC from cache of position.(x/y/z) - 1 and it's plus direction.
+- Implement actual cache building with additional x/y/z direction zero crossing finding and finding the gradient for it
+- Implement so that it's easy to swap to gpu implementation
