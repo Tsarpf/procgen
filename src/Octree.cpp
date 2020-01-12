@@ -62,6 +62,7 @@ int index(int x, int y, int z, int dimensionLength)
 
 void Octree::Construct()
 {
+	std::cout << "Construct called" << std::endl;
 	auto t0 = std::chrono::high_resolution_clock::now();
 	//m_sampleCache = Sampler::BuildCache(m_min, m_size+1);
 	//m_sampleCacheCuda = Sampler::BuildCacheCuda(m_min, m_size+1);

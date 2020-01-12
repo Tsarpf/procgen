@@ -1,3 +1,7 @@
+CPU
+------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
+
 cpu, 8 thread desktop, 1x noise sample per:
 constructing new octree at min (0, 0, 0), size 64
 Constructing new octree from bottom up
@@ -50,3 +54,40 @@ upload data
 index count 245994
 
 total: 1458ms
+
+------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
+CUDA
+
+cuda, 3x noise sample per:
+constructing new octree at min (0, 0, 0), size 64
+init and malloc time 600.076ms
+compute time 0.139ms
+synchronize time 1107.02ms
+memcpy time385.626ms
+cudaFree time 113.581ms
+Constructing new octree from bottom up
+Sample cache build took 3035.39ms
+Construct bottom up took 193.293ms
+Mesh from octree took 15.022ms
+upload data
+index count 290,118
+
+total: 3243ms
+
+
+cuda, 3x noise sample per:
+constructing new octree at min (0, 0, 0), size 64
+init and malloc time 607.433ms
+compute time 0.191ms
+synchronize time 0ms
+memcpy time 1559.04ms
+cudaFree time 114.872ms
+Constructing new octree from bottom up
+Sample cache build took 3069.97ms
+Construct bottom up took 188.278ms
+Mesh from octree took 14.841ms
+upload data
+index count 290118
+
+total: 3272ms

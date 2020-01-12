@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <chrono>
 
 #include "cuda_noise.cuh"
 
@@ -9,9 +10,16 @@
 __device__
 float SampleNoise(float3 pos)
 {
-  int seed = 42;
-  float scale = 0.03f;
-  return cudaNoise::perlinNoise(pos, scale, seed);  // float3 pos, float scale, int seed
+	int seed = 42;
+	float scale = 0.03f;
+	float result = cudaNoise::perlinNoise(pos, scale, seed);  // float3 pos, float scale, int seed
+
+	scale = 0.06f;
+	result += cudaNoise::perlinNoise(pos, scale, seed);
+
+	scale = 0.12f;
+	result += cudaNoise::perlinNoise(pos, scale, seed);
+	return result;
 }
 
 __device__
@@ -104,6 +112,7 @@ namespace CudaNoise
 {
 	void CacheArea(int minX, int minY, int minZ, int size, float4* cpuResults)
 	{
+		auto t0 = std::chrono::high_resolution_clock::now();
 		float3 min = make_float3(minX, minY, minZ);
 		float4* results;
 
@@ -113,23 +122,41 @@ namespace CudaNoise
 		unsigned int samplesPerDirection = 8 * size;
 		unsigned long samples = samplesPerDirection * samplesPerDirection * samplesPerDirection;
 		unsigned long dataSize = sizeof(float) * 4 * samples;
-		cudaMallocManaged(&results, dataSize);
 
 		int threadsPerBlock = 256;
 		int numBlocks = (samples + threadsPerBlock - 1) / threadsPerBlock; // round up
 
+		cudaMallocManaged(&results, dataSize);
+		auto t1 = std::chrono::high_resolution_clock::now();
+
+
 		printf("Launching kernel\n");
 		CacheKernel <<<numBlocks, threadsPerBlock >> > (results, min, size);
+		auto t2 = std::chrono::high_resolution_clock::now();
 
-		printf("Syncing \n");
-		cudaDeviceSynchronize();
+		//printf("Syncing \n");
+		//cudaDeviceSynchronize();
+		auto t3 = std::chrono::high_resolution_clock::now();
 
 		printf("Copying to vector \n");
 		cudaMemcpy(cpuResults, results, dataSize, cudaMemcpyDeviceToHost);
+		auto t4 = std::chrono::high_resolution_clock::now();
 
 		printf("Freeing memory \n");
 		cudaFree(results);
+		auto t5 = std::chrono::high_resolution_clock::now();
 
 		printf("Done \n");
+
+		auto initializationTime = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
+		auto computeTime = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+		auto syncTime = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count();
+		auto memcpyTime = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count();
+		auto freeTime = std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4).count();
+		std::cout << "init and malloc time " << initializationTime / 1000.f << "ms" << std::endl;
+		std::cout << "compute time " << computeTime / 1000.f << "ms" << std::endl;
+		std::cout << "synchronize time " << syncTime / 1000.f << "ms" << std::endl;
+		std::cout << "memcpy time" << memcpyTime / 1000.f << "ms" << std::endl;
+		std::cout << "cudaFree time " << freeTime / 1000.f << "ms" << std::endl;
 	}
 }
