@@ -2,6 +2,11 @@ Working on comprehending and possibly in the future extending various (dual) con
 
 It now actually works (on my machine)! 
 
+`cuda-noise` branch has the cuda implementation, but it's slower than the CPU one for now. 
+Since most of the time is spent sending data to the GPU, in the branch `precompute-zcrossing` there is 
+work towards sending just the zerocrossings per point per direction (=3 * 4 floats) to the GPU instead of n (n=8 here)
+points between two points of the octree.
+
 ![debug](https://cldup.com/SXcjAPRqY4.gif)
 ![cube](https://cldup.com/LABApkDK26.gif)
 ![sphere](https://cldup.com/yEe4nxdPHS.gif)
