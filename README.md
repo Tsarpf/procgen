@@ -7,6 +7,8 @@ Since most of the time is spent sending data to the GPU, in the branch `precompu
 work towards sending just the zerocrossings per point per direction (=3 * 4 floats) to the GPU instead of n (n=8 here)
 points between two points of the octree.
 
+It seems like seams (that are a problem with many DC implementations) can easily be handled just by re-running DC for each neighbours' border points'. IIRC. Check the code.
+
 ![debug](https://cldup.com/SXcjAPRqY4.gif)
 ![cube](https://cldup.com/LABApkDK26.gif)
 ![sphere](https://cldup.com/yEe4nxdPHS.gif)
