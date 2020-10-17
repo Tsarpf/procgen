@@ -5,7 +5,7 @@ It now actually works (on my machine)!
 `cuda-noise` branch has the cuda implementation, but it's slower than the CPU one for now. 
 Since most of the time is spent sending data to the GPU, in the branch `precompute-zcrossing` there is 
 work towards sending just the zerocrossings per point per direction (=3 * 4 floats) to the GPU instead of n (n=8 here)
-points between two points of the octree.
+points between two points of the octree. Or it might be worth it to do "everything" (octree stuff etc) in the GPU end and just send some stuff back.
 
 It seems like seams (that are a problem with many DC implementations) can easily be handled just by re-running DC for each neighbours' border points'. IIRC. Check the code.
 
