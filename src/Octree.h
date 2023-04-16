@@ -56,7 +56,7 @@ private:
 
 	std::unique_ptr<OctreeChildren> m_children;
 
-	std::vector<std::vector<float>> m_sampleCache;
+	std::vector<float> m_sampleCache;
 
 	Octree* ConstructLeafParent(const int resolution, const glm::vec3 min);
 	Octree* ConstructLeaf(const int resolution, glm::ivec3 min);

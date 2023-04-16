@@ -88,10 +88,10 @@ float Plane(const glm::vec3& p)
 }
 
 // Size parameter instead of max coordinate to enforce same size in all coordinate axes for easier indexing
-std::vector<float> AsyncCache(glm::ivec3 min, int segmentStart, int sampleCount, int size)
+std::vector<float> AsyncCache(glm::ivec3 min, int segmentStart, int sampleCount, int size, std::vector<float>& samples)
 {
 	noise::module::Perlin noiseModule;
-	std::vector<float> samples(sampleCount);
+	//std::vector<float> samples(sampleCount);
 	/*
 	for (int x = min.x; x < min.x + range; x++)
 	{
@@ -112,17 +112,17 @@ std::vector<float> AsyncCache(glm::ivec3 min, int segmentStart, int sampleCount,
 		int x = idx % size;
 		int y = (idx / size) % size;
 		int z = idx / (size * size);
-		samples[i] = Noise(min + glm::ivec3(x, y, z), noiseModule);
+		samples[idx] = Sample(min + glm::ivec3(x, y, z));
 	}
 	return samples;
 }
-std::vector<std::vector<float>> BuildCache(const glm::ivec3 min, const unsigned size)
+std::vector<float> BuildCache(const glm::ivec3 min, const unsigned size)
 {
 	unsigned idxCount = size * size * size;
 	unsigned concurrentThreadsSupported = std::thread::hardware_concurrency();
 
 	// perf-wise no sense in computing less than thousands of samples per thread, but for debugging it's nice
-	unsigned threads = std::min(concurrentThreadsSupported, idxCount / 8); 
+	unsigned threads = std::min(concurrentThreadsSupported, idxCount / 8) - 1; 
 
 	unsigned samplesPerSegment = idxCount / threads;
 
@@ -130,7 +130,7 @@ std::vector<std::vector<float>> BuildCache(const glm::ivec3 min, const unsigned 
 	//assert(size % threads == 0);
 
 	std::vector<std::future<std::vector<float>>> futureSamples;
-	std::vector<std::vector<float>> results;
+	std::vector<float> samples(idxCount);
 	for (unsigned i = 0; i < threads; i++)
 	{
 		int segmentStart = i * (idxCount / threads);
@@ -140,15 +140,17 @@ std::vector<std::vector<float>> BuildCache(const glm::ivec3 min, const unsigned 
 			min,
 			segmentStart,
 			i < threads-1 ? samplesPerSegment : samplesPerSegment + extras,
-			size));
+			size,
+			std::ref(samples)));
 	}
 
 	for (auto& future : futureSamples)
 	{
-		results.push_back(future.get());
+		// The data will stay in order due to waiting for each to finish in order they were started (and .get() blocks)
+		future.get();
 	}
 
-	return results;
+	return samples;
 }
 
 float SampleCache(const std::vector<std::vector<float>>& cache, const int coordinate)
@@ -161,10 +163,9 @@ float SampleCache(const std::vector<std::vector<float>>& cache, const int coordi
 	return cache[cacheIdx][idx];
 }
 
-float SampleCache(const std::vector<std::vector<float>>& cache, const glm::ivec3 min, const int size, const glm::ivec3 coordinate)
+float SampleCache(const std::vector<float>& cache, const glm::ivec3 min, const int size, const glm::ivec3 coordinate)
 {
-	//printf("pos %i %i %i \n", coordinate.x, coordinate.y, coordinate.z);
-	return SampleCache(cache, index3D(coordinate - min, size));
+	return cache[index3D(coordinate - min, size)];
 }
 
 float Density(const glm::vec3 pos)

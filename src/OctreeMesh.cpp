@@ -187,6 +187,8 @@ void OctreeMesh::CheckResults()
 			mesh->LoadMesh();
 			std::lock_guard<std::mutex> guard(m_childMeshMutex);
 			m_childMeshes.push_back(mesh);
+
+			m_futureMeshes.erase(m_futureMeshes.begin() + i);
 		}
 	}
 }
