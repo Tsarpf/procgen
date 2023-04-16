@@ -69,6 +69,7 @@ else()
 endif()
 
 set_property(TARGET ${APP_NAME} PROPERTY CXX_STANDARD 17)
+set_property(TARGET ${APP_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 target_link_libraries(${APP_NAME} glfw ${GLFW_LIBRARIES} glew noise-static)
 
 
