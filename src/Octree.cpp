@@ -694,7 +694,7 @@ glm::vec3 ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm::vec3& 
 
 	return resultPos;
 }
-Octree* Octree::ConstructLeaf(const int resolution, glm::vec3 min)
+Octree* Octree::ConstructLeaf(const int resolution, glm::ivec3 min)
 {
 	/*
 	This function (mostly) copied from https://github.com/nickgildea/DualContouringSample/blob/master/DualContouringSample/octree.cpp, ConstructLeaf
@@ -719,12 +719,10 @@ Octree* Octree::ConstructLeaf(const int resolution, glm::vec3 min)
 	using namespace glm;
 
 
-	Octree* leaf = new Octree(resolution, min);
-
 	int corners = 0;
 	for (int i = 0; i < 8; i++)
 	{
-		const vec3 cornerPos = leaf->m_min + CHILD_MIN_OFFSETS[i];
+		const vec3 cornerPos = min + CHILD_MIN_OFFSETS[i];
 		//const bool inside = Sampler::Sample(cornerPos) > 0; // non cached
 		//printf("cornerPosition (%f %f %f) \n", cornerPos.x, cornerPos.y, cornerPos.z);
 		const bool inside = Sampler::SampleCache(m_sampleCache, m_min, m_size+1, cornerPos) > 0; // cached
@@ -737,9 +735,10 @@ Octree* Octree::ConstructLeaf(const int resolution, glm::vec3 min)
 	if (corners == 0 || corners == 255)
 	{
 		// voxel is full inside or outside the volume
-		delete leaf;
 		return nullptr;
 	}
+
+	Octree* leaf = new Octree(resolution, min);
 
 	// otherwise the voxel contains the surface, so find the edge intersections
 	const int MAX_CROSSINGS = 6;
@@ -762,8 +761,8 @@ Octree* Octree::ConstructLeaf(const int resolution, glm::vec3 min)
 			continue;
 		}
 
-		const vec3 p1 = vec3(min + (vec3)CHILD_MIN_OFFSETS[c1]);
-		const vec3 p2 = vec3(min + (vec3)CHILD_MIN_OFFSETS[c2]);
+		const vec3 p1 = vec3(min + CHILD_MIN_OFFSETS[c1]);
+		const vec3 p2 = vec3(min + CHILD_MIN_OFFSETS[c2]);
 		const vec3 p = ApproximateZeroCrossingPosition(p1, p2);
 		const vec3 n = CalculateSurfaceNormal(p);
 		qef.add(p.x, p.y, p.z, n.x, n.y, n.z);
