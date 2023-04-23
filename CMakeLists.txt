@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.15)
+cmake_policy(SET CMP0048 NEW)
+PROJECT(ProcGensu VERSION 0.0.2 LANGUAGES CXX)
 
 find_package(OpenGL REQUIRED)
 
@@ -29,6 +31,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 add_library(noise ${LIBNOISE_SOURCE_DIR})
 add_subdirectory(${LIBNOISE_SOURCE_DIR})
+
+add_subdirectory(external/FastNoise2)
 
 add_library(glew STATIC
   ${GLEW_SOURCE_DIR}/src/glew.c
@@ -70,6 +74,6 @@ endif()
 
 set_property(TARGET ${APP_NAME} PROPERTY CXX_STANDARD 17)
 set_property(TARGET ${APP_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-target_link_libraries(${APP_NAME} glfw ${GLFW_LIBRARIES} glew noise-static)
+target_link_libraries(${APP_NAME} glfw ${GLFW_LIBRARIES} glew noise-static FastNoise)
 
 

@@ -64,7 +64,7 @@ void Scene::Initialize()
 	m_t_start = std::chrono::high_resolution_clock::now();
 	m_program = createTriangleProgram();
 
-	const int octreeSize = 64;
+	const int octreeSize = 32;
 	m_center = glm::vec3(octreeSize/2.f, octreeSize/4.f, octreeSize/2.f);
 	//m_eye = glm::vec3(0, octreeSize/1.2f, 80);
 

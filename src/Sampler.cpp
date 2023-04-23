@@ -6,16 +6,20 @@
 #include <assert.h>
 
 #include "Sampler.h"
+#include "morton.h"
+#include <FastNoise/FastNoise.h>
 
 namespace Sampler
 {
 
 int index3D(int x, int y, int z, int dimensionLength)
 {
+	//printf("pos x %i y %i z %i result %i\n", x, y, z, x + dimensionLength * (y + dimensionLength * z));
 	return x + dimensionLength * (y + dimensionLength * z);
 }
 int index3D(glm::ivec3 coord, int dimensionLength)
 {
+
 	return index3D(coord.x, coord.y, coord.z, dimensionLength);
 }
 
@@ -43,17 +47,46 @@ float Box(const glm::vec3& p, const glm::vec3& size)
 	return glm::length(maxed) + std::min(std::max(d.x, std::max(d.y, d.z)), 0.f);
 }
 
+float fastNoise(const glm::vec3& p)
+{
+	static auto fnGenerator = FastNoise::NewFromEncodedNodeTree("DQAEAAAAAAAAQAgAAAAAAD8AAAAAAA==");
+	//static noise::module::Perlin noiseModule;
+	// auto fnSimplex = FastNoise::New<FastNoise::Simplex>();
+	// auto fnFractal = FastNoise::New<FastNoise::FractalFBm>();
+
+	// fnFractal->SetSource( fnSimplex );
+	// fnFractal->SetOctaveCount( 5 );
+	//"DQAEAAAAAAAAQAgAAAAAAD8AAAAAAA=="
+	//"DQAEAAAAZmYGQAgAAOxRuD4ACtejPA=="
+	//fnGenerator->GenUniformGrid3D(noiseOutput.data(), 0, 0, 0, 16, 16, 16, 0.2f, 1337);
+
+	float divider = 53.f;
+
+	//fnGenerator->GenSingle3D
+
+	// Slow as fug, should generate from positions all at once?
+	// Eg generate finite differences gradients for all points? a
+	return fnGenerator->GenSingle3D(p.x / divider, p.y / divider, p.z / divider, 1337);
+
+}
+
 float Noise(const glm::vec3& p, noise::module::Perlin& noiseModule)
 {
 	double epsilon = 0.500f;
 	float divider = 13.f;
+	//float value = (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
+
+	//divider = 100.f;
+	//value += (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
+
+	//divider = 400.f;
+	//value += (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
+
 	float value = (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
-
-	divider = 100.f;
-	value += (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
-
-	divider = 400.f;
-	value += (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
+	if (p.y > 20.f)
+	{
+		value += p.y / 35.f;
+	}
 
 	//if (p.y > 20.f)
 	//{
@@ -86,26 +119,20 @@ float Plane(const glm::vec3& p)
 {
 	return p.x - 0.00001f *p.y;
 }
-
-// Size parameter instead of max coordinate to enforce same size in all coordinate axes for easier indexing
-std::vector<float> AsyncCache(glm::ivec3 min, int segmentStart, int sampleCount, int size, std::vector<float>& samples)
+const glm::ivec3 CHILD_MIN_OFFSETS[] =
 {
-	noise::module::Perlin noiseModule;
-	//std::vector<float> samples(sampleCount);
-	/*
-	for (int x = min.x; x < min.x + range; x++)
-	{
-		for (int y = min.y; y < min.y + range; y++)
-		{
-			for (int z = min.z; z < min.z + range; z++)
-			{
-				int index = index3D(x - min.x, y - min.y, z - min.z, range);
-				samples[index] = Noise(glm::vec3(x, y, z), noiseModule);
-			}
-		}
-	}
-	*/
-
+        glm::ivec3(0,0,0),
+        glm::ivec3(0,0,1),
+        glm::ivec3(0,1,0),
+        glm::ivec3(0,1,1),
+        glm::ivec3(1,0,0),
+        glm::ivec3(1,0,1),
+        glm::ivec3(1,1,0),
+        glm::ivec3(1,1,1),
+};
+// Size parameter instead of max coordinate to enforce same size in all coordinate axes for easier indexing
+void AsyncCache(glm::ivec3 min, int segmentStart, int sampleCount, int size, std::vector<float>& samples)
+{
 	for (int i = 0; i < sampleCount; i++)
 	{
 		int idx = i + segmentStart;
@@ -114,22 +141,79 @@ std::vector<float> AsyncCache(glm::ivec3 min, int segmentStart, int sampleCount,
 		int z = idx / (size * size);
 		samples[idx] = Sample(min + glm::ivec3(x, y, z));
 	}
+}
+void MultithreadSIMDCache(glm::ivec3 min, int size, float* samples)
+{
+	static auto fnGenerator = FastNoise::NewFromEncodedNodeTree("DQAEAAAAAAAAQAgAAAAAAD8AAAAAAA==");
+	fnGenerator->GenUniformGrid3D(samples,
+								  min.x,
+								  min.y,
+								  min.z,
+								  size,
+								  size,
+								  size,
+								  0.002f, 1337);
+}
+
+const unsigned int g_multiplier = 1; // todo move somewhere nicer
+std::vector<float> BuildSIMDCache(const glm::ivec3 min, const unsigned size)
+{
+	// assert(size)
+	// int size_with_padding = size + 
+
+	unsigned int idxCount = size * size * size * g_multiplier * g_multiplier * g_multiplier;
+	//unsigned int idxCount = size * size * size;
+	unsigned int threads = 8
+	unsigned int samplesPerSegment = idxCount / threads;
+	unsigned int extras = idxCount % threads;
+	//assert(size % threads == 0);
+
+	std::vector<std::future<void>> futureSamples;
+	std::vector<float> samples(idxCount);
+	for (unsigned i = 0; i < threads; i++)
+	{
+		glm::ivec3 segmentStart = {
+			min.x + (CHILD_MIN_OFFSETS[i].x * (static_cast<float>(size) / 2.0f)), // 
+			min.y + (CHILD_MIN_OFFSETS[i].y * (static_cast<float>(size) / 2.0f)), // 
+			min.z + (CHILD_MIN_OFFSETS[i].z * (static_cast<float>(size) / 2.0f)), // 
+
+		}; //min + (glm::ivec3(size) * CHILD_MIN_OFFSETS[i]);
+		futureSamples.push_back(std::async(
+			std::launch::async,
+			AsyncCache,
+			min,
+			segmentStart,
+			i < threads-1 ? samplesPerSegment : samplesPerSegment + extras,
+			size,
+			std::ref(samples)));
+	}
+
+	for (auto& future : futureSamples)
+	{
+		// The data will stay in order due to waiting for each to finish in order they were started (and .get() blocks)
+		future.get();
+	}
+
 	return samples;
 }
 std::vector<float> BuildCache(const glm::ivec3 min, const unsigned size)
 {
-	unsigned idxCount = size * size * size;
-	unsigned concurrentThreadsSupported = std::thread::hardware_concurrency();
+	// assert(size)
+	// int size_with_padding = size + 
+
+	unsigned int idxCount = size * size * size * g_multiplier * g_multiplier * g_multiplier;
+	//unsigned int idxCount = size * size * size;
+	unsigned int concurrentThreadsSupported = std::thread::hardware_concurrency();
 
 	// perf-wise no sense in computing less than thousands of samples per thread, but for debugging it's nice
-	unsigned threads = std::min(concurrentThreadsSupported, idxCount / 8) - 1; 
+	unsigned int threads = std::min(concurrentThreadsSupported, idxCount / 8) - 1; 
 
-	unsigned samplesPerSegment = idxCount / threads;
+	unsigned int samplesPerSegment = idxCount / threads;
 
-	unsigned extras = size % threads;
+	unsigned int extras = idxCount % threads;
 	//assert(size % threads == 0);
 
-	std::vector<std::future<std::vector<float>>> futureSamples;
+	std::vector<std::future<void>> futureSamples;
 	std::vector<float> samples(idxCount);
 	for (unsigned i = 0; i < threads; i++)
 	{
@@ -170,9 +254,8 @@ float SampleCache(const std::vector<float>& cache, const glm::ivec3 min, const i
 
 float Density(const glm::vec3 pos)
 {
-	static noise::module::Perlin noiseModule;
-	//printf("density %f %f %f \n", pos.x, pos.y, pos.z);
 
+	//printf("density %f %f %f \n", pos.x, pos.y, pos.z);
 	//glm::vec3 repeat(15, 15, 15);
 	//glm::vec3 repeatPos(
 	//	repeatAxis(pos.x, repeat.x),
@@ -180,13 +263,16 @@ float Density(const glm::vec3 pos)
 	//	repeatAxis(pos.z, repeat.z)
 	//);
 	//return glm::length(pos - origin) - radius; // repeating
+	static noise::module::Perlin noiseModule;
 	return Noise(pos, noiseModule);
+	//return fastNoise(pos);
 	//return Sphere(repeatPos, glm::vec3(0, 0, 0), 6.0);
 
 	//return Box(pos - glm::vec3(16,16,16), glm::vec3(128, 8, 8));
 	//return Box(repeatPos - glm::vec3(0,0,0), glm::vec3(5, 5, 5));
 
 	//return Plane(pos);
+
 	//return Waves(pos);
 }
 

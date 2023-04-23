@@ -15,6 +15,7 @@ float Waves(const glm::vec3 & p);
 float Plane(const glm::vec3 & p);
 
 std::vector<float> BuildCache(glm::ivec3 min, unsigned range);
+std::vector<float> BuildSIMDCache(glm::ivec3 min, unsigned range);
 
 float SampleCache(const std::vector<std::vector<float>>& cache, const int coordinate);
 

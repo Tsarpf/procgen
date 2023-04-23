@@ -74,6 +74,7 @@ glm::vec3 CalculateSurfaceNormal(const glm::vec3& p)
 void Octree::Construct()
 {
 	auto t0 = std::chrono::high_resolution_clock::now();
+	//m_sampleCache = Sampler::BuildSIMDCache(m_min, m_size+1);
 	m_sampleCache = Sampler::BuildCache(m_min, m_size+1);
 
 	auto t1 = std::chrono::high_resolution_clock::now();
