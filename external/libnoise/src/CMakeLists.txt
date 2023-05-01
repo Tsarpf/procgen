@@ -2,7 +2,8 @@
 
 SET(PROJECT_NAME libnoise)
 PROJECT(libnoise C CXX)
-set_target_properties(noise PROPERTIES LINKER_LANGUAGE CXX)
+#add_library(noise ${LIBNOISE_SOURCE_DIR})
+#set_target_properties(noise PROPERTIES LINKER_LANGUAGE CXX)
 
 INCLUDE_DIRECTORIES (noise)
 
@@ -50,19 +51,19 @@ IF(BUILD_SHARED_LIBS)
     IF (WIN32)
     add_library( noise SHARED ${libSrcs} win32/dllmain.cpp)
     ELSE()
-    add_library( noise SHARED ${libSrcs} )
     ENDIF()
 ENDIF()
-
+add_library( noise SHARED ${libSrcs} )
 add_library( noise-static STATIC ${libSrcs} )
 
 # this value is set in the root CMakeLists.txt
-SET_TARGET_PROPERTIES( noise PROPERTIES LIBNOISE_VERSION ${LIBNOISE_VERSION} )
+#SET_TARGET_PROPERTIES( noise PROPERTIES LIBNOISE_VERSION ${LIBNOISE_VERSION} )
 SET_TARGET_PROPERTIES( noise-static PROPERTIES LIBNOISE_VERSION ${LIBNOISE_VERSION} )
 
 target_compile_definitions( noise PRIVATE NOISE_BUILD_DLL)
 target_compile_definitions( noise-static PUBLIC NOISE_STATIC)
 
+#SET_TARGET_PROPERTIES( noise-static PROPERTIES OUTPUT_NAME "noise-static" ) # with ninja
 SET_TARGET_PROPERTIES( noise-static PROPERTIES OUTPUT_NAME "noise" )
 
 # i would like to see more projects using these defaults

@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_policy(SET CMP0048 NEW)
+cmake_minimum_required(VERSION 3.15) 
 
 project(GLFW C)
 

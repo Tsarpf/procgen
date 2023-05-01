@@ -1,5 +1,4 @@
 #pragma comment(lib, "OpenGL32.lib")
-#pragma comment(lib, "noise.lib")
 
 #include <iostream>
 #include <stdlib.h>
