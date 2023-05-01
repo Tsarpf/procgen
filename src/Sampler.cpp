@@ -50,7 +50,7 @@ float Box(const glm::vec3& p, const glm::vec3& size)
 std::tuple<float, glm::vec3> Noise(const glm::vec3& p)
 {
 	float epsilon = 0.500f;
-	float divider = 13.f;
+	float divider = 26.f;
 	//float value = (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
 
 	//divider = 100.f;
@@ -165,16 +165,6 @@ std::vector<float> BuildCache(const glm::ivec3 min, const unsigned size)
 	}
 
 	return samples;
-}
-
-float SampleCache(const std::vector<std::vector<float>>& cache, const int coordinate)
-{
-	int cacheCount = cache.size();
-	int cacheLength = cache[0].size();
-	int cacheIdx = coordinate / cacheLength;
-	cacheIdx = cacheIdx >= cacheCount ? cacheCount - 1 : cacheIdx;
-	int idx = coordinate % cacheLength;
-	return cache[cacheIdx][idx];
 }
 
 float SampleCache(const std::vector<float>& cache, const glm::ivec3 min, const int size, const glm::ivec3 coordinate)

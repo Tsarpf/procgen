@@ -63,20 +63,6 @@ void printTestRandom() {
     }
 }
 
-// vec3 hash(const vec3& p) {
-//     int x = int(p.x) & 0xFF;
-//     int y = int(p.y) & 0xFF;
-//     int z = int(p.z) & 0xFF;
-// 
-//     int x_idx = duplicated_permuted_array[x];
-//     int y_idx = duplicated_permuted_array[x_idx] + y;
-//     int z_idx = duplicated_permuted_array[x_idx + y] + z;
-// 
-//     return vec3(
-//         static_cast<float>(duplicated_permuted_array[x_idx]),
-//         static_cast<float>(duplicated_permuted_array[y_idx]),
-//         static_cast<float>(duplicated_permuted_array[z_idx]));
-// }
 vec3 hash(const vec3& p) {
     // 16 pre-defined direction vectors
     static const std::array<vec3, 16> gradients = {

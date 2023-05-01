@@ -62,10 +62,6 @@ int index(int x, int y, int z, int dimensionLength)
 
 glm::vec3 CalculateSurfaceNormal(const glm::vec3& p)
 {
-	const float epsilon = 0.0001f;
-	//const float dx = Sampler::Sample(p + glm::vec3(epsilon, 0.f, 0.f)) - Sampler::Sample(p - glm::vec3(epsilon, 0.f, 0.f));
-	//const float dy = Sampler::Sample(p + glm::vec3(0.f, epsilon, 0.f)) - Sampler::Sample(p - glm::vec3(0.f, epsilon, 0.f));
-	//const float dz = Sampler::Sample(p + glm::vec3(0.f, 0.f, epsilon)) - Sampler::Sample(p - glm::vec3(0.f, 0.f, epsilon));
 	const glm::vec3 grad = Sampler::SampleGradient(p);
 
 	return glm::normalize(grad);
@@ -653,6 +649,42 @@ void Octree::ProcessEdge(const Octree* node[4], int dir, IndexBuffer& indexBuffe
 		}
 	}
 }
+
+glm::vec3 ApproximateZeroCrossingPositionBinarySearch(const glm::vec3& p0, const glm::vec3& p1)
+{
+	float minValue = 100000.f;
+	float t = 0.f;
+	float currentT = 0.5f;
+	const int maxSteps = 8;
+	float increment = 0.25f;
+	float minError = 0.01f; // If we find a value this low do early exit
+
+	for(int i = 0; i < maxSteps; i++)
+	{
+		const glm::vec3 p = p0 + ((p1 - p0) * currentT);
+		const float density = glm::abs(Sampler::Sample(p));
+		if (density < minError)
+		{
+			return p;
+		}
+		else if (density > 0)
+		{
+			currentT -= increment;
+		}
+		else
+		{
+			currentT += increment;
+		}
+		increment *= 0.5f;
+	}
+
+	glm::vec3 resultPos = p0 + ((p1 - p0) * currentT);
+	// printf("resultpos (%f, %f, %f) minvalue = %f, t= %f \n", resultPos.x, resultPos.y, resultPos.z, minValue, t);
+	// printf("p0 (%f, %f, %f) minvalue = %f, t= %f \n", p0.x, p0.y, p0.z, glm::abs(Sampler::Sample(p0)), t);
+	// printf("p1 (%f, %f, %f) minvalue = %f, t= %f \n", p1.x, p1.y, p1.z, glm::abs(Sampler::Sample(p1)), t);
+
+	return resultPos;
+}
 glm::vec3 ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm::vec3& p1)
 {
 	/*
@@ -691,8 +723,17 @@ glm::vec3 ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm::vec3& 
 		currentT += increment;
 	}
 
+	// Running mean
+	static float sum = 0.f;
+	static int count = 0;
+	sum += minValue;
+	count++;
+	float runningMean = sum / (float)count;
+
 	glm::vec3 resultPos = p0 + ((p1 - p0) * t);
-	//printf("(%f, %f, %f) minvalue = %f, t= %f \n", resultPos.x, resultPos.y, resultPos.z, minValue, t);
+	//printf("resultpos (%f, %f, %f) minvalue = %f, minvalueRunMean = %f t= %f \n", resultPos.x, resultPos.y, resultPos.z, minValue, runningMean, t);
+	//printf("p0 (%f, %f, %f) minvalue = %f, t= %f \n", p0.x, p0.y, p0.z, glm::abs(Sampler::Sample(p0)), t);
+	//printf("p1 (%f, %f, %f) minvalue = %f, t= %f \n", p1.x, p1.y, p1.z, glm::abs(Sampler::Sample(p1)), t);
 
 	return resultPos;
 }
@@ -765,7 +806,8 @@ Octree* Octree::ConstructLeaf(const int resolution, glm::ivec3 min)
 
 		const vec3 p1 = vec3(min + CHILD_MIN_OFFSETS[c1]);
 		const vec3 p2 = vec3(min + CHILD_MIN_OFFSETS[c2]);
-		const vec3 p = ApproximateZeroCrossingPosition(p1, p2);
+		//const vec3 p = ApproximateZeroCrossingPosition(p1, p2);
+		const vec3 p = m1 > m2 ? ApproximateZeroCrossingPositionBinarySearch(p1, p2) : ApproximateZeroCrossingPositionBinarySearch(p2, p1);
 		const vec3 n = CalculateSurfaceNormal(p);
 		qef.add(p.x, p.y, p.z, n.x, n.y, n.z);
 
