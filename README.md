@@ -27,7 +27,7 @@ On Windows it works straight away.
 OSX might work with a little work
 
 ## Licensing
-Assume everything written by me so far is WTFPL or whatever. 
+Everything written by me is (now) MIT licensed
 
 There are some LGPL functions (they specifically start with a comment noting the license) copied from here https://github.com/nickgildea/DualContouringSample, that are originally from the DC paper's example implementation.
 
