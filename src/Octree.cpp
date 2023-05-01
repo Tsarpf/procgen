@@ -38,6 +38,10 @@ Octree::~Octree()
 Octree::Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min, int resolution)
 : m_children(std::move(children)), m_resolution(resolution), m_size(size), m_min(min), m_leaf(false)
 {
+	if (!m_children || m_children->field == 0) {
+
+		m_leaf = true;
+	}
     //printf("new octree with already made children min (%i, %i, %i), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
     //printBinary(m_children->field);
 }
@@ -75,7 +79,8 @@ void Octree::Construct()
 	m_sampleCache = Sampler::BuildCache(m_min, m_size+1);
 
 	auto t1 = std::chrono::high_resolution_clock::now();
-	ConstructBottomUp();
+	//ConstructBottomUp();
+	ConstructBottomUpParallel();
 	auto t2 = std::chrono::high_resolution_clock::now();
 
 	auto cacheBuildDuration = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
@@ -83,6 +88,184 @@ void Octree::Construct()
 
 	auto bottomUpDuration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
 	std::cout << "Construct bottom up took " << bottomUpDuration / 1000.f << "ms" << std::endl;
+}
+
+void buildChildren(std::vector<std::unique_ptr<OctreeChildren>>& parentSizeNodes, int cornerIdx, Octree* node, int parentIdx)
+{
+	if (!parentSizeNodes[parentIdx])
+	{
+		// std::cout << "parent array not created" << std::endl;
+		std::array<Octree *, 8> children = {};
+		for (auto &child : children)
+		{
+			child = nullptr;
+		}
+		children[cornerIdx] = node;
+		parentSizeNodes[parentIdx] = std::unique_ptr<OctreeChildren>(new OctreeChildren{
+			(uint8_t)(1 << cornerIdx),
+			children});
+	}
+	else // parent list already created
+	{
+		// std::cout << "parent array already created" << std::endl;
+		parentSizeNodes[parentIdx]->field |= (1 << cornerIdx);
+		parentSizeNodes[parentIdx]->children[cornerIdx] = node;
+	}
+}
+
+void Octree::ConstructBottomUpParallel()
+{
+
+	std::array<Octree *, 8> children = {};
+	for (auto &child : children)
+	{
+		child = nullptr;
+	}
+
+	m_children = std::unique_ptr<OctreeChildren>(new OctreeChildren{
+		0,
+		children});
+
+	int numThreads = 8;
+	int numBlocksPerDim = numThreads / 2 / 2;
+	std::vector<std::future<int>> futureSamples;
+	for (int x = 0; x < 2; x++)
+	{
+		for (int y = 0; y < 2; y++)
+		{
+			for (int z = 0; z < 2; z++)
+			{
+				int maxSize = m_size / numBlocksPerDim;
+				glm::ivec3 offset = glm::ivec3(x, y, z) * maxSize;
+				int cornerIdx = index(x, y, z, 2);
+				futureSamples.push_back(std::async(
+					std::launch::async,
+					&Octree::BottomUpParallel,
+					this,
+					offset.x, offset.y, offset.z, maxSize, cornerIdx));
+				//glm::vec3 childPos = glm::vec3(x + local.x, y + local.y, z + local.z) * (float)resolution;
+			}
+		}
+	}
+
+	for (auto& future : futureSamples)
+	{
+		// The data will stay in order due to waiting for each to finish in order they were started (and .get() blocks)
+		int value = future.get(); // 0 if this branch had no children, cornerIdx if it did
+		m_children->field |= (1 << value);
+	}
+}
+
+int Octree::BottomUpParallel(int x_start, int y_start, int z_start, int max_size, int parallelCornerIdx)
+{
+	const int resolution = m_resolution;
+	const int size = max_size;
+	const glm::vec3 min = m_min;
+    printf("constructing new octree from bottom up at min (%i, %i, %i), size %i\n", m_min.x + x_start, m_min.y + y_start, m_min.z + z_start, m_size);
+
+    // First loop through the area in 1x1x1 cubes, then 2x2x2, etc.
+    int cubeSize = resolution * 2;
+    int childCountPerAxis = size / cubeSize;
+    int parentCountPerAxis = childCountPerAxis / 2;
+    int childCount = (int)pow(childCountPerAxis, 3);
+    int parentCount = childCount / 8;
+    std::vector<std::unique_ptr<OctreeChildren>> currentSizeNodes(childCount);
+    std::vector<std::unique_ptr<OctreeChildren>> parentSizeNodes(parentCount);
+    for(uint32_t i = 0; i < currentSizeNodes.size(); i++)
+    {
+        currentSizeNodes[i] = nullptr;
+    }
+    for(uint32_t i = 0; i < parentSizeNodes.size(); i++)
+    {
+        parentSizeNodes[i] = nullptr;
+    }
+    while (cubeSize != size)
+    {
+        for (int xi = 0; xi < size; xi += cubeSize)
+        {
+            for (int yi = 0; yi < size; yi += cubeSize)
+            {
+                for (int zi = 0; zi < size; zi += cubeSize)
+                {
+					int x = x_start + xi;
+					int y = y_start + yi;
+					int z = z_start + zi;
+                    const int childIdxX = xi / cubeSize;
+                    const int childIdxY = yi / cubeSize;
+                    const int childIdxZ = zi / cubeSize;
+                    const int parentIdxX = childIdxX / 2;
+                    const int parentIdxY = childIdxY / 2;
+                    const int parentIdxZ = childIdxZ / 2;
+                    const int parentIdx = index(parentIdxX, parentIdxY, parentIdxZ, parentCountPerAxis);
+                    const int childIdx = index(childIdxX, childIdxY, childIdxZ, size / cubeSize);
+                    const int cornerIdx = index(childIdxX % 2, childIdxY % 2, childIdxZ % 2, 2);
+                    const glm::vec3 localPos = glm::vec3(x, y, z);
+                    Octree* node = nullptr;
+                    if (cubeSize == resolution * 2)
+                    {
+                        node = ConstructLeafParent(resolution, localPos); // null if nothing to draw
+                        if (node)
+                        {
+							buildChildren(parentSizeNodes, cornerIdx, node, parentIdx);
+						}
+                    }
+                    else // cubesize > resolution * 2
+                    {
+                        // is a container element, should just contain previously created children, if any
+                        // check if this node has children
+                        if(currentSizeNodes[childIdx]) // 
+                        {
+                            // Create a new octree node whose children are the ones created in previous
+                            // loop iterations parents that are now currentSized
+							int field = currentSizeNodes[childIdx]->field;
+							if (field == 0)
+							{
+								// just skip adding this anywhere
+								printf("skipping (%i, %i, %i) with cubesize %i\n", x, y, z, cubeSize);
+								continue;
+							}
+
+							node = new Octree(std::move(currentSizeNodes[childIdx]), cubeSize, (glm::ivec3)localPos + m_min, resolution);
+
+                            //////////////////////////////////////////////////////////// This is the same as lines 180 ->
+							buildChildren(parentSizeNodes, cornerIdx, node, parentIdx);
+                            //////////////////////////////////////////////////////////// end copypasta from 180
+                        }
+                    }
+                }
+            }
+        }
+        cubeSize *= 2;
+        childCountPerAxis = size / cubeSize;
+        parentCountPerAxis = childCountPerAxis / 2;
+        childCount = (int)pow(childCountPerAxis, 3);
+        parentCount = childCount / 8;
+
+        currentSizeNodes = std::vector<std::unique_ptr<OctreeChildren>>();
+        for(auto & node : parentSizeNodes)
+        {
+            currentSizeNodes.push_back(std::move(node));
+        }
+        parentSizeNodes = std::vector<std::unique_ptr<OctreeChildren>>(parentCount);
+        for(uint32_t i = 0; i < parentSizeNodes.size(); i++)
+        {
+            parentSizeNodes[i] = nullptr;
+        }
+    }
+
+	auto topNode = new Octree(std::move(currentSizeNodes[0]), size, min, resolution);
+
+	if (topNode->IsLeaf())
+	{
+		m_children->children[parallelCornerIdx] = nullptr;
+		return 0;
+	}
+	else
+	{
+		//m_children->field |= (1 << parallelCornerIdx);  // I think this wouldn't be thread safe
+		m_children->children[parallelCornerIdx] = topNode;
+		return parallelCornerIdx; // will be used to set the field value, can't do it here.
+	}
 }
 
 void Octree::ConstructBottomUp()
@@ -737,7 +920,8 @@ glm::vec3 ApproximateZeroCrossingPosition(const glm::vec3& p0, const glm::vec3& 
 
 	return resultPos;
 }
-Octree* Octree::ConstructLeaf(const int resolution, glm::ivec3 min)
+
+Octree* Octree::ConstructLeaf(const int resolution, glm::ivec3 localPos, glm::ivec3 globalPos)
 {
 	/*
 	This function (mostly) copied from https://github.com/nickgildea/DualContouringSample/blob/master/DualContouringSample/octree.cpp, ConstructLeaf
@@ -765,10 +949,10 @@ Octree* Octree::ConstructLeaf(const int resolution, glm::ivec3 min)
 	int corners = 0;
 	for (int i = 0; i < 8; i++)
 	{
-		const vec3 cornerPos = min + CHILD_MIN_OFFSETS[i];
+		const vec3 cornerPos = localPos + CHILD_MIN_OFFSETS[i];
 		//const bool inside = Sampler::Sample(cornerPos) > 0; // non cached
 		//printf("cornerPosition (%f %f %f) \n", cornerPos.x, cornerPos.y, cornerPos.z);
-		const bool inside = Sampler::SampleCache(m_sampleCache, m_min, m_size+1, cornerPos) > 0; // cached
+		const bool inside = Sampler::SampleCache(m_sampleCache, m_size+1, cornerPos) > 0; // cached
 		if (inside)
 		{
 			corners |= (1 << i);
@@ -781,7 +965,7 @@ Octree* Octree::ConstructLeaf(const int resolution, glm::ivec3 min)
 		return nullptr;
 	}
 
-	Octree* leaf = new Octree(resolution, min);
+	Octree* leaf = new Octree(resolution, globalPos);
 
 	// otherwise the voxel contains the surface, so find the edge intersections
 	const int MAX_CROSSINGS = 6;
@@ -804,8 +988,8 @@ Octree* Octree::ConstructLeaf(const int resolution, glm::ivec3 min)
 			continue;
 		}
 
-		const vec3 p1 = vec3(min + CHILD_MIN_OFFSETS[c1]);
-		const vec3 p2 = vec3(min + CHILD_MIN_OFFSETS[c2]);
+		const vec3 p1 = vec3(globalPos + CHILD_MIN_OFFSETS[c1]);
+		const vec3 p2 = vec3(globalPos + CHILD_MIN_OFFSETS[c2]);
 		//const vec3 p = ApproximateZeroCrossingPosition(p1, p2);
 		const vec3 p = m1 > m2 ? ApproximateZeroCrossingPositionBinarySearch(p1, p2) : ApproximateZeroCrossingPositionBinarySearch(p2, p1);
 		const vec3 n = CalculateSurfaceNormal(p);
@@ -824,20 +1008,20 @@ Octree* Octree::ConstructLeaf(const int resolution, glm::ivec3 min)
 
 	const vec3 max = vec3((vec3)leaf->m_min + (float)(leaf->m_size)); // why do we have to add this one's specific size? Shouldn't it always be 1?
 
-	if (leaf->m_drawPos.x < min.x || leaf->m_drawPos.x > max.x ||
-		leaf->m_drawPos.y < min.y || leaf->m_drawPos.y > max.y ||
-		leaf->m_drawPos.z < min.z || leaf->m_drawPos.z > max.z)
+	if (leaf->m_drawPos.x < globalPos.x || leaf->m_drawPos.x > max.x ||
+		leaf->m_drawPos.y < globalPos.y || leaf->m_drawPos.y > max.y ||
+		leaf->m_drawPos.z < globalPos.z || leaf->m_drawPos.z > max.z)
 	{
 		const auto& mp = qef.getMassPoint();
 		leaf->m_drawPos = vec3(mp.x, mp.y, mp.z);
 	}
-	if (leaf->m_drawPos.x < min.x || leaf->m_drawPos.x > max.x ||
-		leaf->m_drawPos.y < min.y || leaf->m_drawPos.y > max.y ||
-		leaf->m_drawPos.z < min.z || leaf->m_drawPos.z > max.z)
+	if (leaf->m_drawPos.x < globalPos.x || leaf->m_drawPos.x > max.x ||
+		leaf->m_drawPos.y < globalPos.y || leaf->m_drawPos.y > max.y ||
+		leaf->m_drawPos.z < globalPos.z || leaf->m_drawPos.z > max.z)
 	{
 		const auto& mp = qef.getMassPoint();
 		leaf->m_drawPos = vec3(mp.x, mp.y, mp.z);
-		printf("min (%f, %f, %f), max (%f, %f, %f) \n", min.x, min.y, min.z, max.x, max.y, max.z);
+		printf("globalPos (%f, %f, %f), max (%f, %f, %f) \n", globalPos.x, globalPos.y, globalPos.z, max.x, max.y, max.z);
 		printf("drawpos (%f, %f, %f)\n", leaf->m_drawPos.x, leaf->m_drawPos.y, leaf->m_drawPos.z);
 	}
 
@@ -852,7 +1036,7 @@ Octree* Octree::ConstructLeaf(const int resolution, glm::ivec3 min)
 	return leaf;
 }
 
-Octree* Octree::ConstructLeafParent(const int resolution, const glm::vec3 min)
+Octree* Octree::ConstructLeafParent(const int resolution, const glm::vec3 local)
 {
     uint8_t field = 0;
     std::array<Octree*, 8> children = {};
@@ -865,8 +1049,8 @@ Octree* Octree::ConstructLeafParent(const int resolution, const glm::vec3 min)
                 glm::ivec3 offset = glm::ivec3(x, y, z);
                 int cornerIdx = index(offset.x % 2, offset.y % 2, offset.z % 2, 2);
 
-				glm::vec3 childPos = glm::vec3(x + min.x, y + min.y, z + min.z) * (float)resolution;
-				Octree* child = ConstructLeaf(resolution, childPos);
+				glm::vec3 childPos = glm::vec3(x + local.x, y + local.y, z + local.z) * (float)resolution;
+				Octree* child = ConstructLeaf(resolution, childPos, childPos + (glm::vec3)m_min);
 				if (child)
 				{
                     field |= (1 << cornerIdx);
@@ -888,7 +1072,7 @@ Octree* Octree::ConstructLeafParent(const int resolution, const glm::vec3 min)
         c->field = field;
         //printBinary(c->field);
         c->children = children;
-        Octree* o = new Octree(std::move(c), resolution * 2, min, resolution);
+        Octree* o = new Octree(std::move(c), resolution * 2, local + (glm::vec3)m_min, resolution);
         return o;
     }
     return nullptr;

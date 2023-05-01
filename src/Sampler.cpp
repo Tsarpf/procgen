@@ -64,9 +64,9 @@ std::tuple<float, glm::vec3> Noise(const glm::vec3& p)
 	glm::vec4 result = noise_grad(pos); // (value float, gradient vec3)
 	float value = result.x;
 	glm::vec3 grad(result.y, result.z, result.w);
-	if (p.y > 20.f)
+	if (p.y > 40.f)
 	{
-		value += p.y / 35.f;
+		value += (p.y - 20.f) / 50.f;
 	}
 
 	//if (p.y > 20.f)
@@ -113,7 +113,7 @@ const glm::ivec3 CHILD_MIN_OFFSETS[] =
         glm::ivec3(1,1,1),
 };
 // Size parameter instead of max coordinate to enforce same size in all coordinate axes for easier indexing
-static void AsyncCache(glm::ivec3 min, int segmentStart, int sampleCount, int size, std::vector<float>& samples)
+void AsyncCache(glm::ivec3 min, int segmentStart, int sampleCount, int size, std::vector<float>& samples)
 {
 	for (int i = 0; i < sampleCount; i++)
 	{
@@ -167,9 +167,9 @@ std::vector<float> BuildCache(const glm::ivec3 min, const unsigned size)
 	return samples;
 }
 
-float SampleCache(const std::vector<float>& cache, const glm::ivec3 min, const int size, const glm::ivec3 coordinate)
+float SampleCache(const std::vector<float>& cache, const int size, const glm::ivec3 coordinate)
 {
-	return cache[index3D(coordinate - min, size)];
+	return cache[index3D(coordinate, size)];
 }
 
 float Density(const glm::vec3 pos)

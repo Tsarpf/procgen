@@ -27,6 +27,10 @@ public:
 
 	void Construct();
 
+
+	void ConstructBottomUpParallel(); // calls the async function below
+	int BottomUpParallel(int x_start, int y_start, int z_start, int max_size, int parallelCornerIdx); // the async function
+
 	void ConstructBottomUp();
 	void MeshFromOctree(IndexBuffer& indexBuffer, VertexBuffer& vertexBuffer);
 	OctreeChildren* GetChildren() const;
@@ -58,8 +62,8 @@ private:
 
 	std::vector<float> m_sampleCache;
 
-	Octree* ConstructLeafParent(const int resolution, const glm::vec3 min);
-	Octree* ConstructLeaf(const int resolution, glm::ivec3 min);
+	Octree* ConstructLeafParent(const int resolution, const glm::vec3 local);
+	Octree* ConstructLeaf(const int resolution, glm::ivec3 localPos, glm::ivec3 globalPos);
 
 	// Disallow constructors
 	Octree(const Octree&);
