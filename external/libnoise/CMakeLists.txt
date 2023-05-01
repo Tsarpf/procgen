@@ -6,7 +6,7 @@ SET ( LIBNOISE_VERSION "1.0.0-cmake" )
 
 OPTION(BUILD_SHARED_LIBS "Build shared libraries for libnoise" ON)
 OPTION(BUILD_LIBNOISE_DOCUMENTATION "Create doxygen documentation for developers" OFF)
-OPTION(BUILD_LIBNOISE_UTILS "Build utility functions for use with libnoise" ON)
+OPTION(BUILD_LIBNOISE_UTILS "Build utility functions for use with libnoise" OFF)
 OPTION(BUILD_LIBNOISE_EXAMPLES "Build libnoise examples" OFF)
 
 ADD_SUBDIRECTORY(src)

@@ -14,11 +14,18 @@
 
 #include "../glm.hpp"
 
-#ifndef GLM_ENABLE_EXPERIMENTAL
-#	error "GLM: GLM_GTX_vec_swizzle is an experimental extension and may change in the future. Use #define GLM_ENABLE_EXPERIMENTAL before including it, if you really want to use it."
+#if GLM_MESSAGES == GLM_ENABLE && !defined(GLM_EXT_INCLUDED)
+#	ifndef GLM_ENABLE_EXPERIMENTAL
+#		pragma message("GLM: GLM_GTX_vec_swizzle is an experimental extension and may change in the future. Use #define GLM_ENABLE_EXPERIMENTAL before including it, if you really want to use it.")
+#	else
+#		pragma message("GLM: GLM_GTX_vec_swizzle extension included")
+#	endif
 #endif
 
 namespace glm {
+	/// @addtogroup gtx_vec_swizzle
+	/// @{
+
 	// xx
 	template<typename T, qualifier Q>
 	GLM_INLINE glm::vec<2, T, Q> xx(const glm::vec<1, T, Q> &v) {
@@ -2775,4 +2782,5 @@ namespace glm {
 		return glm::vec<4, T, Q>(v.w, v.w, v.w, v.w);
 	}
 
-}
+	/// @}
+}//namespace glm
