@@ -11,33 +11,35 @@ void Scene::KeyCallback(int key, int action) {
 		case GLFW_KEY_SPACE:
 			printf("space pressed\n");
 			//m_center = m_center *= 2;
-			m_center.x = m_center.x * 2;
-			m_center.z = m_center.z * 2;
+			// m_center.x = m_center.x * 2;
+			// m_center.z = m_center.z * 2;
 			//m_eye = m_eye *= 2;
 			setupProjection(m_program, m_eye, m_center);
 
 			//m_mesh->Enlarge(xminus);
-			m_mesh->EnlargeAsync(zplus);
+			m_mesh->EnlargeAsync(xplus);
 			//m_mesh->EnlargeAsync(xplus);
 			break;
 		case GLFW_KEY_LEFT:
 			//m_orientation += 0.1;
-			m_eye += glm::vec3(2.1, 0, 0);
+			m_eye += glm::vec3(0, 0, -2.1f);
+			m_center += glm::vec3(0, 0, -2.1f);
 			setupProjection(m_program, m_eye, m_center);
 			break;
 		case GLFW_KEY_RIGHT:
+			m_eye += glm::vec3(0, 0, 2.1f);
+			m_center += glm::vec3(0, 0, 2.1f);
 			//m_orientation -= 0.1;
-			m_eye += glm::vec3(-2.1, 0, 0);
 			setupProjection(m_program, m_eye, m_center);
 			break;
 		case GLFW_KEY_DOWN:
-			//m_eye += ((-m_center) + m_eye) * 0.05f;
-			m_eye += glm::vec3(0, 0, 2.1f);
+			m_eye += glm::vec3(-2.1, 0, 0);
+			m_center += glm::vec3(-2.1, 0, 0);
 			setupProjection(m_program, m_eye, m_center);
 			break;
 		case GLFW_KEY_UP:
-			//m_eye -= ((-m_center) + m_eye) * 0.05f;
-			m_eye += glm::vec3(0, 0, -2.1f);
+			m_eye += glm::vec3(2.1, 0, 0);
+			m_center += glm::vec3(2.1, 0, 0);
 			setupProjection(m_program, m_eye, m_center);
 			break;
 		}
@@ -64,9 +66,9 @@ void Scene::Initialize()
 	m_t_start = std::chrono::high_resolution_clock::now();
 	m_program = createTriangleProgram();
 
-	const int octreeSize = 512;
+	const int octreeSize = 256;
 	m_center = glm::vec3(octreeSize/2.f, octreeSize/8.f, octreeSize/2.f);
-	//m_eye = glm::vec3(0, octreeSize/1.2f, 80);
+	m_eye = glm::vec3(0, octreeSize/2.f, octreeSize/2.f);
 
 	m_mesh = new OctreeMesh(m_program, octreeSize, glm::vec3(0, 0, 0));
 	m_mesh->BuildOctree();

@@ -230,11 +230,7 @@ void OctreeMesh::Enlarge(Direction dir)
 {
 	// this line doesn't work for some reason? these sorta tuples work elsewhere in the 
 	// codebase. "'_This &&' differs in levels of indirection from 'int' ..."
-	//auto [newCornerIdx, oldCornerIdx, newPosition] = EnlargeCorners(dir);
-	std::tuple<int, int, glm::vec3> asdf = EnlargeCorners(dir);
-	int newCornerIdx = std::get<0>(asdf);
-	int oldCornerIdx = std::get<1>(asdf);
-	glm::vec3 newPosition = std::get<2>(asdf);
+	auto [newCornerIdx, oldCornerIdx, newPosition] = EnlargeCorners(dir);
 
 	std::array<Octree*, 8> rootChildren = {};
 	for (auto& child : rootChildren)

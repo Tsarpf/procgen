@@ -135,9 +135,9 @@ vec4 noise_grad(const vec3& x) {
         u.x * u.y * u.z * (-ga + gb + gc - gd + ge - gf - gg + gh) +
 
         du * (vec3(vb - va, vc - va, ve - va) +
-            u.yzx * vec3(va - vb - vc + vd, va - vc - ve + vg, va - vb - ve + vf) +
-            u.zxy * vec3(va - vb - ve + vf, va - vb - vc + vd, va - vc - ve + vg) +
-            u.yzx * u.zxy * (-va + vb + vc - vd + ve - vf - vg + vh));
+            u.yzx() * vec3(va - vb - vc + vd, va - vc - ve + vg, va - vb - ve + vf) +
+            u.zxy() * vec3(va - vb - ve + vf, va - vb - vc + vd, va - vc - ve + vg) +
+            u.yzx() * u.zxy() * (-va + vb + vc - vd + ve - vf - vg + vh));
 
     return vec4(v, d);
 }
