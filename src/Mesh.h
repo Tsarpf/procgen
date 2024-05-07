@@ -25,7 +25,7 @@ public:
 	Mesh(GLuint program, VertexBuffer vertices, IndexBuffer indices);
 	~Mesh();
 
-	virtual void Draw(const float time);
+	virtual void Draw(const float time, const uint32_t mode);
 private:
 	void BindBuffers();
 

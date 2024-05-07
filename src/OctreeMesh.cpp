@@ -120,7 +120,7 @@ void BuildSeam(Octree& n1, Octree& n2, Direction dir,
 		}
 		j++;
 	}
-	std::cout << "-------------------------------- Processing edges --------------------------------" << std::endl;
+	std::cout << "-------------------------------- Processing seam edges --------------------------------" << std::endl;
 	//Octree::CellChildProc(borderChildren, indices);
 	switch (dir)
 	{
@@ -228,8 +228,6 @@ void OctreeMesh::EnlargeAsync(Direction dir)
 
 void OctreeMesh::Enlarge(Direction dir)
 {
-	// this line doesn't work for some reason? these sorta tuples work elsewhere in the 
-	// codebase. "'_This &&' differs in levels of indirection from 'int' ..."
 	auto [newCornerIdx, oldCornerIdx, newPosition] = EnlargeCorners(dir);
 
 	std::array<Octree*, 8> rootChildren = {};
@@ -263,20 +261,21 @@ void OctreeMesh::Enlarge(Direction dir)
 	m_visualization.Build(m_tree);
 }
 
-void OctreeMesh::Draw(const float time)
+void OctreeMesh::Draw(const float time, uint32_t mode)
 {
 	// Draw octree viz
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // set to use wireframe
-	m_visualization.DrawVisualization(time);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // set to use wireframe
+	//m_visualization.DrawVisualization(time);
 
-	// Draw actual mesh
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // set to GL_LINE to disable wireframe
-	Mesh::Draw(time);
+	// enum for modes
+	// 0 = fill
+	// 1 = wireframe
+	Mesh::Draw(time, mode);
 
 	std::lock_guard<std::mutex> guard(m_childMeshMutex);
 	for (auto& mesh : m_childMeshes)
 	{
-		mesh->Draw(time);
+		mesh->Draw(time, mode);
 	}
 }
 

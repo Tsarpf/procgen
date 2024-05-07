@@ -25,8 +25,9 @@ private:
 	GLFWwindow* m_window;
 	OctreeMesh* m_mesh;
 	std::chrono::time_point<std::chrono::high_resolution_clock> m_t_start;
-	float m_orientation;
+	float m_time;
 	glm::vec3 m_eye;
 	glm::vec3 m_center;
+	bool m_wireframe = false;
 };
 

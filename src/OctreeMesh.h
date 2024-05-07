@@ -26,7 +26,7 @@ public:
 	~OctreeMesh();
 	void LoadMesh();
 
-	void Draw(const float time) override;
+	void Draw(const float time, uint32_t mode) override;
 	void BuildOctree();
 
 	void Enlarge(Direction);

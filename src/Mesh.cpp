@@ -56,15 +56,24 @@ void Mesh::UploadData()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * m_indices.size(), m_indices.data(), GL_STATIC_DRAW);
 }
 
-void Mesh::Draw(const float time)
+void Mesh::Draw(const float time, const uint32_t mode)
 {
 	if (m_indices.size() == 0)
 	{
 		// nothing to draw
 		return;
 	}
-
 	glm::mat4 model = glm::mat4(1.0f);
+
+	if (mode == 0)
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+	else if (mode == 1)
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
+
 
 	//model = glm::translate(model, glm::vec3(-5, -5, -5));
 

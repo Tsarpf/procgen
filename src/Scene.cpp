@@ -11,12 +11,16 @@ void Scene::KeyCallback(int key, int action) {
 			setupProjection(m_program, m_eye, m_center);
 			m_mesh->EnlargeAsync(xplus);
 			break;
+		case GLFW_KEY_F:
+			printf("F pressed \n");
+			m_wireframe = !m_wireframe;
+			break;
 		}
 	}
 }
 
 Scene::Scene(GLFWwindow* window) 
-	: m_window(window), m_orientation(0)
+	: m_window(window), m_time(0)
 {
 	m_eye = glm::vec3(0, 80, 80);
 	m_center = glm::vec3(0, 4, 8);
@@ -112,7 +116,10 @@ void Scene::Render()
 
 	//m_mesh->Draw(time);
 	m_mesh->CheckResults(); // tad ugly, mebbe do something
-	m_mesh->Draw(m_orientation);
+	//m_mesh->Draw(time, 0);
+
+	uint32_t mode = m_wireframe ? 1 : 0;
+	m_mesh->Draw(0, mode);
 }
 
 Scene::~Scene()
