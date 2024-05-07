@@ -1,6 +1,3 @@
-build/
-xcode/
-cmake-build-debug
-.idea/
-.vscode
-64build
+.vs
+build
+vc140.pdb
