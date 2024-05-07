@@ -1,78 +1,17 @@
 #include "Scene.h"
 #include <GLFW/glfw3.h>
+#include <map>
 
-//void Scene::SpaceCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
 void Scene::KeyCallback(int key, int action) {
-	if (action == GLFW_PRESS || action == GLFW_REPEAT)
-	{
-		glm::vec3 direction = glm::normalize(m_eye - m_center);
+	if (action == GLFW_PRESS) {
 		switch (key)
 		{
 		case GLFW_KEY_SPACE:
 			printf("space pressed\n");
 			setupProjection(m_program, m_eye, m_center);
-			//m_mesh->Enlarge(xminus);
 			m_mesh->EnlargeAsync(xplus);
-			//m_mesh->EnlargeAsync(xplus);
 			break;
-		case GLFW_KEY_W:
-			m_eye -= direction * 2.1f;
-			m_center -= direction * 2.1f;
-			setupProjection(m_program, m_eye, m_center);
-			break;
-		case GLFW_KEY_S:
-			m_eye += direction * 2.1f;
-			m_center += direction * 2.1f;
-			setupProjection(m_program, m_eye, m_center);
-			break;
-		case GLFW_KEY_UP:
-			{
-				glm::vec3 right = glm::normalize(glm::cross(m_center - m_eye, glm::vec3(0.0f, 1.0f, 0.0f)));
-				glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(5.0f), right);
-				m_center = glm::vec3(rotation * glm::vec4(m_center - m_eye, 1.0f)) + m_eye;
-				setupProjection(m_program, m_eye, m_center);
-				break;
-			}
-		case GLFW_KEY_DOWN:
-			{
-				glm::vec3 right = glm::normalize(glm::cross(m_center - m_eye, glm::vec3(0.0f, 1.0f, 0.0f)));
-				glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-5.0f), right);
-				m_center = glm::vec3(rotation * glm::vec4(m_center - m_eye, 1.0f)) + m_eye;
-				setupProjection(m_program, m_eye, m_center);
-				break;
-			}
-		case GLFW_KEY_LEFT:
-			{
-				glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-				m_center = glm::vec3(rotation * glm::vec4(m_center - m_eye, 1.0f)) + m_eye;
-				setupProjection(m_program, m_eye, m_center);
-				break;
-			}
-		case GLFW_KEY_RIGHT:
-			{
-				glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-				m_center = glm::vec3(rotation * glm::vec4(m_center - m_eye, 1.0f)) + m_eye;
-				setupProjection(m_program, m_eye, m_center);
-				break;
-			}
-		case GLFW_KEY_A:
-			{
-				glm::vec3 right = glm::normalize(glm::cross(m_center - m_eye, glm::vec3(0.0f, 1.0f, 0.0f)));
-				m_eye -= right * 2.1f;
-				m_center -= right * 2.1f;
-				setupProjection(m_program, m_eye, m_center);
-				break;
-			}
-		case GLFW_KEY_D:
-			{
-				glm::vec3 right = glm::normalize(glm::cross(m_center - m_eye, glm::vec3(0.0f, 1.0f, 0.0f)));
-				m_eye += right * 2.1f;
-				m_center += right * 2.1f;
-				setupProjection(m_program, m_eye, m_center);
-				break;
-			}
 		}
-		return;
 	}
 }
 
@@ -109,6 +48,53 @@ void Scene::Initialize()
 	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+}
+
+void Scene::Update() {
+	glm::vec3 direction = glm::normalize(m_eye - m_center);
+	glm::vec3 right = glm::normalize(glm::cross(m_center - m_eye, glm::vec3(0.0f, 1.0f, 0.0f)));
+	glm::mat4 rotation;
+
+	if (glfwGetKey(m_window, GLFW_KEY_W) == GLFW_PRESS) {
+		m_eye -= direction * 2.1f;
+		m_center -= direction * 2.1f;
+		setupProjection(m_program, m_eye, m_center);
+	}
+	if (glfwGetKey(m_window, GLFW_KEY_S) == GLFW_PRESS) {
+		m_eye += direction * 2.1f;
+		m_center += direction * 2.1f;
+		setupProjection(m_program, m_eye, m_center);
+	}
+	if (glfwGetKey(m_window, GLFW_KEY_UP) == GLFW_PRESS) {
+		rotation = glm::rotate(glm::mat4(1.0f), glm::radians(5.0f), right);
+		m_center = glm::vec3(rotation * glm::vec4(m_center - m_eye, 1.0f)) + m_eye;
+		setupProjection(m_program, m_eye, m_center);
+	}
+	if (glfwGetKey(m_window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+		rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-5.0f), right);
+		m_center = glm::vec3(rotation * glm::vec4(m_center - m_eye, 1.0f)) + m_eye;
+		setupProjection(m_program, m_eye, m_center);
+	}
+	if (glfwGetKey(m_window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+		rotation = glm::rotate(glm::mat4(1.0f), glm::radians(5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		m_center = glm::vec3(rotation * glm::vec4(m_center - m_eye, 1.0f)) + m_eye;
+		setupProjection(m_program, m_eye, m_center);
+	}
+	if (glfwGetKey(m_window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+		rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		m_center = glm::vec3(rotation * glm::vec4(m_center - m_eye, 1.0f)) + m_eye;
+		setupProjection(m_program, m_eye, m_center);
+	}
+	if (glfwGetKey(m_window, GLFW_KEY_A) == GLFW_PRESS) {
+		m_eye -= right * 2.1f;
+		m_center -= right * 2.1f;
+		setupProjection(m_program, m_eye, m_center);
+	}
+	if (glfwGetKey(m_window, GLFW_KEY_D) == GLFW_PRESS) {
+		m_eye += right * 2.1f;
+		m_center += right * 2.1f;
+		setupProjection(m_program, m_eye, m_center);
+	}
 }
 
 void Scene::Render()

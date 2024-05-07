@@ -17,6 +17,7 @@ public:
 	~Scene();
 	void Initialize();
 	void Render();
+	void Update();
 	void KeyCallback(int key, int action);
 
 private:

@@ -16,6 +16,7 @@ int main(void)
 
 	while (!glfwWindowShouldClose(window))
 	{
+		scene.Update();
 		scene.Render();
 
 		glfwPollEvents();
