@@ -1,47 +1,76 @@
 #include "Scene.h"
 #include <GLFW/glfw3.h>
 
-
 //void Scene::SpaceCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
 void Scene::KeyCallback(int key, int action) {
 	if (action == GLFW_PRESS || action == GLFW_REPEAT)
 	{
+		glm::vec3 direction = glm::normalize(m_eye - m_center);
 		switch (key)
 		{
 		case GLFW_KEY_SPACE:
 			printf("space pressed\n");
-			//m_center = m_center *= 2;
-			// m_center.x = m_center.x * 2;
-			// m_center.z = m_center.z * 2;
-			//m_eye = m_eye *= 2;
 			setupProjection(m_program, m_eye, m_center);
-
 			//m_mesh->Enlarge(xminus);
 			m_mesh->EnlargeAsync(xplus);
 			//m_mesh->EnlargeAsync(xplus);
 			break;
-		case GLFW_KEY_LEFT:
-			//m_orientation += 0.1;
-			m_eye += glm::vec3(0, 0, -2.1f);
-			m_center += glm::vec3(0, 0, -2.1f);
+		case GLFW_KEY_W:
+			m_eye -= direction * 2.1f;
+			m_center -= direction * 2.1f;
 			setupProjection(m_program, m_eye, m_center);
 			break;
-		case GLFW_KEY_RIGHT:
-			m_eye += glm::vec3(0, 0, 2.1f);
-			m_center += glm::vec3(0, 0, 2.1f);
-			//m_orientation -= 0.1;
-			setupProjection(m_program, m_eye, m_center);
-			break;
-		case GLFW_KEY_DOWN:
-			m_eye += glm::vec3(-2.1, 0, 0);
-			m_center += glm::vec3(-2.1, 0, 0);
+		case GLFW_KEY_S:
+			m_eye += direction * 2.1f;
+			m_center += direction * 2.1f;
 			setupProjection(m_program, m_eye, m_center);
 			break;
 		case GLFW_KEY_UP:
-			m_eye += glm::vec3(2.1, 0, 0);
-			m_center += glm::vec3(2.1, 0, 0);
-			setupProjection(m_program, m_eye, m_center);
-			break;
+			{
+				glm::vec3 right = glm::normalize(glm::cross(m_center - m_eye, glm::vec3(0.0f, 1.0f, 0.0f)));
+				glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(5.0f), right);
+				m_center = glm::vec3(rotation * glm::vec4(m_center - m_eye, 1.0f)) + m_eye;
+				setupProjection(m_program, m_eye, m_center);
+				break;
+			}
+		case GLFW_KEY_DOWN:
+			{
+				glm::vec3 right = glm::normalize(glm::cross(m_center - m_eye, glm::vec3(0.0f, 1.0f, 0.0f)));
+				glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-5.0f), right);
+				m_center = glm::vec3(rotation * glm::vec4(m_center - m_eye, 1.0f)) + m_eye;
+				setupProjection(m_program, m_eye, m_center);
+				break;
+			}
+		case GLFW_KEY_LEFT:
+			{
+				glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				m_center = glm::vec3(rotation * glm::vec4(m_center - m_eye, 1.0f)) + m_eye;
+				setupProjection(m_program, m_eye, m_center);
+				break;
+			}
+		case GLFW_KEY_RIGHT:
+			{
+				glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				m_center = glm::vec3(rotation * glm::vec4(m_center - m_eye, 1.0f)) + m_eye;
+				setupProjection(m_program, m_eye, m_center);
+				break;
+			}
+		case GLFW_KEY_A:
+			{
+				glm::vec3 right = glm::normalize(glm::cross(m_center - m_eye, glm::vec3(0.0f, 1.0f, 0.0f)));
+				m_eye -= right * 2.1f;
+				m_center -= right * 2.1f;
+				setupProjection(m_program, m_eye, m_center);
+				break;
+			}
+		case GLFW_KEY_D:
+			{
+				glm::vec3 right = glm::normalize(glm::cross(m_center - m_eye, glm::vec3(0.0f, 1.0f, 0.0f)));
+				m_eye += right * 2.1f;
+				m_center += right * 2.1f;
+				setupProjection(m_program, m_eye, m_center);
+				break;
+			}
 		}
 		return;
 	}
@@ -66,7 +95,7 @@ void Scene::Initialize()
 	m_t_start = std::chrono::high_resolution_clock::now();
 	m_program = createTriangleProgram();
 
-	const int octreeSize = 256;
+	const int octreeSize = 128;
 	m_center = glm::vec3(octreeSize/2.f, octreeSize/8.f, octreeSize/2.f);
 	m_eye = glm::vec3(0, octreeSize/2.f, octreeSize/2.f);
 
