@@ -1,3 +1,17 @@
+# Running
+```
+mkdir build
+cd build
+cmake ..
+```
+For me
+- on Windows it just works, provided msvc is installed
+- on OSX (Intel and ARM) it just works straight, at least having xcode etc. installed
+- On my Ubuntu when I tried years ago, I installed `freeglut3 freeglut3-dev xorg-dev libglu1-mesa-dev` and it seemed to find the required OpenGL headers and work.
+
+Uses structured bindings so you need C++17.
+
+# Background
 Working on comprehending and possibly in the future extending various (dual) contouring methods.
 
 It now actually works (on my machine)! 
@@ -13,18 +27,6 @@ It seems like seams (that are a problem with many DC implementations) can easily
 ![cube](https://cldup.com/LABApkDK26.gif)
 ![sphere](https://cldup.com/yEe4nxdPHS.gif)
 
-To build
-```
-mkdir build
-cd build
-cmake ..
-```
-
-Uses structured bindings so you need C++17.
-
-On my Ubuntu, installing `freeglut3 freeglut3-dev xorg-dev libglu1-mesa-dev` packages provided the necessary OpenGL headers.
-On Windows it works straight away.
-OSX might work with a little work
 
 ## Licensing
 Everything written by me is (now) MIT licensed
