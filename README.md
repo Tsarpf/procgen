@@ -3,10 +3,11 @@
 mkdir build
 cd build
 cmake ..
+make
 ```
 For me
-- on Windows it just works, provided msvc is installed
-- on OSX (Intel and ARM) it just works straight away, at least having xcode etc. installed
+- on Windows it just works, provided msvc is installed, you should find the executable in the build dir
+- on OSX (Intel and ARM) it seems to work straight away, at least having xcode etc. installed. Running `make` as above creates `build/dual-contouring.app/Contents/MacOS/dual-contouring`
 - On my Ubuntu when I tried years ago, I installed `freeglut3 freeglut3-dev xorg-dev libglu1-mesa-dev` and it seemed to find the required OpenGL headers and work.
 
 Uses structured bindings so you need C++17.
