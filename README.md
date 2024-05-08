@@ -6,7 +6,7 @@ cmake ..
 ```
 For me
 - on Windows it just works, provided msvc is installed
-- on OSX (Intel and ARM) it just works straight, at least having xcode etc. installed
+- on OSX (Intel and ARM) it just works straight away, at least having xcode etc. installed
 - On my Ubuntu when I tried years ago, I installed `freeglut3 freeglut3-dev xorg-dev libglu1-mesa-dev` and it seemed to find the required OpenGL headers and work.
 
 Uses structured bindings so you need C++17.
