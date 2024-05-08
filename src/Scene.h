@@ -28,6 +28,6 @@ private:
 	float m_time;
 	glm::vec3 m_eye;
 	glm::vec3 m_center;
-	bool m_wireframe = false;
+	bool m_wireframe = true;
 };
 

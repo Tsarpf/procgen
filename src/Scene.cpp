@@ -9,7 +9,7 @@ void Scene::KeyCallback(int key, int action) {
 		case GLFW_KEY_SPACE:
 			printf("space pressed\n");
 			setupProjection(m_program, m_eye, m_center);
-			m_mesh->EnlargeAsync(xplus);
+			m_mesh->EnlargeAsync(Direction::xplus);
 			break;
 		case GLFW_KEY_F:
 			printf("F pressed \n");
@@ -22,8 +22,8 @@ void Scene::KeyCallback(int key, int action) {
 Scene::Scene(GLFWwindow* window) 
 	: m_window(window), m_time(0)
 {
-	m_eye = glm::vec3(0, 80, 80);
-	m_center = glm::vec3(0, 4, 8);
+	//m_eye = glm::vec3(0, 128, 128);
+	//m_center = glm::vec3(0, 0, );
 }
 
 void Scene::Initialize()
@@ -40,7 +40,7 @@ void Scene::Initialize()
 
 	const int octreeSize = 128;
 	m_center = glm::vec3(octreeSize/2.f, octreeSize/8.f, octreeSize/2.f);
-	m_eye = glm::vec3(0, octreeSize/2.f, octreeSize/2.f);
+	m_eye = glm::vec3(octreeSize, octreeSize/2.f, octreeSize);
 
 	m_mesh = new OctreeMesh(m_program, octreeSize, glm::vec3(0, 0, 0));
 	m_mesh->BuildOctree();
