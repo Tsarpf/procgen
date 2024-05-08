@@ -157,6 +157,7 @@ static std::string readFile(const char* path)
 {
 	std::ifstream stream(path);
 	if (!stream.is_open()) {
+		std::cout << "Shader file not found! Probably just a problem with the working directory being different from expected" << std::endl;
 		throw std::runtime_error("File not found!");
 	}
 
