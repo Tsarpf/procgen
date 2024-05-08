@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interactive Octree Demo</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.127.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        let scene, camera, renderer, controls;
+        let lastCube, cubes = [];
+        let cubeSize = 1;
+
+        init();
+        animate();
+
+        function init() {
+            // Set up the scene
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+
+            // Set up the renderer
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+            // Lighting
+            //const light = new THREE.AmbientLight(0x404040); // soft white light
+            //scene.add(light);
+
+            // New directional light
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.4);
+            directionalLight.position.set(1, 1, 1); // positioned to the right, above, and behind the camera
+            scene.add(directionalLight);
+
+            // Add the initial cube
+            addCube(0, 0, 0);
+
+            // Keyboard listener
+            window.addEventListener('keydown', onKeyPress, false);
+        }
+
+        function addCube(x, y, z) {
+            const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+            //const material = new THREE.MeshBasicMaterial({color: 0x00ff00, wireframe: false});
+            const material = new THREE.MeshBasicMaterial({
+                color: new THREE.Color("hsl(" + ((cubes.length * 30) % 360) + ", 100%, 50%)"),
+                wireframe: false
+            });
+
+            const cube = new THREE.Mesh(geometry, material);
+            cube.position.set(x, y, z);
+            scene.add(cube);
+            cubes.push(cube);
+            if (lastCube) {
+                addSeam(lastCube, cube, material.color);
+            }
+            lastCube = cube;
+        }
+
+        function addSeam(cube1, cube2, color) {
+                // Update neighbor color
+                cube1.material.color.set(color);
+
+                // Create and add the seam line
+                const material = new THREE.LineBasicMaterial({ color: color });
+                const points = [cube1.position.clone(), cube2.position.clone()];
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const line = new THREE.Line(geometry, material);
+                scene.add(line);
+        }
+
+
+        function onKeyPress(event) {
+            if (!lastCube) return;
+
+            let dir = {x: 0, y: 0, z: 0};
+            if (event.key === "1") dir.x += cubeSize;
+            else if (event.key === "2") dir.x -= cubeSize;
+            else if (event.key === "3") dir.y += cubeSize;
+            else if (event.key === "4") dir.y -= cubeSize;
+            else if (event.key === "5") dir.z += cubeSize;
+            else if (event.key === "6") dir.z -= cubeSize;
+
+            addCube(lastCube.position.x + dir.x, lastCube.position.y + dir.y, lastCube.position.z + dir.z);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+    </script>
+</body>
+</html>
