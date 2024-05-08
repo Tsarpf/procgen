@@ -1,4 +1,4 @@
-# Running
+# Running and building
 ```
 mkdir build
 cd build
@@ -11,6 +11,12 @@ For me
 - On my Ubuntu when I tried years ago, I installed `freeglut3 freeglut3-dev xorg-dev libglu1-mesa-dev` and it seemed to find the required OpenGL headers and work.
 
 Uses structured bindings so you need C++17.
+
+# Keys
+Camera:
+- w/a/s/d to move camera
+- arrow keys to turn camera
+- `f` to toggle between wireframe on/off (as the lighting is quite elementary)
 
 # Background
 Working on comprehending and possibly in the future extending various (dual) contouring methods.
