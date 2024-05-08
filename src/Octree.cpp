@@ -53,7 +53,7 @@ Octree::Octree(const int resolution, const int size, const glm::vec3 min)
     printf("constructing new octree at min (%i, %i, %i), size %i\n", m_min.x, m_min.y, m_min.z, m_size);
 }
 
-// Leaf node constructor
+// Leaf node constructor, probably shouldn't be used
 Octree::Octree(const int resolution, glm::vec3 min)
     : m_resolution(resolution), m_size(resolution), m_min(min), m_children(nullptr), m_leaf(true)
 {

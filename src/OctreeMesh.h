@@ -30,8 +30,8 @@ public:
 	void Draw(const float time, uint32_t mode) override;
 	void BuildOctree();
 
-	void Enlarge(Direction);
-	void AddNewChunk(Direction dir, uint16_t chunkSize);
+	void Enlarge(Direction dir, uint16_t chunkSize);
+	glm::ivec3 AddNewChunk(glm::ivec3 chunkCursor, Direction dir, uint16_t chunkSize);
 
 	void CheckResults();
 

@@ -1,6 +1,6 @@
 #include "OctreeMesh.h"
 #include "utils.h"
-#include <OctreeUtil.h>
+#include "OctreeUtil.h"
 
 #include <memory>
 
@@ -165,6 +165,27 @@ OctreeMesh* CreateNewMeshTask(Octree* neighbour, Octree* newOctree,
 	return mesh;
 }
 
+OctreeMesh* CreateNewMeshWithNeighboursTask(std::vector<Octree*>& neighbours, Octree* newOctree,
+	const int size, Direction dir, const glm::vec3 position, GLuint program)
+{
+	VertexBuffer vertices;
+	IndexBuffer indices;
+
+	newOctree->Construct();
+	newOctree->MeshFromOctree(indices, vertices);
+
+	for (auto neighbour : neighbours)
+	{
+		BuildSeam(*neighbour, *newOctree, dir, vertices, indices);
+	}
+
+	OctreeMesh* mesh = new OctreeMesh(program, size, position, newOctree, std::move(vertices), std::move(indices));
+
+	return mesh;
+}
+
+
+
 template<typename R>
 bool is_ready(std::future<R> const& f)
 	#ifdef _MSC_VER
@@ -247,14 +268,36 @@ void OctreeMesh::Enlarge(Direction dir, uint16_t chunkSize)
 	// probably isn't more than a few hops in the tree. This is never going to be a bottle neck I think.
 }
 
-void OctreeMesh::AddNewChunk(Direction dir, uint16_t chunkSize)
+glm::vec3 OctreeMesh::AddNewChunk(glm::vec3 chunkCursor, Direction dir, uint16_t chunkSize)
 {
+	switch (dir)
+	{
+	case xplus:
+		chunkCursor.x += m_size;
+		break;
+	case yplus:
+		chunkCursor.y += m_size;
+		break;
+	case zplus:
+		chunkCursor.z += m_size;
+		break;
+	case xminus:
+		chunkCursor.x -= m_size;
+		break;
+	case yminus:
+		chunkCursor.y -= m_size;
+		break;
+	case zminus:
+		chunkCursor.z -= m_size;
+		break;
+	}	
+
 	// 1) check if needs expansion
-    Direction expandDir = expansionDirection(m_tree, position, m_chunkSize);
+    Direction expandDir = expansionDirection(m_tree, chunkCursor, chunkSize);
     if (expandDir != Direction::nodir) {
 		// 2) do expansion if needed
 		//		a) this is probably handled ok by existing parts of the EnlargeAsync, just the position where the meshtask needs to run is wrong now
-        Enlarge(expandDir);
+        Enlarge(expandDir, chunkSize);
     }
 	// 3) place new node at given position. the task is to find the parent node of the new node from the root node down, 
 			// and place this new node into its children in the correct index 
@@ -262,12 +305,30 @@ void OctreeMesh::AddNewChunk(Direction dir, uint16_t chunkSize)
 			// I guess we should be looking for the node that is 2x chunksize in all cases, as its children will be 1x chunksize what we were looking for, no?
 	// new pos is just currentChunkPos + chunkSize in the direction of the expansion
 
-	// 4) process new node
-	//		a) just run the Construct function on the new node as usual
+	// now we initialize the tree all the way until the new node to be meshed
+	// note that this is different from above possible expansion, as there we just double the size of the root octree which may be much larger than the chunk size
+	Octree* newNode = CreateNewSubTree(m_tree, chunkCursor, chunkSize); 
 
-	// 5) find neighbours of the new node (which may have different parents so this needs to be a recursive algorithm)
+
+	// 4) find neighbours of the new node (which may have different parents so this needs to be a recursive algorithm)
+	std::vector<Octree*> neighbours = FindNeighbors(m_tree, chunkCursor, chunkSize);
+
+	// 5) process new node
+	//		a) just run the Construct function on the new node as usual
 	//		a) implement algorithm that moves down from the root node, use the index(x,y,z,2) function to find what child to visit for each level
 	// 6) process seams by looping through the neighbours 
+	m_futureMeshes.push_back(
+		std::future<OctreeMesh*>(std::async(std::launch::async,
+			CreateNewMeshWithNeighboursTask,
+			neighbours,
+			newNode,
+			chunkSize,
+			dir,
+			m_position,
+			m_gl_program))
+	);
+
+	return chunkCursor;
 }
 
 std::tuple<int, int, glm::vec3> OctreeMesh::EnlargeCorners(Direction dir)

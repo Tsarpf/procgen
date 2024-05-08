@@ -30,5 +30,6 @@ private:
 	glm::vec3 m_center;
 	bool m_wireframe = true;
 	uint16_t m_chunkSize = 64;
+	glm::ivec3 m_chunkCursor; // this could be eg. the chunk the the player is in, should only really be used for the root node
 };
 

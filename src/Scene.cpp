@@ -9,7 +9,7 @@ void Scene::KeyCallback(int key, int action) {
 		case GLFW_KEY_SPACE:
 			printf("space pressed\n");
 			setupProjection(m_program, m_eye, m_center);
-			m_mesh->AddNewChunk(Direction::xplus, m_chunkSize);
+			m_chunkCursor = m_mesh->AddNewChunk(m_chunkCursor, Direction::xplus, m_chunkSize);
 			break;
 		case GLFW_KEY_F:
 			printf("F pressed \n");
