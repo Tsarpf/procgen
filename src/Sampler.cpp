@@ -62,11 +62,13 @@ std::tuple<float, glm::vec3> Noise(const glm::vec3& p)
 	glm::vec3 pos  = p / divider + epsilon;
 	//float value = (float)noiseModule.GetValue(p.x / divider  + epsilon, p.y / divider + epsilon, p.z / divider + epsilon);
 	glm::vec4 result = noise_grad(pos); // (value float, gradient vec3)
+	result += noise_grad(pos*100.f) / 10.f; // (value float, gradient vec3)
+	result += noise_grad(pos/100.f) * 5.f; // (value float, gradient vec3)
 	float value = result.x;
 	glm::vec3 grad(result.y, result.z, result.w);
 	if (p.y > 40.f)
 	{
-		value += (p.y - 20.f) / 50.f;
+		value += (p.y - 40.f) / 10.f;
 	}
 
 	//if (p.y > 20.f)
