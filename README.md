@@ -13,10 +13,13 @@ For me
 Uses structured bindings so you need C++17.
 
 # Keys
-Camera:
-- w/a/s/d to move camera
-- arrow keys to turn camera
+General
 - `f` to toggle between wireframe on/off (as the lighting is quite elementary)
+- Press `space` to create a new chunk on the fly
+
+Camera:
+- w/a/s/d to move
+- arrow keys to turn
 
 # Background
 Working on comprehending and possibly in the future extending various (dual) contouring methods.
