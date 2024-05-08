@@ -14,7 +14,8 @@
 enum Direction {
 	xplus, xminus,
 	yplus, yminus,
-	zplus, zminus
+	zplus, zminus,
+	nodir
 };
 
 class OctreeMesh : public Mesh
@@ -30,7 +31,7 @@ public:
 	void BuildOctree();
 
 	void Enlarge(Direction);
-	void EnlargeAsync(Direction dir);
+	void AddNewChunk(Direction dir, uint16_t chunkSize);
 
 	void CheckResults();
 

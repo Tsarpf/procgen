@@ -79,6 +79,7 @@ struct OctreeChildren {
 };
 
 int index(int x, int y, int z, int dimensionLength);
+int octreeIndex(int x, int y, int z);
 
 
 #endif //PROJECT_OCTREE_H

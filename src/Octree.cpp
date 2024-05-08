@@ -64,6 +64,12 @@ int index(int x, int y, int z, int dimensionLength)
 	return x + dimensionLength * (y + dimensionLength * z);
 }
 
+// Overload for octree child index calculation
+int octreeIndex(int x, int y, int z) {
+    return x | (y << 1) | (z << 2);
+}
+
+
 glm::vec3 CalculateSurfaceNormal(const glm::vec3& p)
 {
 	const glm::vec3 grad = Sampler::SampleGradient(p);
@@ -137,7 +143,7 @@ void Octree::ConstructBottomUpParallel()
 			{
 				int maxSize = m_size / numBlocksPerDim;
 				glm::ivec3 offset = glm::ivec3(x, y, z) * maxSize;
-				int cornerIdx = index(x, y, z, 2);
+				int cornerIdx = octreeIndex(x, y, z);
 				futureSamples.push_back(std::async(
 					std::launch::async,
 					&Octree::BottomUpParallel,

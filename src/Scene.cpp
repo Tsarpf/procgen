@@ -9,7 +9,7 @@ void Scene::KeyCallback(int key, int action) {
 		case GLFW_KEY_SPACE:
 			printf("space pressed\n");
 			setupProjection(m_program, m_eye, m_center);
-			m_mesh->EnlargeAsync(Direction::xplus);
+			m_mesh->AddNewChunk(Direction::xplus, m_chunkSize);
 			break;
 		case GLFW_KEY_F:
 			printf("F pressed \n");
@@ -38,7 +38,7 @@ void Scene::Initialize()
 	m_t_start = std::chrono::high_resolution_clock::now();
 	m_program = createTriangleProgram();
 
-	const int octreeSize = 128;
+	const int octreeSize = m_chunkSize;
 	m_center = glm::vec3(octreeSize/2.f, octreeSize/8.f, octreeSize/2.f);
 	m_eye = glm::vec3(octreeSize, octreeSize/2.f, octreeSize);
 

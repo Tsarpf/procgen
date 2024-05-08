@@ -29,5 +29,6 @@ private:
 	glm::vec3 m_eye;
 	glm::vec3 m_center;
 	bool m_wireframe = true;
+	uint16_t m_chunkSize = 64;
 };
 
