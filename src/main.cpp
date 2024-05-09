@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <GL/glew.h>
+#include <GL/glu.h> // Include this at the top of your file
 #include <GLFW/glfw3.h>
 
 #include "Scene.h"
@@ -23,10 +24,22 @@ int main(void)
 		glfwSwapBuffers(window);
 
 		GLenum err;
+
+		// ...
+
 		while ((err = glGetError()) != GL_NO_ERROR)
 		{
-			printf("haz error %i \n", err);
+			const GLubyte *errString = gluErrorString(err);
+			if (errString)
+			{
+				printf("OpenGL error: %s\n", errString);
+			}
+			else
+			{
+				printf("Unknown OpenGL error with code: %i\n", err);
+			}
 		}
+
 	}
 
 	stop(window);
