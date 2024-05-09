@@ -1,3 +1,4 @@
+![example](docs/dc-short.gif)
 # Running and building
 ```
 mkdir build
