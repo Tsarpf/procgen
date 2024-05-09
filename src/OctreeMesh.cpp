@@ -407,8 +407,8 @@ void OctreeMesh::SpiralGenerate(int width, int height) {
         glm::ivec3(-m_chunkSize, 0, 0)  // up
     };
 
-    for (int y = 0; y < height; ++y) {
-        glm::ivec3 position(width * m_chunkSize, y * m_chunkSize, width * m_chunkSize); // Start from the center of the grid at height y
+    for (int y = (-height / 2); y < height; ++y) {
+        glm::ivec3 position(0, y * m_chunkSize, 0); // Start from the center of the grid at height y
         int directionIndex = 0;
         int step = 1, change = 0;
         int count = 0;
@@ -436,7 +436,6 @@ void OctreeMesh::SpiralGenerate(int width, int height) {
     // Start processing the queue
     std::thread(&OctreeMesh::ProcessQueue, this).detach();
 }
-
 
 void OctreeMesh::ProcessQueue()
 {

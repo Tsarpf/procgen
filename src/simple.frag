@@ -15,15 +15,23 @@ vec3 lightColor = vec3(1.0, 1.0, 1.0);
 // Adjusted light settings
 vec3 ambient = vec3(0.100, 0.001, 0.001);
 
+// void main()
+// {
+//   vec3 norm = normalize(outNormal);
+//   vec3 lightDirection = normalize(lightDir);
+//   float diff = max(dot(norm, lightDirection), 0.0);
+//   vec3 diffuse = diff * lightColor;
+//   vec3 result = ambient + diffuse;
+//   outColor = vec4(result * fragInColor, 1.0);
+// }
+
+// normals debug
 void main()
 {
-  vec3 norm = normalize(outNormal);
-  vec3 lightDirection = normalize(lightDir);
-  float diff = max(dot(norm, lightDirection), 0.0);
-  vec3 diffuse = diff * lightColor;
-  vec3 result = ambient + diffuse;
-  outColor = vec4(result * fragInColor, 1.0);
+    vec3 norm = normalize(outNormal);
+    outColor = vec4(norm * 0.5 + 0.5, 1.0); // Normals scaled and biased to [0, 1] range
 }
+
 // with specular etc
 // void main()
 // {
@@ -63,12 +71,6 @@ void main()
 //     outColor = vec4(diffuse, 1.0);
 // }
 
-// normals debug
-// void main()
-// {
-//     vec3 norm = normalize(outNormal);
-//     outColor = vec4(norm * 0.5 + 0.5, 1.0); // Normals scaled and biased to [0, 1] range
-// }
 
 
 // Point light

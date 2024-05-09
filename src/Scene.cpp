@@ -39,10 +39,10 @@ void Scene::Initialize()
 	m_program = createTriangleProgram();
 
 	const int octreeSize = m_chunkSize;
-	m_center = glm::vec3(octreeSize/2.f, octreeSize/8.f, octreeSize/2.f);
-	m_eye = glm::vec3(octreeSize, octreeSize/2.f, octreeSize);
+	m_center = glm::vec3(octreeSize * 0, octreeSize/2.f, octreeSize * 0);
+	m_eye = glm::vec3(octreeSize * 8, octreeSize * 4, octreeSize * 8);
 
-	auto initialPos = glm::ivec3(0, 0, 0);
+	auto initialPos = glm::ivec3(0, -octreeSize, 0);
 	m_chunkCursor = initialPos;
 
 	m_mesh = new OctreeMesh(m_program, octreeSize, initialPos, m_chunkSize);
@@ -56,7 +56,7 @@ void Scene::Initialize()
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
-	m_mesh->SpiralGenerate(5, 1);
+	m_mesh->SpiralGenerate(7, 5);
 }
 
 void Scene::Update() {

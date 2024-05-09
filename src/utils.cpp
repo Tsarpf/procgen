@@ -300,10 +300,10 @@ void setupProjection(GLuint program, glm::vec3 eye, glm::vec3 center)
 	//printf("%i view\n", viewUniform);
 	glUniformMatrix4fv(viewUniform, 1, GL_FALSE, glm::value_ptr(view));
 
-	const float farClip = 1200;
+	const float farClip = 10000;
 	glm::mat4 proj = glm::perspective
 	(
-		glm::radians(45.0f),
+		glm::radians(60.0f),
 		1280.0f / 768.0f,
 		0.1f,
 		farClip

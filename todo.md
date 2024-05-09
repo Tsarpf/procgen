@@ -1,9 +1,7 @@
-# Make sure infgen really works
-- It seems to create empty chunks around 20 away from the origin in many directions
-    - bug or a feature?
+# If chunks are added by position, they can be generated way outside the octree - the octree should be grown/enlarged multiple times in a row in this case
+# Fix the last piece of seams between two seams... 
+    - It's this one by nick gildea https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjS5IvTGbndbV0XX0nonX-40FclWFjFiJLJU5LMnpUFEgBAEE642uz-TN3kXeqtsXqKUNnNp1S7N-vNNNABssT-FVt8nenFfWbuthD2KPs7d69PS6VVwdVZyOqwNIbPjunc80GQQA7S9jI/s1600/select_seams_4.png
 # Make it work with Godot as library!
-
-# Implement spiral loading chunks
 
 # Implement CSGs
 

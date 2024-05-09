@@ -144,32 +144,36 @@ glm::vec4 compute_noise_octave(const glm::vec3& pos, float frequency, float ampl
 
 std::pair<float, glm::vec3> Noise(const glm::vec3& p)
 {
-	float epsilon = 0.500f;
-	float divider = 26.f;
-	float seaLevel = 32.f;
+    float epsilon = 0.500f;
+    float divider = 26.f;
+    float seaLevel = 32.f;
+    float seaScaler = 40.0f;
+    float maxAdjustment = 0.95f; // Maximum adjustment cap
 
-	glm::vec3 pos = p / divider + epsilon;
-    //glm::vec4 result = compute_noise_octave(pos, 1.0f, 1.0f);
-    glm::vec4 result = compute_noise_octave(pos, .5f, 0.5f);
+    glm::vec3 pos = p / divider + epsilon;
+    glm::vec4 result = compute_noise_octave(pos, 0.5f, 0.5f);
     result += compute_noise_octave(pos, 2.0f, 0.10f);
     result += compute_noise_octave(pos, 0.01f, 1.0f);
+    result += compute_noise_octave(pos, 0.10f, 1.0f);
+    result += compute_noise_octave(pos, 0.02f, 1.0f);
 
     float value = result.x;
     glm::vec3 grad = glm::vec3(result.y, result.z, result.w);
 
-    // Adjust value and gradient for sea level
-	if (p.y > seaLevel)
-	{
+    // Adjust value and gradient for sea level with a cap on adjustment
+    if (p.y > seaLevel)
+    {
+        float adjustment = (p.y - seaLevel) / seaScaler;
+        adjustment = glm::min(adjustment, maxAdjustment); // Cap the adjustment
 
-		float seaScaler = 20.0f;
-		float adjustment = (p.y - seaLevel) / seaScaler;
-		value += adjustment;
-		grad.y += 1.f / seaScaler; // Applying chain rule: g'(p.y) = gy + 1/10
-	}
+        value += adjustment;
+        grad.y += 1.f / seaScaler; // Applying chain rule: g'(p.y) = gy + 1/seaScaler
+    }
 
-	grad = glm::normalize(grad);
-	return {value, grad};
+    grad = glm::normalize(grad);
+    return {value, grad};
 }
+
 
 float Sample(const glm::vec3 pos)
 {
