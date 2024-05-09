@@ -1,3 +1,6 @@
+# Make sure infgen really works
+- It seems to create empty chunks around 20 away from the origin in many directions
+    - bug or a feature?
 # Make it work with Godot as library!
 
 # Implement spiral loading chunks
