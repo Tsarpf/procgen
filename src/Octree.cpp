@@ -1022,7 +1022,7 @@ Octree* Octree::ConstructLeaf(const int resolution, glm::ivec3 localPos, glm::iv
 	{
 		const auto& mp = qef.getMassPoint();
 		leaf->m_drawPos = vec3(mp.x, mp.y, mp.z);
-		printf("globalPos (%f, %f, %f), max (%f, %f, %f) \n", globalPos.x, globalPos.y, globalPos.z, max.x, max.y, max.z);
+		printf("globalPos (%i, %i, %i), max (%f, %f, %f) \n", globalPos.x, globalPos.y, globalPos.z, max.x, max.y, max.z);
 		printf("drawpos (%f, %f, %f)\n", leaf->m_drawPos.x, leaf->m_drawPos.y, leaf->m_drawPos.z);
 	}
 
