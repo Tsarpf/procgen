@@ -4,7 +4,7 @@ PROJECT(ProcGensu VERSION 0.0.2 LANGUAGES CXX C)
 
 find_package(OpenGL REQUIRED)
 
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
 set(GLFW_SOURCE_DIR "external/glfw")
 set(GLM_SOURCE_DIR "external/glm")
