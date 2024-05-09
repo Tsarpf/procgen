@@ -69,6 +69,23 @@ Octree* Octree::CreateNewSubTree(Octree* rootNode, const glm::vec3& newPosition,
 Octree* FindNode(Octree* rootNode, glm::ivec3 position, int chunkSize)
 {
     Octree* currentNode = rootNode;
+
+    // Check if the node is outside the root node
+    if (position.x < currentNode->m_min.x || position.y < currentNode->m_min.y || position.z < currentNode->m_min.z || position.x >= currentNode->m_min.x + currentNode->m_size || position.y >= currentNode->m_min.y + currentNode->m_size || position.z >= currentNode->m_min.z + currentNode->m_size)
+    {
+        return nullptr;
+    }
+
+    // Extra check for case where there is just one node and its not the one we were looking for
+    if (currentNode->m_size == chunkSize)
+    {
+        if (currentNode->m_min != position)
+        {
+            return nullptr;
+        }
+        return currentNode;
+    }
+
     while (currentNode)
     {
         if (currentNode->IsLeaf())
@@ -99,24 +116,25 @@ Octree* FindNode(Octree* rootNode, glm::ivec3 position, int chunkSize)
     return nullptr;
 }
 
-std::vector<Octree *> FindNeighbors(Octree *rootNode, glm::ivec3 nodePos, int nodeSize)
+
+std::vector<std::pair<Octree*, Direction>> FindNeighbors(Octree *rootNode, glm::ivec3 nodePos, int nodeSize)
 {
-    std::vector<Octree *> neighbors;
-    std::vector<glm::ivec3> neighborPositions = {
-        nodePos + glm::ivec3(nodeSize, 0, 0), // xplus
-        nodePos - glm::ivec3(nodeSize, 0, 0), // xminus
-        nodePos + glm::ivec3(0, nodeSize, 0), // yplus
-        nodePos - glm::ivec3(0, nodeSize, 0), // yminus
-        nodePos + glm::ivec3(0, 0, nodeSize), // zplus
-        nodePos - glm::ivec3(0, 0, nodeSize)  // zminus
+    std::vector<std::pair<Octree*, Direction>> neighbors;
+    std::vector<std::pair<glm::ivec3, Direction>> neighborPositions = {
+        {nodePos - glm::ivec3(nodeSize, 0, 0), Direction::xplus}, // xplus
+        {nodePos + glm::ivec3(nodeSize, 0, 0), Direction::xminus}, // xminus
+        {nodePos - glm::ivec3(0, nodeSize, 0), Direction::yplus},  // yplus
+        {nodePos + glm::ivec3(0, nodeSize, 0), Direction::yminus}, // yminus
+        {nodePos - glm::ivec3(0, 0, nodeSize), Direction::zplus},  // zplus
+        {nodePos + glm::ivec3(0, 0, nodeSize), Direction::zminus}  // zminus
     };
 
-    for (const auto &pos : neighborPositions)
+    for (const auto &posDir : neighborPositions)
     {
-        Octree *neighbor = FindNode(rootNode, pos, nodeSize);
+        Octree *neighbor = FindNode(rootNode, posDir.first, nodeSize);
         if (neighbor)
         {
-            neighbors.push_back(neighbor);
+            neighbors.push_back(std::make_pair(neighbor, posDir.second));
         }
     }
 

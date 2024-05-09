@@ -5,6 +5,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <mutex>
 #include <future>
+#include <queue>
 
 #include "Octree.h"
 #include "Mesh.h"
@@ -22,7 +23,7 @@ class OctreeMesh : public Mesh
 {
 public:
 	//OctreeMesh();
-	OctreeMesh(GLuint program, const int size, const glm::vec3 position);
+	OctreeMesh(GLuint program, const int size, const glm::vec3 position, const uint16_t chunkSize);
 	OctreeMesh(GLuint program, const int size, const glm::vec3 position, Octree* tree, VertexBuffer vertices, IndexBuffer indices);
 	~OctreeMesh();
 	void LoadMesh();
@@ -32,12 +33,22 @@ public:
 
 	void Enlarge(Direction dir, uint16_t chunkSize);
 	glm::ivec3 AddNewChunk(glm::ivec3 chunkCursor, Direction dir, uint16_t chunkSize);
+	glm::ivec3 AddNewChunk(glm::ivec3 newPosition, uint16_t chunkSize);
 
 	void CheckResults();
 
 	Octree* GetOctree();
 
+	// Chunk processing
+	void SpiralGenerate(int width, int height);
 private:
+	// Chunk processing
+	void ProcessQueue();
+	void WaitForMeshCompletion();
+	std::queue<glm::ivec3> chunkQueue;
+    std::mutex queueMutex;
+	uint16_t m_chunkSize;
+
 	std::tuple<int, int, glm::vec3> EnlargeCorners(Direction dir);
 
 	std::vector<std::future<OctreeMesh*>> m_futureMeshes;

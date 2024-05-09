@@ -9,7 +9,7 @@ void Scene::KeyCallback(int key, int action) {
 		case GLFW_KEY_SPACE:
 			printf("space pressed\n");
 			setupProjection(m_program, m_eye, m_center);
-			m_chunkCursor = m_mesh->AddNewChunk(m_chunkCursor, Direction::xplus, m_chunkSize);
+			m_chunkCursor = m_mesh->AddNewChunk(m_chunkCursor, Direction::yminus, m_chunkSize);
 			break;
 		case GLFW_KEY_F:
 			printf("F pressed \n");
@@ -45,7 +45,7 @@ void Scene::Initialize()
 	auto initialPos = glm::ivec3(0, 0, 0);
 	m_chunkCursor = initialPos;
 
-	m_mesh = new OctreeMesh(m_program, octreeSize, initialPos);
+	m_mesh = new OctreeMesh(m_program, octreeSize, initialPos, m_chunkSize);
 	m_mesh->BuildOctree();
 	m_mesh->LoadMesh();
 
@@ -55,6 +55,8 @@ void Scene::Initialize()
 	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+
+	m_mesh->SpiralGenerate(5, 1);
 }
 
 void Scene::Update() {
@@ -62,44 +64,61 @@ void Scene::Update() {
 	glm::vec3 right = glm::normalize(glm::cross(m_center - m_eye, glm::vec3(0.0f, 1.0f, 0.0f)));
 	glm::mat4 rotation;
 
-	if (glfwGetKey(m_window, GLFW_KEY_W) == GLFW_PRESS) {
-		m_eye -= direction * 0.5f;
-		m_center -= direction * 0.5f;
+	float strafeSpeed = 0.5f;
+	float cameraSpeed = 2.0f;
+	float moveSpeed = 1.0f;
+
+	// Forward backward
+	if (glfwGetKey(m_window, GLFW_KEY_W) == GLFW_PRESS)
+	{
+		m_eye -= direction * moveSpeed;
+		m_center -= direction * moveSpeed;
 		setupProjection(m_program, m_eye, m_center);
 	}
-	if (glfwGetKey(m_window, GLFW_KEY_S) == GLFW_PRESS) {
-		m_eye += direction * 0.5f;
-		m_center += direction * 0.5f;
+	if (glfwGetKey(m_window, GLFW_KEY_S) == GLFW_PRESS)
+	{
+		m_eye += direction * moveSpeed;
+		m_center += direction * moveSpeed;
 		setupProjection(m_program, m_eye, m_center);
 	}
-	if (glfwGetKey(m_window, GLFW_KEY_UP) == GLFW_PRESS) {
-		rotation = glm::rotate(glm::mat4(1.0f), glm::radians(1.0f), right);
+
+	// Strafe left right
+	if (glfwGetKey(m_window, GLFW_KEY_A) == GLFW_PRESS)
+	{
+		m_eye -= right * strafeSpeed;
+		m_center -= right * strafeSpeed;
+		setupProjection(m_program, m_eye, m_center);
+	}
+	if (glfwGetKey(m_window, GLFW_KEY_D) == GLFW_PRESS)
+	{
+		m_eye += right * strafeSpeed;
+		m_center += right * strafeSpeed;
+		setupProjection(m_program, m_eye, m_center);
+	}
+
+	// Turn camera up/down/left/right
+	if (glfwGetKey(m_window, GLFW_KEY_UP) == GLFW_PRESS)
+	{
+		rotation = glm::rotate(glm::mat4(1.0f), glm::radians(cameraSpeed), right);
 		m_center = glm::vec3(rotation * glm::vec4(m_center - m_eye, 1.0f)) + m_eye;
 		setupProjection(m_program, m_eye, m_center);
 	}
-	if (glfwGetKey(m_window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-		rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-1.0f), right);
+	if (glfwGetKey(m_window, GLFW_KEY_DOWN) == GLFW_PRESS)
+	{
+		rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-cameraSpeed), right);
 		m_center = glm::vec3(rotation * glm::vec4(m_center - m_eye, 1.0f)) + m_eye;
 		setupProjection(m_program, m_eye, m_center);
 	}
-	if (glfwGetKey(m_window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-		rotation = glm::rotate(glm::mat4(1.0f), glm::radians(1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	if (glfwGetKey(m_window, GLFW_KEY_LEFT) == GLFW_PRESS)
+	{
+		rotation = glm::rotate(glm::mat4(1.0f), glm::radians(cameraSpeed), glm::vec3(0.0f, 1.0f, 0.0f));
 		m_center = glm::vec3(rotation * glm::vec4(m_center - m_eye, 1.0f)) + m_eye;
 		setupProjection(m_program, m_eye, m_center);
 	}
-	if (glfwGetKey(m_window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-		rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	if (glfwGetKey(m_window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+	{
+		rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-cameraSpeed), glm::vec3(0.0f, 1.0f, 0.0f));
 		m_center = glm::vec3(rotation * glm::vec4(m_center - m_eye, 1.0f)) + m_eye;
-		setupProjection(m_program, m_eye, m_center);
-	}
-	if (glfwGetKey(m_window, GLFW_KEY_A) == GLFW_PRESS) {
-		m_eye -= right * 0.5f;
-		m_center -= right * 0.5f;
-		setupProjection(m_program, m_eye, m_center);
-	}
-	if (glfwGetKey(m_window, GLFW_KEY_D) == GLFW_PRESS) {
-		m_eye += right * 0.5f;
-		m_center += right * 0.5f;
 		setupProjection(m_program, m_eye, m_center);
 	}
 }

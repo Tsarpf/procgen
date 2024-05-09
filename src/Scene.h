@@ -21,6 +21,7 @@ public:
 	void KeyCallback(int key, int action);
 
 private:
+	// Other
 	GLuint m_program;
 	GLFWwindow* m_window;
 	OctreeMesh* m_mesh;
@@ -29,7 +30,7 @@ private:
 	glm::vec3 m_eye;
 	glm::vec3 m_center;
 	bool m_wireframe = true;
-	uint16_t m_chunkSize = 64;
+	uint16_t m_chunkSize = 32;
 	glm::ivec3 m_chunkCursor; // this could be eg. the chunk the the player is in, should only really be used for the root node
 };
 
