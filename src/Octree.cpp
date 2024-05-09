@@ -35,7 +35,7 @@ Octree::~Octree()
 // TODO: Don't use different constructors for different types of octrees, use member functions that state what they do
 
 // Used to initialize with ready built children
-Octree::Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min, int resolution)
+Octree::Octree(std::shared_ptr<OctreeChildren> children, int size, glm::vec3 min, int resolution)
 : m_children(std::move(children)), m_resolution(resolution), m_size(size), m_min(min), m_leaf(false)
 {
 	if (!m_children || m_children->field == 0) {
@@ -96,7 +96,7 @@ void Octree::Construct()
 	std::cout << "Construct bottom up took " << bottomUpDuration / 1000.f << "ms" << std::endl;
 }
 
-void buildChildren(std::vector<std::unique_ptr<OctreeChildren>>& parentSizeNodes, int cornerIdx, Octree* node, int parentIdx)
+void buildChildren(std::vector<std::shared_ptr<OctreeChildren>>& parentSizeNodes, int cornerIdx, Octree* node, int parentIdx)
 {
 	if (!parentSizeNodes[parentIdx])
 	{
@@ -107,9 +107,10 @@ void buildChildren(std::vector<std::unique_ptr<OctreeChildren>>& parentSizeNodes
 			child = nullptr;
 		}
 		children[cornerIdx] = node;
-		parentSizeNodes[parentIdx] = std::unique_ptr<OctreeChildren>(new OctreeChildren{
+		parentSizeNodes[parentIdx] = std::make_shared<OctreeChildren>(OctreeChildren{
 			(uint8_t)(1 << cornerIdx),
-			children});
+			children
+		});
 	}
 	else // parent list already created
 	{
@@ -128,7 +129,7 @@ void Octree::ConstructBottomUpParallel()
 		child = nullptr;
 	}
 
-	m_children = std::unique_ptr<OctreeChildren>(new OctreeChildren{
+	m_children = std::make_shared<OctreeChildren>(OctreeChildren{
 		0,
 		children});
 
@@ -175,8 +176,8 @@ int Octree::BottomUpParallel(int x_start, int y_start, int z_start, int max_size
     int parentCountPerAxis = childCountPerAxis / 2;
     int childCount = (int)pow(childCountPerAxis, 3);
     int parentCount = childCount / 8;
-    std::vector<std::unique_ptr<OctreeChildren>> currentSizeNodes(childCount);
-    std::vector<std::unique_ptr<OctreeChildren>> parentSizeNodes(parentCount);
+    std::vector<std::shared_ptr<OctreeChildren>> currentSizeNodes(childCount);
+    std::vector<std::shared_ptr<OctreeChildren>> parentSizeNodes(parentCount);
     for(uint32_t i = 0; i < currentSizeNodes.size(); i++)
     {
         currentSizeNodes[i] = nullptr;
@@ -233,9 +234,7 @@ int Octree::BottomUpParallel(int x_start, int y_start, int z_start, int max_size
 
 							node = new Octree(std::move(currentSizeNodes[childIdx]), cubeSize, (glm::ivec3)localPos + m_min, resolution);
 
-                            //////////////////////////////////////////////////////////// This is the same as lines 180 ->
 							buildChildren(parentSizeNodes, cornerIdx, node, parentIdx);
-                            //////////////////////////////////////////////////////////// end copypasta from 180
                         }
                     }
                 }
@@ -247,16 +246,12 @@ int Octree::BottomUpParallel(int x_start, int y_start, int z_start, int max_size
         childCount = (int)pow(childCountPerAxis, 3);
         parentCount = childCount / 8;
 
-        currentSizeNodes = std::vector<std::unique_ptr<OctreeChildren>>();
+        currentSizeNodes = std::vector<std::shared_ptr<OctreeChildren>>();
         for(auto & node : parentSizeNodes)
         {
             currentSizeNodes.push_back(std::move(node));
         }
-        parentSizeNodes = std::vector<std::unique_ptr<OctreeChildren>>(parentCount);
-        for(uint32_t i = 0; i < parentSizeNodes.size(); i++)
-        {
-            parentSizeNodes[i] = nullptr;
-        }
+        parentSizeNodes = std::vector<std::shared_ptr<OctreeChildren>>(parentCount, nullptr);
     }
 
 	auto topNode = new Octree(std::move(currentSizeNodes[0]), size, min, resolution);
@@ -287,8 +282,8 @@ void Octree::ConstructBottomUp()
     int parentCountPerAxis = childCountPerAxis / 2;
     int childCount = (int)pow(childCountPerAxis, 3);
     int parentCount = childCount / 8;
-    std::vector<std::unique_ptr<OctreeChildren>> currentSizeNodes(childCount);
-    std::vector<std::unique_ptr<OctreeChildren>> parentSizeNodes(parentCount);
+    std::vector<std::shared_ptr<OctreeChildren>> currentSizeNodes(childCount);
+    std::vector<std::shared_ptr<OctreeChildren>> parentSizeNodes(parentCount);
     for(uint32_t i = 0; i < currentSizeNodes.size(); i++)
     {
         currentSizeNodes[i] = nullptr;
@@ -329,7 +324,7 @@ void Octree::ConstructBottomUp()
                                     child = nullptr;
                                 }
                                 children[cornerIdx] = node;
-                                parentSizeNodes[parentIdx] = std::unique_ptr<OctreeChildren>(new OctreeChildren
+                                parentSizeNodes[parentIdx] = std::shared_ptr<OctreeChildren>(new OctreeChildren
                                 {
                                     (uint8_t)(1 << cornerIdx),
                                     children
@@ -371,7 +366,7 @@ void Octree::ConstructBottomUp()
                                 //std::cout << "parent array not created" << std::endl;
                                 std::array<Octree*, 8> children = {};
                                 children[cornerIdx] = node;
-                                parentSizeNodes[parentIdx] = std::unique_ptr<OctreeChildren>(new OctreeChildren
+                                parentSizeNodes[parentIdx] = std::shared_ptr<OctreeChildren>(new OctreeChildren
                                 {
                                     (uint8_t)(1 << cornerIdx),
                                     children
@@ -399,12 +394,12 @@ void Octree::ConstructBottomUp()
         childCount = (int)pow(childCountPerAxis, 3);
         parentCount = childCount / 8;
 
-        currentSizeNodes = std::vector<std::unique_ptr<OctreeChildren>>();
+        currentSizeNodes = std::vector<std::shared_ptr<OctreeChildren>>();
         for(auto & node : parentSizeNodes)
         {
             currentSizeNodes.push_back(std::move(node));
         }
-        parentSizeNodes = std::vector<std::unique_ptr<OctreeChildren>>(parentCount);
+        parentSizeNodes = std::vector<std::shared_ptr<OctreeChildren>>(parentCount);
         for(uint32_t i = 0; i < parentSizeNodes.size(); i++)
         {
             parentSizeNodes[i] = nullptr;
@@ -420,14 +415,9 @@ void Octree::ConstructBottomUp()
 
 }
 
-OctreeChildren* Octree::GetChildren() const
+std::shared_ptr<OctreeChildren> Octree::GetChildren() const
 {
-    if(!m_children)
-    {
-        return nullptr;
-    }
-    //printBinary(m_children.get()->field);
-    return m_children.get() ? m_children.get() : nullptr;
+	return m_children;
 }
 
 void Octree::MeshFromOctree(IndexBuffer& indexBuffer, VertexBuffer& vertexBuffer)
@@ -516,7 +506,12 @@ Octree* LeafOrChild(Octree* node, size_t idx)
 	if (node && node->IsLeaf())
 		return node;
 
-	return node->GetChildren()->children[idx];
+	auto children = node->GetChildren();
+	if (children)
+	{
+		return children->children[idx];
+	}
+	return nullptr;
 }
 
 bool Octree::IsLeaf() const
@@ -1074,7 +1069,7 @@ Octree* Octree::ConstructLeafParent(const int resolution, const glm::vec3 local)
 		// approximate all children with a single vertex. Check QEFs. Set m_leaf'ness.
 		// ^ wot?
 
-        auto c = std::unique_ptr<OctreeChildren>(new OctreeChildren());
+        auto c = std::make_shared<OctreeChildren>();
         c->field = field;
         //printBinary(c->field);
         c->children = children;

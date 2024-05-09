@@ -42,7 +42,10 @@ void Scene::Initialize()
 	m_center = glm::vec3(octreeSize/2.f, octreeSize/8.f, octreeSize/2.f);
 	m_eye = glm::vec3(octreeSize, octreeSize/2.f, octreeSize);
 
-	m_mesh = new OctreeMesh(m_program, octreeSize, glm::vec3(0, 0, 0));
+	auto initialPos = glm::ivec3(0, 0, 0);
+	m_chunkCursor = initialPos;
+
+	m_mesh = new OctreeMesh(m_program, octreeSize, initialPos);
 	m_mesh->BuildOctree();
 	m_mesh->LoadMesh();
 

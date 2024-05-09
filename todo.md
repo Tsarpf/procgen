@@ -1,14 +1,14 @@
 # Make it work with Godot as library!
 
+# Implement spiral loading chunks
+
 # Implement CSGs
 
 # Dear ImGui
 - Would be nice to be able to click a button to toggle
     - Wireframe on/off
-    - Spawn a new chunk in some direction
+    - Spawn a new chunk in a specific direction
 
-# Enlarge bug
-- The sizes are doubling and that's not what should be happening? Fix! Probably easy ISH to keep track of size of octree against original size and find the new position inside the new parent octree?
 
 
 # Mem optimizations:

@@ -1,9 +1,7 @@
 //
 // Created by Teemu Sarapisto on 20/07/2017.
 //
-
-#ifndef PROJECT_OCTREE_H
-#define PROJECT_OCTREE_H
+#pragma once
 
 #include "svd.h"
 #include "qef.h"
@@ -22,7 +20,7 @@ class Octree {
 public:
 	Octree(const int maxResolution, const int size, const glm::vec3 min);
 	Octree(const int resolution, glm::vec3 min); // Leaf node
-	Octree(std::unique_ptr<OctreeChildren> children, int size, glm::vec3 min, int resolution);
+	Octree(std::shared_ptr<OctreeChildren> children, int size, glm::vec3 min, int resolution);
 	~Octree();
 
 	void Construct();
@@ -33,7 +31,7 @@ public:
 
 	void ConstructBottomUp();
 	void MeshFromOctree(IndexBuffer& indexBuffer, VertexBuffer& vertexBuffer);
-	OctreeChildren* GetChildren() const;
+	std::shared_ptr<OctreeChildren> GetChildren() const;
 
 	const glm::ivec3 m_min;
 	const int m_size;
@@ -45,6 +43,8 @@ public:
 	glm::vec3 m_drawPos;
 	glm::vec3 m_averageNormal;
 	int m_corners;
+
+	static Octree* CreateNewSubTree(Octree* rootNode, const glm::vec3& newPosition, int chunkSize); // top down
 
 	static void CellChildProc(const std::array<Octree*, 8>& children, IndexBuffer& indexBuffer);
 	static void GenerateVertexIndices(Octree* node, VertexBuffer& vertexBuffer);
@@ -58,9 +58,6 @@ private:
 	static void EdgeProcYZ(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
 	static void ProcessEdge(const Octree* node[4] , int dir, IndexBuffer& indexBuffer);
 
-	std::unique_ptr<OctreeChildren> m_children;
-
-	std::vector<float> m_sampleCache;
 
 	Octree* ConstructLeafParent(const int resolution, const glm::vec3 local);
 	Octree* ConstructLeaf(const int resolution, glm::ivec3 localPos, glm::ivec3 globalPos);
@@ -69,6 +66,8 @@ private:
 	Octree(const Octree&);
 	Octree& operator=(const Octree&);
 
+	std::vector<float> m_sampleCache;
+	std::shared_ptr<OctreeChildren> m_children;
 	const int m_resolution;
 	bool m_leaf;
 };
@@ -80,6 +79,3 @@ struct OctreeChildren {
 
 int index(int x, int y, int z, int dimensionLength);
 int octreeIndex(int x, int y, int z);
-
-
-#endif //PROJECT_OCTREE_H

@@ -101,11 +101,12 @@ void BuildSeam(Octree& n1, Octree& n2, Direction dir,
 	std::vector<OctreeVisualizationData> viz;
 	for(auto [j, node] : idxs)
 	{
-		if (!node.GetChildren())
+		auto childrenPtr = node.GetChildren();
+		if (!childrenPtr)
 		{
 			continue;
 		}
-		std::array<Octree*, 8> children = node.GetChildren()->children;
+		std::array<Octree*, 8> children = childrenPtr->children;
 		for (int i = 0; i < 4; i++)
 		{
 			auto[x, y, z, edgeIdx] = edgeIndexLookup[dir][j][i];
@@ -249,7 +250,7 @@ void OctreeMesh::Enlarge(Direction dir, uint16_t chunkSize)
     rootChildren[newCornerIdx] = new Octree(1, m_size, m_position + offset); 
 	// the other 6 children should be empty
 
-    std::unique_ptr<OctreeChildren> newRootChildren(new OctreeChildren
+    std::shared_ptr<OctreeChildren> newRootChildren(new OctreeChildren
     {
 		// TODO: what if one of them is actually empty? should check fo dat at some point after sampling?
         (uint8_t)((1 << oldCornerIdx) | (1 << newCornerIdx)), // will contain just the old one, and the new (currently empty) one
@@ -261,6 +262,8 @@ void OctreeMesh::Enlarge(Direction dir, uint16_t chunkSize)
     }
 
     m_size *= 2;
+
+    printf("new root octree with already made children min (%f, %f, %f), size %i\n", m_position.x, m_position.y, m_position.z, m_size);
     m_tree = new Octree(std::move(newRootChildren), m_size, m_position, 1);
 
 	// could return the new node here, but its just the parent that will later contain the actual node we want to create,
@@ -268,27 +271,27 @@ void OctreeMesh::Enlarge(Direction dir, uint16_t chunkSize)
 	// probably isn't more than a few hops in the tree. This is never going to be a bottle neck I think.
 }
 
-glm::vec3 OctreeMesh::AddNewChunk(glm::vec3 chunkCursor, Direction dir, uint16_t chunkSize)
-{
+glm::ivec3 OctreeMesh::AddNewChunk(glm::ivec3 chunkCursor, Direction dir, uint16_t chunkSize)
+ {
 	switch (dir)
 	{
 	case xplus:
-		chunkCursor.x += m_size;
+		chunkCursor.x += chunkSize;
 		break;
 	case yplus:
-		chunkCursor.y += m_size;
+		chunkCursor.y += chunkSize;
 		break;
 	case zplus:
-		chunkCursor.z += m_size;
+		chunkCursor.z += chunkSize;
 		break;
 	case xminus:
-		chunkCursor.x -= m_size;
+		chunkCursor.x -= chunkSize;
 		break;
 	case yminus:
-		chunkCursor.y -= m_size;
+		chunkCursor.y -= chunkSize;
 		break;
 	case zminus:
-		chunkCursor.z -= m_size;
+		chunkCursor.z -= chunkSize;
 		break;
 	}	
 
@@ -307,7 +310,7 @@ glm::vec3 OctreeMesh::AddNewChunk(glm::vec3 chunkCursor, Direction dir, uint16_t
 
 	// now we initialize the tree all the way until the new node to be meshed
 	// note that this is different from above possible expansion, as there we just double the size of the root octree which may be much larger than the chunk size
-	Octree* newNode = CreateNewSubTree(m_tree, chunkCursor, chunkSize); 
+	Octree* newNode = Octree::CreateNewSubTree(m_tree, chunkCursor, chunkSize); 
 
 
 	// 4) find neighbours of the new node (which may have different parents so this needs to be a recursive algorithm)
