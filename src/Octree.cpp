@@ -69,6 +69,15 @@ int octreeIndex(int x, int y, int z) {
     return x | (y << 1) | (z << 2);
 }
 
+// glm::vec3 CalculateSurfaceNormal(const glm::vec3& p)
+// {
+// 	const float epsilon = 0.0001f;
+// 	const float dx = Sampler::Sample(p + glm::vec3(epsilon, 0.f, 0.f)) - Sampler::Sample(p - glm::vec3(epsilon, 0.f, 0.f));
+// 	const float dy = Sampler::Sample(p + glm::vec3(0.f, epsilon, 0.f)) - Sampler::Sample(p - glm::vec3(0.f, epsilon, 0.f));
+// 	const float dz = Sampler::Sample(p + glm::vec3(0.f, 0.f, epsilon)) - Sampler::Sample(p - glm::vec3(0.f, 0.f, epsilon));
+
+// 	return glm::normalize(glm::vec3(dx, dy, dz));
+// }
 
 glm::vec3 CalculateSurfaceNormal(const glm::vec3& p)
 {
