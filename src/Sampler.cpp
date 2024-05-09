@@ -144,18 +144,20 @@ glm::vec4 compute_noise_octave(const glm::vec3& pos, float frequency, float ampl
 
 std::pair<float, glm::vec3> Noise(const glm::vec3& p)
 {
+	//return PlanetNoise(p);
     float epsilon = 0.500f;
     float divider = 26.f;
-    float seaLevel = 32.f;
+    float seaLevel = -32.f;
     float seaScaler = 40.0f;
-    float maxAdjustment = 0.95f; // Maximum adjustment cap
+    float maxAdjustment = 0.75f; // Maximum adjustment cap
 
     glm::vec3 pos = p / divider + epsilon;
-    glm::vec4 result = compute_noise_octave(pos, 0.5f, 0.5f);
-    result += compute_noise_octave(pos, 2.0f, 0.10f);
-    result += compute_noise_octave(pos, 0.01f, 1.0f);
-    result += compute_noise_octave(pos, 0.10f, 1.0f);
-    result += compute_noise_octave(pos, 0.02f, 1.0f);
+    glm::vec4 result = compute_noise_octave(pos, 0.2f, 1.0f);
+    result += compute_noise_octave(pos, 0.009f, 1.0f);
+    result += compute_noise_octave(pos, 0.03f, 0.1f);
+    result += compute_noise_octave(pos, 0.30f, 0.1f);
+    result += compute_noise_octave(pos, 1.00f, 0.1f);
+    //result += compute_noise_octave(pos, 0.009f, 1.0f);
 
     float value = result.x;
     glm::vec3 grad = glm::vec3(result.y, result.z, result.w);
@@ -173,6 +175,43 @@ std::pair<float, glm::vec3> Noise(const glm::vec3& p)
     grad = glm::normalize(grad);
     return {value, grad};
 }
+
+std::pair<float, glm::vec3> PlanetNoise(const glm::vec3& p)
+{
+    // Parameters for noise function
+    float epsilon = 0.500f;
+    float divider = 0.25f;
+	float noiseAmplitudeScaler = 250.f;
+    float radiusTransition = 256.0f; // Transition point for SDF
+
+    // Calculate SDF value
+    float sdfValue = glm::length(p) - radiusTransition;
+
+    // Normalize point p for noise calculation
+    glm::vec3 unitSpherePos = glm::normalize(p);
+
+    // Sample noise at the scaled position
+    glm::vec3 pos = unitSpherePos / divider + epsilon;
+    glm::vec4 result = compute_noise_octave(pos, 0.5f, 0.5f);
+    result += compute_noise_octave(pos, 2.0f, 0.10f);
+    result += compute_noise_octave(pos, 0.05f, 1.0f);
+    result -= compute_noise_octave(pos, 0.01f, 0.5f);
+    result += compute_noise_octave(pos, 0.30f, 0.3f);
+
+    float noiseValue = result.x;
+    glm::vec3 grad = glm::vec3(result.y, result.z, result.w);
+
+    // Combine SDF and noise
+    float combinedValue = sdfValue + noiseValue * noiseAmplitudeScaler;
+
+    // Update gradient to reflect combined SDF and noise
+    glm::vec3 sdfGradient = glm::normalize(p); // Gradient of SDF is normalized vector
+    glm::vec3 combinedGradient = sdfGradient + grad;
+    combinedGradient = glm::normalize(combinedGradient);
+
+    return {combinedValue, combinedGradient};
+}
+
 
 
 float Sample(const glm::vec3 pos)

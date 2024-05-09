@@ -395,7 +395,7 @@ std::tuple<int, int, glm::vec3> OctreeMesh::EnlargeCorners(Direction dir)
     return std::tuple<int, int, glm::vec3>(newCornerIdx, oldCornerIdx, offset);
 }
 
-void OctreeMesh::SpiralGenerate(int width, int height) {
+void OctreeMesh::SpiralGenerate(int width, int height, bool generateColumns) {
     // Initialize the grid size
     int gridSize = 2 * width + 1;
 
@@ -407,17 +407,22 @@ void OctreeMesh::SpiralGenerate(int width, int height) {
         glm::ivec3(-m_chunkSize, 0, 0)  // up
     };
 
-    for (int y = (-height / 2); y < height; ++y) {
-        glm::ivec3 position(0, y * m_chunkSize, 0); // Start from the center of the grid at height y
-        int directionIndex = 0;
-        int step = 1, change = 0;
-        int count = 0;
+    glm::ivec3 basePosition(0, 0, 0); // Centered at (0, 0, 0)
+    int directionIndex = 0;
+    int step = 1, change = 0;
+    int count = 0;
 
+    auto addPositionToQueue = [&](glm::ivec3 pos) {
+        std::lock_guard<std::mutex> lock(queueMutex);
+        chunkQueue.push(pos);
+    };
+
+    if (generateColumns) {
+        // Loop over x, z and generate entire column for each x, z position
         for (int i = 1; i <= gridSize * gridSize; ++i) {
-            // Push the position into the queue
-            {
-                std::lock_guard<std::mutex> lock(queueMutex);
-                chunkQueue.push(position);
+            for (int y = height / 2; y > -height / 2; --y) {
+                glm::ivec3 position = basePosition + glm::ivec3(0, y * m_chunkSize, 0);
+                addPositionToQueue(position);
             }
 
             if (count == step) {
@@ -428,14 +433,41 @@ void OctreeMesh::SpiralGenerate(int width, int height) {
                 count = 0;
             }
 
-            position += directions[directionIndex];
+            basePosition += directions[directionIndex];
             count++;
+        }
+    } else {
+        // Loop over each y level and generate the spiral for each y level
+        for (int y = -height / 2; y < height / 2; y++) {
+            glm::ivec3 levelBasePosition(0, y * m_chunkSize, 0);
+            basePosition = levelBasePosition;
+            directionIndex = 0;
+            step = 1;
+            count = 0;
+
+            for (int i = 1; i <= gridSize * gridSize; ++i) {
+                glm::ivec3 position = basePosition;
+                addPositionToQueue(position);
+
+                if (count == step) {
+                    directionIndex = (directionIndex + 1) % 4;
+                    if (directionIndex % 2 == 0) {
+                        step++;
+                    }
+                    count = 0;
+                }
+
+                basePosition += directions[directionIndex];
+                count++;
+            }
         }
     }
 
     // Start processing the queue
     std::thread(&OctreeMesh::ProcessQueue, this).detach();
 }
+
+
 
 void OctreeMesh::ProcessQueue()
 {
@@ -474,6 +506,6 @@ void OctreeMesh::WaitForMeshCompletion()
 				break;
 			}
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Sleep to avoid busy-waiting
+		std::this_thread::sleep_for(std::chrono::milliseconds(5)); // Sleep to avoid busy-waiting
 	}
 }

@@ -40,7 +40,7 @@ public:
 	Octree* GetOctree();
 
 	// Chunk processing
-	void SpiralGenerate(int width, int height);
+	void SpiralGenerate(int width, int height, bool generateColumns);
 private:
 	// Chunk processing
 	void ProcessQueue();

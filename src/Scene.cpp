@@ -40,7 +40,7 @@ void Scene::Initialize()
 
 	const int octreeSize = m_chunkSize;
 	m_center = glm::vec3(octreeSize * 0, octreeSize/2.f, octreeSize * 0);
-	m_eye = glm::vec3(octreeSize * 8, octreeSize * 4, octreeSize * 8);
+	m_eye = glm::vec3(octreeSize * 5, octreeSize / 3, octreeSize * 5);
 
 	auto initialPos = glm::ivec3(0, -octreeSize, 0);
 	m_chunkCursor = initialPos;
@@ -56,7 +56,7 @@ void Scene::Initialize()
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
-	m_mesh->SpiralGenerate(7, 5);
+	m_mesh->SpiralGenerate(6, 5, false);
 }
 
 void Scene::Update() {
