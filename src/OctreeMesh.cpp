@@ -155,6 +155,176 @@ void BuildSeam(Octree& n1, Octree& n2, Direction dir,
 	std::cout << "edges processed" << std::endl;
 }
 
+// Returns the offset vector for a direction (where the neighbor is relative to the node)
+glm::ivec3 directionOffset(Direction dir, int nodeSize)
+{
+	switch (dir)
+	{
+	case xplus:  return glm::ivec3(-nodeSize, 0, 0); // neighbor is at -X
+	case xminus: return glm::ivec3(nodeSize, 0, 0);  // neighbor is at +X
+	case yplus:  return glm::ivec3(0, -nodeSize, 0); // neighbor is at -Y
+	case yminus: return glm::ivec3(0, nodeSize, 0);  // neighbor is at +Y
+	case zplus:  return glm::ivec3(0, 0, -nodeSize); // neighbor is at -Z
+	case zminus: return glm::ivec3(0, 0, nodeSize);  // neighbor is at +Z
+	default:     return glm::ivec3(0, 0, 0);
+	}
+}
+
+// Check if two directions are perpendicular
+bool arePerpendicular(Direction d1, Direction d2)
+{
+	// X directions (xplus, xminus) are perpendicular to Y (yplus, yminus) and Z (zplus, zminus)
+	int axis1 = (d1 == xplus || d1 == xminus) ? 0 : (d1 == yplus || d1 == yminus) ? 1 : 2;
+	int axis2 = (d2 == xplus || d2 == xminus) ? 0 : (d2 == yplus || d2 == yminus) ? 1 : 2;
+	return axis1 != axis2;
+}
+
+// Get the axis for a direction (0=X, 1=Y, 2=Z)
+int directionAxis(Direction dir)
+{
+	if (dir == xplus || dir == xminus) return 0;
+	if (dir == yplus || dir == yminus) return 1;
+	return 2;
+}
+
+// Check if direction is positive
+bool isPositiveDirection(Direction dir)
+{
+	return dir == xminus || dir == yminus || dir == zminus; // neighbor at +X/+Y/+Z
+}
+
+// Build edge seam between 4 chunks that share an edge
+// This handles the "green box" case where perpendicular face seams meet
+void BuildEdgeSeam(Octree* newChunk, Octree* neighbor1, Octree* neighbor2, Octree* diagonal,
+	Direction dir1, Direction dir2, VertexBuffer& vertices, IndexBuffer& indices)
+{
+	if (!newChunk || !neighbor1 || !neighbor2 || !diagonal)
+	{
+		std::cout << "Skipping edge seam - missing chunk(s)" << std::endl;
+		return;
+	}
+
+	// Generate vertex indices for diagonal neighbor (face seams already generated for others)
+	Octree::GenerateVertexIndices(diagonal, vertices);
+
+	// Determine which EdgeProc to call based on the perpendicular directions
+	int axis1 = directionAxis(dir1);
+	int axis2 = directionAxis(dir2);
+
+	// The edge is aligned with the third axis (not axis1 or axis2)
+	// EdgeProcXY handles Z-aligned edges (when we have X and Y neighbors)
+	// EdgeProcXZ handles Y-aligned edges (when we have X and Z neighbors)
+	// EdgeProcYZ handles X-aligned edges (when we have Y and Z neighbors)
+
+	// Determine node ordering based on their positions
+	// For EdgeProc, nodes are ordered by position in the plane perpendicular to the edge:
+	// n0 at (min, min), n1 at (max, min), n2 at (min, max), n3 at (max, max)
+
+	bool pos1 = isPositiveDirection(dir1); // neighbor1 at positive side
+	bool pos2 = isPositiveDirection(dir2); // neighbor2 at positive side
+
+	Octree* n0 = nullptr;
+	Octree* n1 = nullptr;
+	Octree* n2 = nullptr;
+	Octree* n3 = nullptr;
+
+	// Map chunks to n0-n3 based on their relative positions
+	// The quadrant mapping depends on which axes we're dealing with
+	if (axis1 == 0 && axis2 == 1) // X + Y neighbors -> Z-aligned edge (EdgeProcXY)
+	{
+		// For XY plane: n0=(-X,-Y), n1=(+X,-Y), n2=(-X,+Y), n3=(+X,+Y)
+		if (!pos1 && !pos2) { // neighbors at -X, -Y
+			n0 = diagonal; n1 = neighbor2; n2 = neighbor1; n3 = newChunk;
+		} else if (pos1 && !pos2) { // neighbors at +X, -Y
+			n0 = neighbor2; n1 = diagonal; n2 = newChunk; n3 = neighbor1;
+		} else if (!pos1 && pos2) { // neighbors at -X, +Y
+			n0 = neighbor1; n1 = newChunk; n2 = diagonal; n3 = neighbor2;
+		} else { // neighbors at +X, +Y
+			n0 = newChunk; n1 = neighbor1; n2 = neighbor2; n3 = diagonal;
+		}
+		std::cout << "Processing XY edge seam (Z-aligned)" << std::endl;
+		Octree::EdgeProcXY(n0, n1, n2, n3, indices);
+	}
+	else if (axis1 == 0 && axis2 == 2) // X + Z neighbors -> Y-aligned edge (EdgeProcXZ)
+	{
+		// For XZ plane: n0=(-X,-Z), n1=(+X,-Z), n2=(-X,+Z), n3=(+X,+Z)
+		if (!pos1 && !pos2) { // neighbors at -X, -Z
+			n0 = diagonal; n1 = neighbor2; n2 = neighbor1; n3 = newChunk;
+		} else if (pos1 && !pos2) { // neighbors at +X, -Z
+			n0 = neighbor2; n1 = diagonal; n2 = newChunk; n3 = neighbor1;
+		} else if (!pos1 && pos2) { // neighbors at -X, +Z
+			n0 = neighbor1; n1 = newChunk; n2 = diagonal; n3 = neighbor2;
+		} else { // neighbors at +X, +Z
+			n0 = newChunk; n1 = neighbor1; n2 = neighbor2; n3 = diagonal;
+		}
+		std::cout << "Processing XZ edge seam (Y-aligned)" << std::endl;
+		Octree::EdgeProcXZ(n0, n1, n2, n3, indices);
+	}
+	else if (axis1 == 1 && axis2 == 2) // Y + Z neighbors -> X-aligned edge (EdgeProcYZ)
+	{
+		// For YZ plane: n0=(-Y,-Z), n1=(+Y,-Z), n2=(-Y,+Z), n3=(+Y,+Z)
+		if (!pos1 && !pos2) { // neighbors at -Y, -Z
+			n0 = diagonal; n1 = neighbor2; n2 = neighbor1; n3 = newChunk;
+		} else if (pos1 && !pos2) { // neighbors at +Y, -Z
+			n0 = neighbor2; n1 = diagonal; n2 = newChunk; n3 = neighbor1;
+		} else if (!pos1 && pos2) { // neighbors at -Y, +Z
+			n0 = neighbor1; n1 = newChunk; n2 = diagonal; n3 = neighbor2;
+		} else { // neighbors at +Y, +Z
+			n0 = newChunk; n1 = neighbor1; n2 = neighbor2; n3 = diagonal;
+		}
+		std::cout << "Processing YZ edge seam (X-aligned)" << std::endl;
+		Octree::EdgeProcYZ(n0, n1, n2, n3, indices);
+	}
+	else if (axis1 == 1 && axis2 == 0) // Same as axis1=0, axis2=1 but swapped
+	{
+		std::swap(neighbor1, neighbor2);
+		std::swap(pos1, pos2);
+		if (!pos1 && !pos2) {
+			n0 = diagonal; n1 = neighbor2; n2 = neighbor1; n3 = newChunk;
+		} else if (pos1 && !pos2) {
+			n0 = neighbor2; n1 = diagonal; n2 = newChunk; n3 = neighbor1;
+		} else if (!pos1 && pos2) {
+			n0 = neighbor1; n1 = newChunk; n2 = diagonal; n3 = neighbor2;
+		} else {
+			n0 = newChunk; n1 = neighbor1; n2 = neighbor2; n3 = diagonal;
+		}
+		std::cout << "Processing XY edge seam (Z-aligned) [swapped]" << std::endl;
+		Octree::EdgeProcXY(n0, n1, n2, n3, indices);
+	}
+	else if (axis1 == 2 && axis2 == 0) // Same as axis1=0, axis2=2 but swapped
+	{
+		std::swap(neighbor1, neighbor2);
+		std::swap(pos1, pos2);
+		if (!pos1 && !pos2) {
+			n0 = diagonal; n1 = neighbor2; n2 = neighbor1; n3 = newChunk;
+		} else if (pos1 && !pos2) {
+			n0 = neighbor2; n1 = diagonal; n2 = newChunk; n3 = neighbor1;
+		} else if (!pos1 && pos2) {
+			n0 = neighbor1; n1 = newChunk; n2 = diagonal; n3 = neighbor2;
+		} else {
+			n0 = newChunk; n1 = neighbor1; n2 = neighbor2; n3 = diagonal;
+		}
+		std::cout << "Processing XZ edge seam (Y-aligned) [swapped]" << std::endl;
+		Octree::EdgeProcXZ(n0, n1, n2, n3, indices);
+	}
+	else if (axis1 == 2 && axis2 == 1) // Same as axis1=1, axis2=2 but swapped
+	{
+		std::swap(neighbor1, neighbor2);
+		std::swap(pos1, pos2);
+		if (!pos1 && !pos2) {
+			n0 = diagonal; n1 = neighbor2; n2 = neighbor1; n3 = newChunk;
+		} else if (pos1 && !pos2) {
+			n0 = neighbor2; n1 = diagonal; n2 = newChunk; n3 = neighbor1;
+		} else if (!pos1 && pos2) {
+			n0 = neighbor1; n1 = newChunk; n2 = diagonal; n3 = neighbor2;
+		} else {
+			n0 = newChunk; n1 = neighbor1; n2 = neighbor2; n3 = diagonal;
+		}
+		std::cout << "Processing YZ edge seam (X-aligned) [swapped]" << std::endl;
+		Octree::EdgeProcYZ(n0, n1, n2, n3, indices);
+	}
+}
+
 OctreeMesh* CreateNewMeshTask(Octree* neighbour, Octree* newOctree,
 	const int size, Direction dir, const glm::vec3 position, GLuint program)
 {
@@ -171,8 +341,8 @@ OctreeMesh* CreateNewMeshTask(Octree* neighbour, Octree* newOctree,
 	return mesh;
 }
 
-OctreeMesh* CreateNewMeshWithNeighboursTask(std::vector<std::pair<Octree*, Direction>>& neighbours, Octree* newOctree,
-	const int size, const glm::vec3 position, GLuint program)
+OctreeMesh* CreateNewMeshWithNeighboursTask(std::vector<std::pair<Octree*, Direction>> neighbours, Octree* newOctree,
+	const int size, const glm::vec3 position, GLuint program, Octree* rootNode, int chunkSize)
 {
 	VertexBuffer vertices;
 	IndexBuffer indices;
@@ -180,9 +350,46 @@ OctreeMesh* CreateNewMeshWithNeighboursTask(std::vector<std::pair<Octree*, Direc
 	newOctree->Construct();
 	newOctree->MeshFromOctree(indices, vertices);
 
+	// Process face seams with direct neighbors
 	for (const auto& neighbourDir : neighbours)
 	{
 		BuildSeam(*neighbourDir.first, *newOctree, neighbourDir.second, vertices, indices);
+	}
+
+	// Process edge seams for perpendicular neighbor pairs (the "green box" case)
+	// For each pair of perpendicular neighbors, find the diagonal and process the edge seam
+	for (size_t i = 0; i < neighbours.size(); i++)
+	{
+		for (size_t j = i + 1; j < neighbours.size(); j++)
+		{
+			Direction dir1 = neighbours[i].second;
+			Direction dir2 = neighbours[j].second;
+
+			if (!arePerpendicular(dir1, dir2))
+				continue;
+
+			Octree* neighbor1 = neighbours[i].first;
+			Octree* neighbor2 = neighbours[j].first;
+
+			// Calculate diagonal position: newOctree position + offset from dir1 + offset from dir2
+			glm::ivec3 newChunkPos = newOctree->m_min;
+			glm::ivec3 diagonalPos = newChunkPos + directionOffset(dir1, chunkSize) + directionOffset(dir2, chunkSize);
+
+			// Find the diagonal neighbor
+			Octree* diagonal = FindNode(rootNode, diagonalPos, chunkSize);
+
+			std::cout << "Edge seam: looking for diagonal at (" << diagonalPos.x << ", " << diagonalPos.y << ", " << diagonalPos.z << ")" << std::endl;
+
+			if (diagonal)
+			{
+				std::cout << "Found diagonal neighbor, processing edge seam" << std::endl;
+				BuildEdgeSeam(newOctree, neighbor1, neighbor2, diagonal, dir1, dir2, vertices, indices);
+			}
+			else
+			{
+				std::cout << "Diagonal neighbor not found, skipping edge seam" << std::endl;
+			}
+		}
 	}
 
 	OctreeMesh* mesh = new OctreeMesh(program, size, position, newOctree, std::move(vertices), std::move(indices));
@@ -316,11 +523,13 @@ glm::ivec3 OctreeMesh::AddNewChunk(glm::ivec3 newPosition, uint16_t chunkSize)
 	m_futureMeshes.push_back(
 		std::future<OctreeMesh*>(std::async(std::launch::async,
 			CreateNewMeshWithNeighboursTask,
-			neighbours,
+			std::move(neighbours),
 			newNode,
-			chunkSize,
+			static_cast<int>(chunkSize),
 			m_position,
-			m_gl_program))
+			m_gl_program,
+			m_tree,
+			static_cast<int>(chunkSize)))
 	);
 
 	return newPosition;

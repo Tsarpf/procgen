@@ -51,11 +51,11 @@ public:
 	static void FaceProcX(Octree*, Octree*, IndexBuffer& indexBuffer);
 	static void FaceProcY(Octree*, Octree*, IndexBuffer& indexBuffer);
 	static void FaceProcZ(Octree*, Octree*, IndexBuffer& indexBuffer);
-private:
-	void CellProc(IndexBuffer& indexBuffer);
 	static void EdgeProcXY(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
 	static void EdgeProcXZ(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
 	static void EdgeProcYZ(Octree*, Octree*, Octree*, Octree*, IndexBuffer& indexBuffer);
+private:
+	void CellProc(IndexBuffer& indexBuffer);
 	static void ProcessEdge(const Octree* node[4] , int dir, IndexBuffer& indexBuffer);
 
 
