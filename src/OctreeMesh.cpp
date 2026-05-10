@@ -202,22 +202,29 @@ bool is_ready(std::future<R> const& f)
 
 void OctreeMesh::CheckResults()
 {
-	std::vector<int> readies;
-	for (int i = 0; i < m_futureMeshes.size(); i++)
+	std::vector<OctreeMesh*> readyMeshes;
 	{
-		auto& future = m_futureMeshes[i];
-		if (is_ready(future))
+		std::lock_guard<std::mutex> guard(m_futureMeshMutex);
+		for (int i = 0; i < m_futureMeshes.size();)
 		{
-			//m_indices.clear();
-			//m_vertices.clear();
-			readies.push_back(i);
-			OctreeMesh* mesh = future.get();
-			mesh->LoadMesh();
-			std::lock_guard<std::mutex> guard(m_childMeshMutex);
-			m_childMeshes.push_back(mesh);
-
-			m_futureMeshes.erase(m_futureMeshes.begin() + i);
+			auto& future = m_futureMeshes[i];
+			if (is_ready(future))
+			{
+				readyMeshes.push_back(future.get());
+				m_futureMeshes.erase(m_futureMeshes.begin() + i);
+			}
+			else
+			{
+				i++;
+			}
 		}
+	}
+
+	for (auto* mesh : readyMeshes)
+	{
+		mesh->LoadMesh();
+		std::lock_guard<std::mutex> guard(m_childMeshMutex);
+		m_childMeshes.push_back(mesh);
 	}
 }
 
@@ -313,15 +320,18 @@ glm::ivec3 OctreeMesh::AddNewChunk(glm::ivec3 newPosition, uint16_t chunkSize)
 	//		a) just run the Construct function on the new node as usual
 	//		a) implement algorithm that moves down from the root node, use the index(x,y,z,2) function to find what child to visit for each level
 	// 6) process seams by looping through the neighbours 
-	m_futureMeshes.push_back(
-		std::future<OctreeMesh*>(std::async(std::launch::async,
-			CreateNewMeshWithNeighboursTask,
-			neighbours,
-			newNode,
-			chunkSize,
-			m_position,
-			m_gl_program))
-	);
+	{
+		std::lock_guard<std::mutex> guard(m_futureMeshMutex);
+		m_futureMeshes.push_back(
+			std::future<OctreeMesh*>(std::async(std::launch::async,
+				CreateNewMeshWithNeighboursTask,
+				neighbours,
+				newNode,
+				chunkSize,
+				m_position,
+				m_gl_program))
+		);
+	}
 
 	return newPosition;
 }
@@ -467,45 +477,34 @@ void OctreeMesh::SpiralGenerate(int width, int height, bool generateColumns) {
     std::thread(&OctreeMesh::ProcessQueue, this).detach();
 }
 
+void OctreeMesh::ProcessQueue() {
+    while (true) {
+        glm::ivec3 currentPosition;
+        {
+            std::lock_guard<std::mutex> lock(queueMutex);
+            if (chunkQueue.empty()) {
+                break;
+            }
+            currentPosition = chunkQueue.front();
+            chunkQueue.pop();
+        }
+        // Call AddNewChunk
+        AddNewChunk(currentPosition, m_chunkSize);
 
 
-void OctreeMesh::ProcessQueue()
-{
-	while (true)
-	{
-		glm::ivec3 currentPosition;
-		{
-			std::lock_guard<std::mutex> lock(queueMutex);
-			if (chunkQueue.empty())
-			{
-				break;
-			}
-			currentPosition = chunkQueue.front();
-			chunkQueue.pop();
-		}
-
-		// Ensure thread safety while calling AddNewChunk
-		{
-			std::lock_guard<std::mutex> lock(queueMutex);
-			AddNewChunk(currentPosition, m_chunkSize);
-		}
-
-		// Wait for current mesh tasks to complete before proceeding
-		WaitForMeshCompletion();
-	}
+        // Wait for current mesh tasks to complete before proceeding
+        WaitForMeshCompletion();
+    }
 }
 
-void OctreeMesh::WaitForMeshCompletion()
-{
-	while (true)
-	{
-		{
-			std::lock_guard<std::mutex> lock(queueMutex);
-			if (m_futureMeshes.empty())
-			{
-				break;
-			}
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(5)); // Sleep to avoid busy-waiting
-	}
+void OctreeMesh::WaitForMeshCompletion() {
+    while (true) {
+        {
+            std::lock_guard<std::mutex> guard(m_futureMeshMutex);
+            if (m_futureMeshes.empty()) {
+                break;
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
 }

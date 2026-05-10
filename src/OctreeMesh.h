@@ -48,10 +48,12 @@ private:
 	std::queue<glm::ivec3> chunkQueue;
     std::mutex queueMutex;
 	uint16_t m_chunkSize;
+    std::future<void> queueProcessingFuture;
 
 	std::tuple<int, int, glm::vec3> EnlargeCorners(Direction dir);
 
 	std::vector<std::future<OctreeMesh*>> m_futureMeshes;
+	std::mutex m_futureMeshMutex;
 	std::mutex m_childMeshMutex;
 	Octree* m_tree;
 	glm::vec3 m_position;

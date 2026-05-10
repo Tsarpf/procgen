@@ -45,7 +45,7 @@ void Mesh::UploadData()
 	}
 	*/
 
-	printf("index count %i\n", m_indices.size());
+	printf("index count %zu\n", m_indices.size());
 
 
 
@@ -95,38 +95,47 @@ void Mesh::BindBuffers()
 	glBindVertexArray(m_gl_vao);
 
 	GLint posAttrib = glGetAttribLocation(m_gl_program, "position");
-	glEnableVertexAttribArray(posAttrib);
-	glBindBuffer(GL_ARRAY_BUFFER, m_gl_vertex);
-	glVertexAttribPointer(
-		posAttrib, // attribute
-		3,                 // number of elements per vertex, here (x,y,z)
-		GL_FLOAT,          // the type of each element
-		GL_FALSE,          // take our values as-is
-		m_stride,                 // no extra data between each position
-		0                  // offset of first element
-	);
+	if (posAttrib >= 0)
+	{
+		glEnableVertexAttribArray(posAttrib);
+		glBindBuffer(GL_ARRAY_BUFFER, m_gl_vertex);
+		glVertexAttribPointer(
+			posAttrib, // attribute
+			3,                 // number of elements per vertex, here (x,y,z)
+			GL_FLOAT,          // the type of each element
+			GL_FALSE,          // take our values as-is
+			m_stride,                 // no extra data between each position
+			0                  // offset of first element
+		);
+	}
 
 	GLint colAttrib = glGetAttribLocation(m_gl_program, "inColor");
-	glEnableVertexAttribArray(colAttrib);
-	glVertexAttribPointer(
-		colAttrib, // attribute
-		3,                 // number of elements per vertex, here (R,G,B)
-		GL_FLOAT,          // the type of each element
-		GL_FALSE,          // take our values as-is
-		m_stride,                 // no extra data between each position
-		(void*)(3 * sizeof(float))                  // offset of first element
-	);
+	if (colAttrib >= 0)
+	{
+		glEnableVertexAttribArray(colAttrib);
+		glVertexAttribPointer(
+			colAttrib, // attribute
+			3,                 // number of elements per vertex, here (R,G,B)
+			GL_FLOAT,          // the type of each element
+			GL_FALSE,          // take our values as-is
+			m_stride,                 // no extra data between each position
+			(void*)(3 * sizeof(float))                  // offset of first element
+		);
+	}
 
 	GLint normAttrib = glGetAttribLocation(m_gl_program, "normal");
-	glEnableVertexAttribArray(normAttrib);
-	glVertexAttribPointer(
-		normAttrib, // attribute
-		3,                 // number of elements per vertex, here (R,G,B)
-		GL_FLOAT,          // the type of each element
-		GL_FALSE,          // take our values as-is
-		m_stride,                 // no extra data between each position
-		(void*)(6 * sizeof(float))                  // offset of first element
-	);
+	if (normAttrib >= 0)
+	{
+		glEnableVertexAttribArray(normAttrib);
+		glVertexAttribPointer(
+			normAttrib, // attribute
+			3,                 // number of elements per vertex, here (R,G,B)
+			GL_FLOAT,          // the type of each element
+			GL_FALSE,          // take our values as-is
+			m_stride,                 // no extra data between each position
+			(void*)(6 * sizeof(float))                  // offset of first element
+		);
+	}
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_gl_indices);
 }

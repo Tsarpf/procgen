@@ -133,10 +133,6 @@ void Octree::ConstructBottomUpParallel()
 {
 
 	std::array<Octree *, 8> children = {};
-	for (auto &child : children)
-	{
-		child = nullptr;
-	}
 
 	m_children = std::make_shared<OctreeChildren>(OctreeChildren{
 		0,
@@ -185,16 +181,8 @@ int Octree::BottomUpParallel(int x_start, int y_start, int z_start, int max_size
     int parentCountPerAxis = childCountPerAxis / 2;
     int childCount = (int)pow(childCountPerAxis, 3);
     int parentCount = childCount / 8;
-    std::vector<std::shared_ptr<OctreeChildren>> currentSizeNodes(childCount);
-    std::vector<std::shared_ptr<OctreeChildren>> parentSizeNodes(parentCount);
-    for(uint32_t i = 0; i < currentSizeNodes.size(); i++)
-    {
-        currentSizeNodes[i] = nullptr;
-    }
-    for(uint32_t i = 0; i < parentSizeNodes.size(); i++)
-    {
-        parentSizeNodes[i] = nullptr;
-    }
+    std::vector<std::shared_ptr<OctreeChildren>> currentSizeNodes(childCount, nullptr);
+    std::vector<std::shared_ptr<OctreeChildren>> parentSizeNodes(parentCount, nullptr);
     while (cubeSize != size)
     {
         for (int xi = 0; xi < size; xi += cubeSize)

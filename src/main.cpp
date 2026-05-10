@@ -25,8 +25,6 @@ int main(void)
 
 		GLenum err;
 
-		// ...
-
 		while ((err = glGetError()) != GL_NO_ERROR)
 		{
 			const GLubyte *errString = gluErrorString(err);
